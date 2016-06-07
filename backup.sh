@@ -1,3 +1,3 @@
 #!/bin/bash
-git pull --rebase origin master
+git pull --no-edit origin master
 git push -u github master
