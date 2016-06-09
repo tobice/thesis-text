@@ -1,5 +1,48 @@
-\chapter{Title of the second chapter}
+\chapter{Related Work}
 
-\section{Title of the first subchapter of the second chapter}
+In this chapter, we will present several tools with similar focus as our proposed \emph{application generator}. That will help us to identify the key features that we will need to implement in order to achieve our goals. We aim to create a \emph{Linked Data-driven web application generator}. So we have to begin with defining what kind of tools would fall into the same category. Before we start: Let us not limit ourselves only to Linked Data based tools. Firstly, there is not that many similar Linked Data based tools available so there would not be much to analyze. Secondly, we can get interesting findings even from the other tools, as the inner data format is only one aspect of a generator (and for a non-developer, i. e., our potential user, it is definitely not the most important one). We will now move on to the individual features that a tool should have in order to be classified by us as a \emph{data-driven application generator}.
 
-\section{Title of the second subchapter of the second chapter}
+Firstly, such a tool should be a \emph{generator}. That means that whatever the generator produces, it should not disappear after the generator is closed and it should persist as an independent \emph{instance}. This requirement is rather vague as for example any text processor t(e.g. Microsoft Word) would count as a generator in this sense. But it does rule out all kinds of \emph{data viewers}. Secondly, such a tool should generate \emph{applications}. An application, to be called an \emph{application}, should offer (at least potentially) some level of interactivity. For example text documents, images or static visualizations (like non-interactive graphs) are definitely not applications. Lastly, such a tool should be \emph{data-driven}. That means that in a typical scenario, one should start the process with a data set and use this data set to create a new application with the generator.  To give you an example of what we do not consider \emph{data-driven}, we could mention for example the WordPress.com \cite{wordpress} platform. This platform definitely is an \emph{application generator} according to our first two requirements (specifically, it is a \emph{website generator}, or perhaps a \emph{blog generator}). The key difference is that when you create a new application (\emph{website} or \emph{blog}), it is completely empty and then you start adding the data. The process is completely reversed.
+
+We admit that all these definitions are rather vague and it can still be hard to determine whether a certain tool falls into the category of \emph{data-driven application generators}. We believe, however, that all these definitions together give the reader a decent idea of what we consider a \emph{data-driven application generator}.
+
+To make the comparison more organized, we define a limited set of features that we will specifically focus on while examining the tools. An overview table showing the support of these features among all selected tools will be presented to the reader at the end of this chapter. Let us now give a short description of each chosen feature.
+
+\begin{itemize}
+\item \emph{Linked Data support}. Our \emph{application generator} is going to be Linked Data based and we consider this aspect one of its biggest assets. Therefore we are naturally interested in the \emph{Linked Data support} of other tools as well.
+\item \emph{Extendability}. We want to know whether a particular tool can be programmatically extended to support new types of data and corresponding  new types of applications. By a type of data we do not mean a different format (the data might or might not be represented in RDF, that is irrelevant at this moment) but a different \emph{semantic} meaning of the data. For example, if we decide that our generator should be able to recognize geospatial data and visualize them using an application in the form of a map, can we extend the generator in such a way?
+\item \emph{Online sharing}. We want to know whether a generated application can be published online.
+\item \emph{Non-developers friendly}. Here we are interested in whether the \emph{application generator} can be operated by a person with no technical knowledge. We are focused specifically on the actual application creation process. An expert might be needed to set up the generator, but this requirement would not break our condition.
+\item \emph{Platform}. This feature specifies whether the generator exists in the form of an online \emph{platform} where each user has an account through which he can create, publish and manage his applications.
+\item \emph{Configuration}. Here we want to know whether the generator will simply take the input data and generate and publish the application from it, or whether it will offer the user an extra \emph{configuration} step in between, in which the user will be able to affect the final shape of the application before publishing it. This configuration step should allow more than just  changing the application name.
+\end{itemize}
+
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\newcolumntype{C}{>{\centering}X} % Create new column type that centers the cell content
+\begin{table}[h]
+  \caption{Features of related tools}
+  \vspace{0.5cm}
+  \label{tab:related-features}
+\begin{tabularx}
+  {\textwidth}{ |r|C|C|C|C|C|C| }
+  \hline
+      \begin{sideways}Tool\end{sideways} & 
+      \begin{sideways}Linked Data support\end{sideways} &
+      \begin{sideways}Extendability\end{sideways} &
+      \begin{sideways}Online sharing\end{sideways} &
+      \begin{sideways}Non-developers friendly\end{sideways} &
+      \begin{sideways}Platform\end{sideways} &
+      \begin{sideways}Configuration\end{sideways} \tabularnewline \hline
+  \hline
+  Miga Data Viewer		& Y~& Y~& L~& Y~& Y~& W~ \tabularnewline \hline
+  Citadel On The Move	& Y~& Y~& R~& N~& N~& W~ \tabularnewline \hline
+  Tableau       		& Y~& Y~& A~& N~& Y~& W~ \tabularnewline \hline
+  Avelca                & Y~& N~& - & N~& N~& W~ \tabularnewline \hline  
+  Exhibit             	& N~& - & - & N~& - & W~ \tabularnewline \hline
+  Payola              	& N~& - & - & N~& - & W~ \tabularnewline \hline
+  LinkedPipes           & N~& - & - & N~& - & D~ \tabularnewline \hline
+
+  
+\end{tabularx}
+\end{table}
+
