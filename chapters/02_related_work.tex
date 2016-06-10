@@ -14,10 +14,10 @@ To make the comparison more organized, we define a limited set of features that 
 \item \emph{Online sharing}. We want to know whether a generated application can be published online.
 \item \emph{Non-developers friendly}. Here we are interested in whether the \emph{application generator} can be operated by a person with no technical knowledge. We are focused specifically on the actual application creation process. An expert might be needed to set up the generator, but this requirement would not break our condition.
 \item \emph{Platform}. This feature specifies whether the generator exists in the form of an online \emph{platform} where each user has an account through which he can create, publish and manage his applications.
-\item \emph{Configuration}. Here we want to know whether the generator will simply take the input data and generate and publish the application from it, or whether it will offer the user an extra \emph{configuration} step in between, in which the user will be able to affect the final shape of the application before publishing it. This configuration step should allow more than just  changing the application name.
+\item \emph{Configuration}. Here we want to know whether the generator will simply take the input data and generate and publish the application from it, or whether it will offer the user an extra \emph{configuration} step in between, in which the user will be able to affect the final shape of the application before publishing it. This configuration step should allow more than just changing the application name.
 \end{itemize}
 
-\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
 \newcolumntype{C}{>{\centering}X} % Create new column type that centers the cell content
 \begin{table}[h]
   \caption{Features of related tools}
@@ -34,7 +34,8 @@ To make the comparison more organized, we define a limited set of features that 
       \begin{sideways}Platform\end{sideways} &
       \begin{sideways}Configuration\end{sideways} \tabularnewline \hline
   \hline
-  Miga Data Viewer		& Y~& Y~& L~& Y~& Y~& W~ \tabularnewline \hline
+% 						&LD			&Extend		&Sharing	&Non-devel	&Platform	&Config	
+  Miga Data Viewer		&			& 			&\checkmark &			&			&\checkmark ~ \tabularnewline \hline
   Citadel On The Move	& Y~& Y~& R~& N~& N~& W~ \tabularnewline \hline
   Tableau       		& Y~& Y~& A~& N~& Y~& W~ \tabularnewline \hline
   Avelca                & Y~& N~& - & N~& N~& W~ \tabularnewline \hline  
@@ -46,3 +47,34 @@ To make the comparison more organized, we define a limited set of features that 
 \end{tabularx}
 \end{table}
 
+\section{Miga Data Viewer}
+
+Miga Data Viewer is a tabular data based \emph{application generator}. It accepts only data formatted in CSV but as this format is widely supported and there is lots of conversion tools available, any source of tabular data (Microsoft Excel file, RDBMC) can be used as an input. Despite the word \emph{viewer} in the name, this tool does meet our requirements to be called an \emph{application generator}. What it generates is an interactive interface that supports browsing, searching and filtering over the input data set. Once it is generated, it can be published online.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/02_miga_data_viewer.png}
+	\caption{Miga Data Viewer: A sample application generated from a set of Jazz Musicians.}
+	\label{fig:miga-data-viewer}
+\end{figure}
+
+As we already mentioned in the introduction chapter, the big disadvantage of tabular data is that they carry very little semantic information. As without the semantic information, it would be almost impossible to generate anything else but a simple paginated table, the user is required to provide a \emph{schema definition} for each data table (for each single CSV file). That is done through configuration *.ini files using a custom \emph{Miga Data Schema} format. Here is an example of such a configuration:
+
+\scriptsize
+\begin{verbatim}
+[Books]
+Title = Name
+Author = List (,) of Entity (Authors/Name)
+Number of pages = Number
+Genre = List (,) of Text
+Wikipedia URL = URL
+
+[Authors]
+Name = Name
+Birth date = Date
+\end{verbatim}
+\normalsize
+
+Each section defines a scheme for a CSV file with a name matching the section's name. Each column in the data file is assigned one of the data types provided by the \emph{Miga Data Schema}. Besides the very basic ones (\emph{Text} or \emph{Number} that correspond to data types known from programming languages) and slightly more complex ones (\emph{List} for collections, \emph{Entity} for \emph{foreign keys} as known from relation databases), there are a few special ones with added \emph{semantic meaning}. Let us name for example \emph{URL}, \emph{Image URL} or \emph{Coordinates}. Using these types the Miga Data Viewer is able to create richer interfaces (e.g. it can display entities with coordinates on a map).
+
+It is clear that this format is an attempt of the authors to solve what RDF would be perfect for. But unlike RDF, this format is proprietary so the semantic augmentation will work only with Miga Data Viewer.
