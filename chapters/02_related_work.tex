@@ -11,6 +11,7 @@ To make the comparison more organized, we define a limited set of features that 
 \begin{itemize}
 \item \emph{Linked Data support}. Our \emph{application generator} is going to be Linked Data based and we consider this aspect one of its biggest assets. Therefore we are naturally interested in the \emph{Linked Data support} of other tools as well.
 \item \emph{Extendability}. We want to know whether a particular tool can be programmatically extended to support new types of data and new corresponding types of applications. By a type of data we do not mean a different format (the data might or might not be represented in RDF, that is irrelevant at this moment) but a different \emph{semantic} meaning of the data. For example, if we decide that our generator should be able to recognize geospatial data and visualize them using an application in the form of a map, can we extend the generator in such a way? Also just because a particular tool is released under an Open-source software license and therefore can be modified, we do not consider it \emph{extendable}. Such a tool has to be intentionally \emph{designed} as \emph{extendable} with clearly defined and document plugin interface.
+\item \emph{Data analysis}. We are interested in whether the generator analyses the input data in any way. Typically, such a generator can enable (or disable)  features of generated applications depending on the characteristics of the input data. Or it can give recommendations to the user about how the data can be visualized. By contrast, a generator that performs no analysis at all, leaves the whole generation process up to the user. Then there is the question whether the application is still \emph{generated} or rather \emph{built}.
 \item \emph{Online sharing}. We want to know whether a generated application can be published online.
 \item \emph{Non-developers friendly}. Here we are interested in whether the \emph{application generator} can be operated by a person with no technical knowledge. We are focused specifically on the actual application creation process. An expert might be needed to set up the generator, but this requirement would not break our condition.
 \item \emph{Platform}. This feature specifies whether the generator exists in the form of an online \emph{platform} where each user has an account through which he can create, publish and manage his applications.
@@ -24,20 +25,21 @@ To make the comparison more organized, we define a limited set of features that 
   \vspace{0.5cm}
   \label{tab:related-features}
 \begin{tabularx}
-  {\textwidth}{ |r|C|C|C|C|C|C| }
+  {\textwidth}{ |r|C|C|C|C|C|C|C| }
   \hline
       \begin{sideways}Tool\end{sideways} & 
       \begin{sideways}Linked Data support\end{sideways} &
       \begin{sideways}Extendability\end{sideways} &
+      \begin{sideways}Data analysis\end{sideways} &
       \begin{sideways}Online sharing\end{sideways} &
       \begin{sideways}Non-developers friendly\end{sideways} &
       \begin{sideways}Platform\end{sideways} &
       \begin{sideways}Configuration\end{sideways} \tabularnewline \hline
   \hline
-% 						&LD			&Extend		&Sharing	&Non-devel	&Platform	&Config	
-  Miga Data Viewer		&			& 			&\checkmark &			&			&\checkmark ~ \tabularnewline \hline
-  Citadel on the Move	& 			&\checkmark	&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
-  Tableau       		& Y~& Y~& A~& N~& Y~& W~ \tabularnewline \hline
+% 						&LD			&Extend		&Data analysis	&Sharing	&Non-devel	&Platform	&Config	
+  Miga Data Viewer		&			& 			&\checkmark 	&\checkmark &			&			&\checkmark ~ \tabularnewline \hline
+  Citadel on the Move	& 			&\checkmark	&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
+  Tableau       		& 			&\checkmark	&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
   Avelca                & Y~& N~& - & N~& N~& W~ \tabularnewline \hline  
   Exhibit             	& N~& - & - & N~& - & W~ \tabularnewline \hline
   Payola              	& N~& - & - & N~& - & W~ \tabularnewline \hline
@@ -75,7 +77,7 @@ Birth date = Date
 \end{verbatim}
 \normalsize
 
-Each section defines a scheme for a CSV file with a name matching the section's name. Each column in the data file is assigned one of the data types provided by the \emph{Miga Data Schema}. Besides the very basic ones (\emph{Text} or \emph{Number} that correspond to data types known from programming languages) and slightly more complex ones (\emph{List} for collections, \emph{Entity} working as a \emph{foreign key} pointing to a different CSV file), there are a few special ones with added \emph{semantic meaning}. Let us name for example \emph{URL}, \emph{Image URL} or \emph{Coordinates} (GPS coordinates). Using these types the Miga Data Viewer is able to create richer interfaces (e.g. it can display entities with coordinates on a map).
+Each section defines a scheme for a CSV file with a name matching the section's name. Each column in the data file is assigned one of the data types provided by the \emph{Miga Data Schema}. Besides the very basic ones (\emph{Text} or \emph{Number} that correspond to data types known from programming languages) and slightly more complex ones (\emph{List} for collections, \emph{Entity} working as a \emph{foreign key} pointing to a different CSV file), there are a few special ones with added \emph{semantic meaning}. Let us name for example \emph{URL}, \emph{Image URL} or \emph{Coordinates} (GPS coordinates). Using these types the Miga Data Viewer is able to dynamically create richer interfaces (e.g. it can display entities with coordinates on a map).
 
 It is clear that this format is the authors' attempt to solve what RDF would be perfect for. But unlike RDF, which is a universal, open and widely supported framework, this format will work with Miga Data Viewer only. We will see similar approaches in other generators as well.
 
@@ -111,5 +113,21 @@ Citadel on the Move is not a monolithic application but a fairly large project c
 
 To sum it up: Citadel on the Move offers two different approaches. The first one utilizes the \emph{Application Generator Tool} which allows non-developers to generate simple applications in a very \emph{friendly} way. The other one utilizes the \emph{templates} which allow developers to create more customizable applications. There is no data \emph{analysis} involved. The user has to select a different template manually and he has to make sure that the given data set contains all necessary information that the template needs in order to work properly. The project offers several different documented templates and encourages the developers to create new ones which makes the project \emph{extensible}. As the \emph{templates} are just standalone web applications (not plugins), there is no interface that they would need to implement. However, they need to support the common \emph{Citadel JSON} format. Just like Miga Data Viewer, Citadel on the Move needs to address the problem that standalone tabular data contain almost no semantic information. To deal with that, it provides the \emph{JSON Converter tool} which allows the user to map the data set table columns onto the Citadel JSON scheme.
 
+\section{Tableau Software}
 
+Tableau Software \cite{tableau} is a company behind a family of professional commercial products focused on rich interactive data visualizations. The core product is Tableau Desktop. It can be used together with Tableau Server, which adds sharing, collaboration and other features useful for organizations, or with Tableau Online which is Tableau Server hosted directly by Tableau Software (i.e. cloud solution). There is also Tableau Public which offers a light-weight free version of Tableau Desktop and focuses on creating rich online public visualizations.
 
+\begin{figure}
+	\centering
+	\includegraphics[width=110mm]{img/02_tableau_sample.png}
+	\caption{Global Nuclear Energy Use \cite{citadel_agt_doc}. Sample rich interactive visualization created with Tableau Public}
+	\label{fig:citadel-on-the-move}
+\end{figure}
+
+At first glance, Tableau Desktop has more in common with Microsoft Excel than with the \emph{application generators} we are describing in this chapter. A task typical for Tableau Desktop is to create a graph from a given data table. But this tool goes way beyond that. Firstly, it does not have to be just graphs. The user can choose from a very long list of rich and attractive visualizations. Secondly, the visualizations can very often be interactive, allowing easy data exploration. And lastly, multiple visualizations can exist within a single document. They can be arbitrarily combined and put into a layout chosen by the user.
+
+A typical output of Tableau Desktop is an interactive \emph{dashboard} containing multiple visualizations. The \emph{dashboard} can be extended with filtering tools that control the underlying data set. As the end user changes the filters, the visualizations on the \emph{dashboard} change on-the-fly. The Tableau Desktop is not promoted as \emph{application generator} but considering the nature of produced \emph{dashboards} it can be very well considered as one. With little effort (and with no developer knowledge) it can achieve very similar results as the previously described generators, Miga Data Viewer and Citadel on the Move.
+
+It works only with tabular data but unlike the previous tools, it supports by default many various source types. Besides the classical ones like Excel tables or CSV, it allows the user to connect to live databases (the published dashboards can work as live views on the database content). Tableau Desktop contains many \emph{analytical} (and statistical) tools but not in the sense that they would dynamically help the user with creating the visualizations. The process is very \emph{user-friendly} (overall drag and drop approach) but it is completely controlled by the user. The application is not really \emph{generated}, the user \emph{builds} it.
+
+We can assume that the inner software architecture does support extending, but as it is a commercial closed source product, there is no natural way in which a user could extend the generator with features he would desire. He can only rely on the authors.
