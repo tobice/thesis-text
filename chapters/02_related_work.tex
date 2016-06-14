@@ -37,10 +37,10 @@ To make the comparison more organized, we define a limited set of features that 
       \begin{sideways}Configuration\end{sideways} \tabularnewline \hline
   \hline
 % 						&LD			&Extend		&Data analysis	&Sharing	&Non-devel	&Platform	&Config	
-  Miga Data Viewer		&			& 			&\checkmark 	&\checkmark &			&			&\checkmark ~ \tabularnewline \hline
+  Miga Data Viewer		&			& 			&			 	&\checkmark &			&			&\checkmark ~ \tabularnewline \hline
   Citadel on the Move	& 			&\checkmark	&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
-  Tableau       		& 			&\checkmark	&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
-  Avelca                & Y~& N~& - & N~& N~& W~ \tabularnewline \hline  
+  Tableau       		& 			&			&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
+  Avelca                & 			&			&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
   Exhibit             	& N~& - & - & N~& - & W~ \tabularnewline \hline
   Payola              	& N~& - & - & N~& - & W~ \tabularnewline \hline
   LinkedPipes           & N~& - & - & N~& - & D~ \tabularnewline \hline
@@ -121,7 +121,7 @@ Tableau Software \cite{tableau} is a company behind a family of professional com
 	\centering
 	\includegraphics[width=110mm]{img/02_tableau_sample.png}
 	\caption{Global Nuclear Energy Use \cite{citadel_agt_doc}. Sample rich interactive visualization created with Tableau Public}
-	\label{fig:citadel-on-the-move}
+	\label{fig:tableau-global-nuclear-enery-use}
 \end{figure}
 
 At first glance, Tableau Desktop has more in common with Microsoft Excel than with the \emph{application generators} we are describing in this chapter. A task typical for Tableau Desktop is to create a graph from a given data table. But this tool goes way beyond that. Firstly, it does not have to be just graphs. The user can choose from a very long list of rich and attractive visualizations. Secondly, the visualizations can very often be interactive, allowing easy data exploration. And lastly, multiple visualizations can exist within a single document. They can be arbitrarily combined and put into a layout chosen by the user.
@@ -131,3 +131,24 @@ A typical output of Tableau Desktop is an interactive \emph{dashboard} containin
 It works only with tabular data but unlike the previous tools, it supports by default many various source types. Besides the classical ones like Excel tables or CSV, it allows the user to connect to live databases (the published dashboards can work as live views on the database content). Tableau Desktop contains many \emph{analytical} (and statistical) tools but not in the sense that they would dynamically help the user with creating the visualizations. The process is very \emph{user-friendly} (overall drag and drop approach) but it is completely controlled by the user. The application is not really \emph{generated}, the user \emph{builds} it.
 
 We can assume that the inner software architecture does support extending, but as it is a commercial closed source product, there is no natural way in which a user could extend the generator with features he would desire. He can only rely on the authors.
+
+\section{Avelca}
+
+Avelca \cite{avelca} is another commercial tool for building custom business applications. Among the tools that we are describing in this chapter, this one is probably the furthers from our original definition of a \emph{data driven application generator}. It is focused on companies and organizations allowing them to build interactive applications around their agendas. An example of an application created with this tool could be a movie rental database, keeping track of owned movies, registered customers and current rentals. Thanks to Avelca, even a user with zero developer knowledge can create such an application.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=110mm]{img/02_avelca.png}
+	\caption{Sample application generated with Avelca. Source: YouTube demo video \cite{avelca_youtube}}
+	\label{fig:avelca-example}
+\end{figure}
+
+In its essence, Avelca \emph{application generator} is just a \emph{user-friendly} interface over a common relational database. The user starts with creating the database schema, i.e., creating tables and defining relationships between them. Obviously, the interface is more verbose and uses vocabulary that is more friendly in order not to scare off the non-developer user. The generator then uses the schema definition to create the actual application. Another way is to start with an existing data source (once again, only tabular data are supported, typically Microsoft Excel spreadsheet) and use it as a base for the generated application. This feature puts this tool among our \emph{application generators} but you should note that this time, starting with a data set is just an option, the user can actually begin with an empty application and use it to create the data.
+
+Avelca is a proprietary Application Platform as a Service. That means that on one hand, \emph{online sharing} is supported by default, on the other, it is not possible to \emph{extend} the generator in the sense that we described at the beginning of this chapter. There is also no actual \emph{data analysis} going on. The application is completely built by the user. The only exception might be the situation when the tabular data are being imported and Avelca has to \emph{guess} the table schema. That process is, however, very straightforward and we can hardly speak about some kind of \emph{understanding} of the data.
+
+In a way, Avelca is very similar to the Miga Data Viewer. Both tools work with tabular data that are augmented with a schema definition effectively turning it into some kind of relational database. The application is then generated from both the data and the schema. Clearly, Avelca is a way more advanced tool (Miga Data Viewer is just an interactive viewer) but the particular difference we are interested in at this moment, is that to achieve the same (i.e., defining the schema), they use two different approaches. Miga Data Viewer requires the user to create the schema using *.ini files, whereas Avelca offers a rich, user-friendly, drag and drop-based interface. Interestingly enough, the underlying technology in Avelca uses YAML-based DSL to represent the schema.
+
+This creates a little paradox. Miga Data Viewer \emph{feels} a bit more like an \emph{application generator} than Avelca. You start with a data set, augment it with a schema defined in a small and simple file and that is it. Miga Data Viewer generates the application from these two pieces of information. Moreover, if we considered the schema definition to be a \emph{part} of the data itself (some kind of \emph{semantic} augmentation, which is pretty common in the world of RDF data), then we could say that Miga Data Viewer actually \emph{understands} the data \emph{semantics} and uses this ability to create better and richer applications. This can be hardly claimed about Avelca. We can say that the Miga Data Viewer schema definition is part of the data only because it is an actual file that can be distributed with the actual data set. In the case of Avelca, the schema definition is stored somewhere on the Avelca servers and the user can access it only through the interface. It is definitely not part of the data. On top of that, the whole process of creating an application is very different and it feels more like \emph{building} than \emph{generating}. But besides all of this, the fact remains that Avelca can be used to get very similar results to what you can do with Miga Data Viewer. Avelca is like an upgraded and more advanced Miga Data Viewer with a slightly different overall approach.
+
+We understand that his is very subjective. We are mentioning this paradox here only to show that it is hard to define and agree on what a \emph{application generator} is and that there are many different tools that might share some of the features we are interested in.
