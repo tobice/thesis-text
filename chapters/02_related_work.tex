@@ -41,7 +41,7 @@ To make the comparison more organized, we define a limited set of features that 
   Citadel on the Move	& 			&\checkmark	&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
   Tableau       		& 			&			&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
   Avelca                & 			&			&				&\checkmark	&\checkmark	&\checkmark	&\checkmark	~ \tabularnewline \hline
-  Exhibit             	& N~& - & - & N~& - & W~ \tabularnewline \hline
+  Exhibit             	&\checkmark	&\checkmark	&				&\checkmark	&			&			&\checkmark	~ \tabularnewline \hline
   Payola              	& N~& - & - & N~& - & W~ \tabularnewline \hline
   LinkedPipes           & N~& - & - & N~& - & D~ \tabularnewline \hline
 
@@ -149,6 +149,61 @@ Avelca is a proprietary Application Platform as a Service. That means that on on
 
 In a way, Avelca is very similar to the Miga Data Viewer. Both tools work with tabular data that are augmented with a schema definition effectively turning it into some kind of relational database. The application is then generated from both the data and the schema. Clearly, Avelca is a way more advanced tool (Miga Data Viewer is just an interactive viewer) but the particular difference we are interested in at this moment, is that to achieve the same (i.e., defining the schema), they use two different approaches. Miga Data Viewer requires the user to create the schema using *.ini files, whereas Avelca offers a rich, user-friendly, drag and drop-based interface. Interestingly enough, the underlying technology in Avelca uses YAML-based DSL to represent the schema.
 
-This creates a little paradox. Miga Data Viewer \emph{feels} a bit more like an \emph{application generator} than Avelca. You start with a data set, augment it with a schema defined in a small and simple file and that is it. Miga Data Viewer generates the application from these two pieces of information. Moreover, if we considered the schema definition to be a \emph{part} of the data itself (some kind of \emph{semantic} augmentation, which is pretty common in the world of RDF data), then we could say that Miga Data Viewer actually \emph{understands} the data \emph{semantics} and uses this ability to create better and richer applications. This can be hardly claimed about Avelca. We can say that the Miga Data Viewer schema definition is part of the data only because it is an actual file that can be distributed with the actual data set. In the case of Avelca, the schema definition is stored somewhere on the Avelca servers and the user can access it only through the interface. It is definitely not part of the data. On top of that, the whole process of creating an application is very different and it feels more like \emph{building} than \emph{generating}. But besides all of this, the fact remains that Avelca can be used to get very similar results to what you can do with Miga Data Viewer. Avelca is like an upgraded and more advanced Miga Data Viewer with a slightly different overall approach.
+This creates a little paradox. Miga Data Viewer \emph{feels} a bit more like an \emph{application generator} than Avelca. You start with a data set, augment it with a schema defined in a small and simple file and that is it. Miga Data Viewer generates the application from these two pieces of information. Moreover, if we considered the schema definition to be a \emph{part} of the data itself (some kind of \emph{semantic} augmentation, which is pretty common in the world of RDF data), then we could say that Miga Data Viewer actually \emph{understands} the data \emph{semantics} and uses this ability to create better and richer applications. This can be hardly claimed about Avelca. We can say that the Miga Data Viewer schema definition is part of the data only because it is an actual file that can be distributed with the actual data set. In the case of Avelca, the schema definition is stored somewhere on the Avelca servers and the user can access it only through the user interface. It is definitely not part of the data. On top of that, the whole process of creating an application is very different and it feels more like \emph{building} than \emph{generating}. But besides all of this, the fact remains that Avelca can be used to get very similar results to what you can do with Miga Data Viewer. Avelca is like an upgraded and more advanced Miga Data Viewer with a slightly different overall approach.
 
 We understand that his is very subjective. We are mentioning this paradox here only to show that it is hard to define and agree on what a \emph{application generator} is and that there are many different tools that might share some of the features we are interested in.
+
+\section{Exhibit}
+
+Exhibit 3.0 \cite{exhibit} is a publishing framework for large-scale data-rich interactive Web pages. It offers yet another approach compared to what we have seen so far. To see how it works, we will have a look at a sample application "Billionaires in History" \cite{exhibit_example}. The data are in Exhibit internal JSON-based format (which we will mention later) but in their nature it is just a simple 2D table containing a list of billionaires with several named properties (name, age, wealth, origin etc). The \emph{applications} produced by Exhibit are called \emph{exhibits} and they are directly embedded into HTML pages. So when creating an exhibit like the mentioned "Billionaires in History" application, we would start with an empty HTML page. In the first step, it is necessary to link \emph{Exhibit JavaScript API} and the actual data set into the page. For this particular application, we also need to link an Exhibit plugin with the map view. Once this is done, we can start inserting Exhibit widgets and components into the HTML page using special syntax.
+
+\begin{figure}
+\centering
+
+  \begin{verbatim}
+  <div ex:role="view"
+    ex:viewClass="Map"
+    ex:label="Where They Are From"
+    ex:latlng=".latLng"
+    ex:sizeKey=".wealth"
+    ex:sizeCoder="wealth-coder"
+    ex:bubbleWidth="200"
+    ex:bubbleHeight="200"
+    ex:bubbleTip="top"
+    ex:mapHeight="500"
+    ex:sizeLegendLabel="Wealth in Billion USD"
+    >
+      <div class="map-lens" ex:role="lens" style="display: none;">
+        <div>
+          <b ex:content=".label"></b>
+          <span ex:if-exists=".origin">
+          	from <span ex:content=".origin"></span>
+          </span>
+        </div>
+        <div><span ex:content=".wealth"></span> billions USD</div>
+        <div>Company: <span ex:content=".company"></span></div>
+      </div>
+  </div>
+  \end{verbatim}  
+  \caption{Code snippet from the "Billionaires in History" application \cite{exhibit_example} showing how the map is instantiated.}
+  \label{fig:exhibit-map-code-snippet}
+\end{figure}
+
+As you can see in Figure \ref{fig:exhibit-map-code-snippet}, the special syntax consists of standard HTML tags extended with custom attributes prefixed with \texttt{ex:}. We insert the map into our application by creating a new wrapping \texttt{div} tag and giving it the attributes \texttt{ex:role="view"} and \texttt{ex:viewClass="Map"}. 
+
+The map should display a \emph{bubble} for each billionaire. The size of the \emph{bubble} corresponds to the billionaire's wealth and the position of the \emph{bubble} corresponds to the coordinates of his origin. This mapping is specified using the \texttt{ex:sizeKey} and \texttt{ex:latlng} attributes, i.e., the \texttt{ex:sizeKey} attribute says that the \emph{bubble} size should be defined by the \texttt{wealth} property, and the \texttt{ex:latlng} attribute says that the \emph{bubble} position should be defined by the \texttt{latLng} property. The child \texttt{div} with the \texttt{ex:role} attribute set to \texttt{lens} defines the looks and the contents of a \emph{bubble tooltip}  which is displayed upon a click on the \emph{bubble}. Notice how the data properties are linked to the code using the \texttt{ex:content} attribute. 
+
+\begin{figure}
+	\centering
+	\includegraphics[width=110mm]{img/02_exhibit.png}
+	\caption{"Billionaires in History" application \cite{exhibit_example} created with Exhibit.} 
+	\label{fig:exhibit-map-example}
+\end{figure}
+
+Exhibit provides a large number of available components and widgets which can be used to create complex and interactive applications. As the components can be combined with standard HTML and CSS markup, the user has almost unlimited possibilities in how the final application should look like. The obvious disadvantage is that the user has to have at least some basic knowledge of HTML in order to be able to create an application with Exhibit. That means that Exhibit is not really \emph{non-developer friendly} but on the other hand, no real programming skills are needed and even with a shallow knowledge of HTML, one can achieve very good results.
+
+In the previous cases of \emph{application generators}, we were examining how they deal with missing \emph{semantic} information. For example, Miga Data Viewer requires a schema definition which allows the user to specify the extra \emph{semantic} information. If a data property is marked as GPS coordinates, Miga Data Viewer displays the appropriate entity on a map. Exhibit has an exactly opposite approach. The user assigns the meaning to individual properties by using them \emph{properly}. If you have a look at the map example, what happens there is that we tell the map widget that the \texttt{latLng} property contains GPS coordinates. Nevertheless, besides this approach Exhibit does allow us to create a schema for our data as well. Typically, the schema can define how entities of different types are related to each other within a single data set.
+
+Internally, Exhibit uses its own JSON-based data format which makes it possible for the data to live together with the schema within a single file. We have seen this similar approach with a custom format in Citadel on the Move. Just like Citadel on the Move, Exhibit also offers tools allowing arbitrary data sets to be converted into the internal format. This time, however, the internal format is way more powerful, so the original data sources are not limited to just tabular data. For example, \emph{Linked Data} are also supported by Exhibit.
+
+As Exhibit consists of individual components and widgets, it can be naturally extended by adding new components and new widgets capable of displaying new types of data. For those who decide to extend Exhibit, there is a developer documentation available \cite{exhibit_documentation}.
