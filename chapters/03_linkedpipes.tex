@@ -1,0 +1,52 @@
+\chapter{LinkedPipes Visualization}
+
+
+\section{LDVM model}
+
+Linked Data Visualization Model (LDVM) [cite ldvm] is an abstract concept that breaks down the visualization process of Linked Data into four separated stages. Those stages are \emph{Source Data}, \emph{Analytical Abstraction}, \emph{Visualization Abstraction} and \emph{View} [cite ldvm]. Let us walk through the individual stages.
+
+\begin{itemize}
+\item In the \emph{Source Data} stage, we begin with raw input data in an arbitrary format (it can but does not have to be in RDF). In this stage appropriate transformations need to be applied on the input data to convert them into RDF representation suitable for the next stage. For example, a CSV file could be converted into corresponding RDF representation at this stage. If the input data already is in RDF, this stage could be reduced to simple identity mapping. The transformation is done by component called \emph{data source}.
+\item In the \emph{Analytical Abstraction} stage, relevant data are extracted and represented from the input produced in the \emph{Source Data} stage. Also arbitrary aggregation and computation of additional characteristics can be performed at this stage. This is typically done through a sequence of in-stage SPARQL operators. This sequence is denoted as an \emph{analyzer} component.
+\item In the \emph{Visualization Abstraction} stage, the \emph{analytical abstraction} produced by the previous stage is transformed into \emph{visualization abstraction} which corresponds to the desired visualization technique. Under the hood it works very similarly to the \emph{analytical abstraction} stage as the transformation is also achieved through a sequence of in-stage SPARQL operators which is denoted as an \emph{visualization transformer} component.
+\item In the final \emph{View} stage, the \emph{visualization abstraction} is transformed into an actual on-screen visualization that the user can see and potentially interact with. This visual mapping transformation is performed by component called \emph{visualizer}.
+\end{itemize}
+
+By putting this all together, we get a pipeline which on one end takes some arbitrary data as an input, and on the other end produces an actual on-screen visualization of the input data. If we look closely at the pipeline, it starts with transforming the data into RDF, then follows a sequence of SPARQL operators and finally it ends with the visualization. The reason why the process is abstracted into four separate stages with four separate types of components is re-usability and composability. 
+
+Let us say we have a data set that contains a list of cities,  their populations and the countries they belong to. Clearly, all kinds of information can be extracted from such a data set. We might want to select just the cities. Or we might want to select the countries and calculate the number of cities in every country. Or we might want to select the countries and calculate the average population size of all cities in a country. For each of these tasks we would define a different \emph{analyzer}. Now let us say we have the list of the cities and we want to visualize it on a map. Each city has GPS coordinates attached to it but unfortunately, it is using a vocabulary that our map \emph{visualizer} does not understand. In this case, we can use a \emph{visualization transformer} that converts the geospatial information into the desired format by using the supported vocabulary. Eventually, we might have two different map \emph{visualizers} available, one is Google Maps based and the other one is OpenStreetMap based. Both can work with the output of the earlier mentioned \emph{visualization transformer}. Therefore, the user can choose which one suits his need best.
+
+The final pipeline in this example might consist of the \emph{data source}, the \emph{analyzer} that extracts the cities, the \emph{visualization transformer} that converts to the supported geospatial format, and eventually the \emph{visualizer} that shows the selected cities on a map. What is important here is that every single component in this pipeline can be re-used and based on the context it can yield different results. Al kinds of other information can be extracted from the \emph{data source}. This particular \emph{analyzer} can extract cities from different \emph{data sources} and pass them on. We can easily imagine that the task of converting the geospatial data between two vocabularies, which is what our \emph{visualization transformer} does, will be pretty common. Finally, the map \emph{visualizer} can be used to visualize any geospatial data.
+
+On top of all of this, LDVM introduces a very important concept of \emph{compatibility}. \emph{Analyzers}, \emph{visualization transformers} and \emph{visualizers} are software components that consume data through their input interfaces. What we want to know is whether an \emph{analyzer} can be applied on a \emph{data source}, whether a \emph{visualization transformer} can be applied on an \emph{analytical abstraction} and whether a \emph{visualizer} can visualizer a \emph{visualization abstraction}. To achieve this, the concept of \emph{compatibility} requires that every LDVM component has to describe the expected format of the input data using a \emph{input signature}. The implementation details of an \emph{input signature} are not important at this moment. What matters is that thanks to \emph{input signatures} we can automatically check the \emph{compatibility} of two LDVM components, i.e., whether the output of one component can be \emph{bound} to the input of another component.
+
+If we look back at Payola, there are many similar aspects. A Payola \emph{analysis} is also a pipeline that consists of connected \emph{plugins} that somehow process and modify the RDF data. However, there is no such thing as \emph{compatibility} in Payola. It is the user who needs to check that it is possible to combine two plugins together. The concept of \emph{compatibility} in LDVM has two big consequences. First, it is possible to automatically check that a created pipeline makes sense and can work. Second, it is actually possible to automatically generate a pipeline from given \emph{data source} using available LDVM components. We will describe this more in detail in the next section.
+
+\section{LDVM model implementation}
+
+- components: templates vs instance, RDF representation, features, descriptors, disovery
+
+"As we have
+already mentioned, it is necessary to ensure compatibility
+between analyzers and RDF datasets, between visualization
+transformers and analytical RDF abstractions, and between
+visualizers and visualization RDF abstractions. "
+
+\section{Features/Concept}
+
+Registering components, component of type visualizer, LDVM vocabulary, different datasources
+
+Disadvantage: too many pipelines, pipeline selection
+
+\section{Components}
+
+ldvm vocabulary, RDF definition
+
+\section{Implementation}
+
+Technological stack?
+
+Scala backend, MVC, REST architecture, constructors, H2 database, underlying triplestore (Virtuoso)
+
+AngularJS Frontend, SPA, completely separated applications, using websockets, no universal solutions (i.e. languages), messy contept
+
