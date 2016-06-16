@@ -243,7 +243,7 @@ Payola is easily extendable by new analytical and visualization plugins. The ana
 
 \section{LinkedPipes Visualization}
 
-LinkedPipes Visualization is a successor of Payola. It is also a platform for reading, sharing, analyzing and visualizing Linked Data. As our \emph{application generator} is going to be built on top of LinkedPipes Visualization, we will dedicate one whole chapter to this tool and here we will give just a short description.
+LinkedPipes Visualization \cite{linked_pipes_visualization} is a successor of Payola. It is also a platform for reading, sharing, analyzing and visualizing Linked Data. As our \emph{application generator} is going to be built on top of LinkedPipes Visualization, we will dedicate one whole chapter to this tool and here we will give just a short description.
 
 In Payola, the user has to manually build the \emph{analytical pipeline} by combining available plugins and applying them on input data sources. In LinkedPipes Visualization, the user just selects the RDF data sources and the tool will automatically discover all possible combinations of available plugins, making up \emph{pipelines} that lead to meaningful visualizations. For example, if the data set contains geospatial information, LinkedPipes Visualization will automatically offer the user a map visualization of the data. Or if the data set contains geospatial information in a format that the map visualization plugin does not understand, but there is a plugin available that can transform the data into the required format, LinkedPipes Visualization will automatically insert that plugin into the \emph{pipeline} and that \emph{pipeline} will be offered to the user.
 
