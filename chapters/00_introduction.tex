@@ -3,9 +3,9 @@
 
 The Internet of today is full of data and the amount is constantly increasing. By data we mean literary anything that can be found online, may it be a huge source of organized information like Wikipedia or a small table created with Microsoft Excel by a local government office. Unfortunately, our ability to use the whole potential of all currently available data is very limited. We want to to explore the data, we want to connect and combine different data sets, we want to look for patterns in the data, we want to make the data available to end users. All of that is possible, yet usually time and resources demanding. 
 
-Let us consider for example the aforementioned "Excel table".  XLSX is a proprietary format that can be officially opened only by a paid proprietary software. This software offers a large yet still limited set of tools. It may very well happen that it will not allow us to do what we want. Given the topic of this thesis, let us say that we want to create from the table a new specialized interactive visualization (or an \textit{application}) and publish it online. To get this done,  we would most likely need a computer specialist or  even a developer. Those people are relatively rare and expensive.
+Let us consider for example the aforementioned table produced by Microsoft Excel.  XLSX is a proprietary format that can be officially opened only by a paid proprietary software. This software offers a large yet still limited set of tools. It may very well happen that it will not allow us to do what we want. Given the topic of this thesis, let us say that we want to create from the table a new specialized interactive visualization (or an \textit{application}) and publish it online. To get this done,  we would most likely need a computer specialist or  even a developer. Those people are relatively rare and expensive.
 
-Tools that attempt to solve this particular problem are called application generators. They allow non-developers to do developers' work which in this case means to generate from the data an interactive (possibly online) application. Such generators already exist, for example for the aforementioned XLSX format (or in general for tabular data) but they are usually very limited. One reason for this limitation is that the tabular data carry very little semantic information with them. One row represents an entity and each column contains one entity attribute. The first row might (or might not) contain labels for the attributes. That is all that the tabular data based generator can work with.
+Tools that attempt to solve this particular problem are called \emph{application generators}. They allow non-developers to do developers' work which in this case means to generate from the data an interactive (possibly online) application. Such generators already exist, for example for the aforementioned XLSX format (or in general for tabular data) but they are usually very limited. One reason for this limitation is that the tabular data carry very little semantic information with them. One row represents an entity and each column contains one entity attribute. The first row might (or might not) contain labels for the attributes. That is all that the tabular data based generator can work with.
 
 One of the positive recent trends is that more and more information is published using the Resource Description Framework \cite{rdf} while utilizing the Linked Data model \cite{ld}. Besides being open and offering a natural way of linking and combining different data sets, this framework is able to express any kind of information by extending the raw data with machine-readable semantic meta-data. In other words, data represented in RDF are, unlike the tabular data, not limited in what semantic information they can carry with them. A Linked Data driven application generator could benefit significantly from this feature. As such a generator could literary \textit{understand} the data, it would allow the user to generate way more versatile applications, tailored for all different kinds of data. 
 % * <tobiaspotocek@gmail.com> 2016-06-09T10:02:42.253Z:
@@ -19,54 +19,10 @@ One of the positive recent trends is that more and more information is published
 % Eg. There is an application called Justinian. It's hard to imagine that a non-developer user could create such a complex application. But the framework could be of great help.
 %
 % ^.
-š
+
 The main goal of this thesis will be to create such a Linked Data driven application generator. That means, as already suggested, that we will be focusing on allowing the non-developers do developers' work. Obviously, that is possible only to a certain extent. The data represented in RDF can be understood with software, but first someone (the developer) has to teach the software how to understand it. For example, for data containing geospatial information (RDF offers a way how to describe such information), the developer would have to extend the generator with a plugin showing such data on a~map.
 
-\section*{Motivation and contribution}
-% * <tobiaspotocek@gmail.com> 2016-06-08T21:14:06.686Z:
-%
-% > Motivation and contribution}
-%
-% This part should probably go to the Analysis chapter and the Introduction should be kept more general.
-%
-% ^.
-Let us describe more in depth how our application generator will work and how it will help its users. To make it more organized, we will separate the descriptions by different type of users that should benefit from our generator. For each type of user, we will describe his role, his motivation (or perhaps a use case typical for this user) and eventually the contribution of this generator, i. e., how this generator is going to help him.
-
-\begin{itemize}
-\item \textbf{Developer}
-
-\textit{Description:} A software engineer with deep technical knowledge.
-
-\textit{Motivation/Use case:} A developer is given a task at his job to create an interactive online map application that visualizes provided company geospatial data. The developer is smart and wants to avoid doing the same thing again the next time. Therefore, he would prefer to create a universal solution that would allow other non-developer employees to create the applications on their own and do it with any data containing geospatial information. Also, it is very likely that he will be given similar task in the near future, but with a different data type and the developer would like to re-use as much work as possible from the first time.
-
-\textit{Contribution:} Thanks to our application generator, the developer will have to focus only on developing the actual visualizer plugin. The generator will work both as a \textit{framework} and a \textit{platform}, solving many problems up front. As as a \textit{platform}, the generator will handle user agenda, registration of new plugins, application management (creating, updating, deleting, publishing), common application configuration and so on. As a \textit{framework}, the generator will define a standard  interface which will allow seamless integration of new plugins. Plus it will provide many drop-in solutions for typical challenges that the developer might encounter across multiple plugins (e.g. caching, multi-language support, support for fixing missing or incorrect data labels, re-usable user interface components etc.).
-
-\item \textbf{Data Analyst}
-
-\textit{Description:} A data analyst is not necessarily a developer, but he has enough knowledge to work with data on a lower level, typically convert data to RDF format or to augment existing RDF data sets with different meta-data. 
-
-\textit{Motivation/Use case:} Let us say that a data analyst works at the same company as our developer. He has a couple of interesting data sets that he would like to make available for other employees so that they could use them to generate applications with the plugin developed by the developer.
-
-\textit{Contribution:} By implementing the interface defined by the framework, each visualizer plugin describes what the input data should look like. Therefore the data analyst has clear instructions on how to prepare a data set to make it compatible with the visualizer plugin. After preparing such data set, the data analyst will be able to upload it to the generator and make it available for all other users that can use the data set for generating new applications.
-
-\item \textbf{User}
-
-\textit{Description: }This is the non-developer with no technical knowledge. He does possess at least some basic understanding of the data though.
-
-\textit{Motivation/Use case: }A user wants to create a new interactive application from a data set and make it available online. For example, he might want to create a map application from the data set with geospatial information, but would be interested only in certain type of data from a certain area.
-
-\textit{Contribution: }The application generator will let this user leverage the work that has been already done by the developer and the data analyst. He will be able to select a prepared data set (or choose his own), the generator will analyze the content of the data set and based on the results, the generator will offer the user a list of visualization plugins that are compatible with the data set. By choosing one plugin, the user will proceed to a configuration phase where he will be allowed to create the application according to his needs. The configuration possibilities will differ depending on the selected visualizer plugin, but typically the user will be allowed filter the data (select a subset) and to tune the level of interactivity for the audience. For example, he could either create a completely static visualization with pre-filtered data, or he could let the audience decide what they want to see. This will greatly increase the re-usability of data sets and visualizer plugins. A single data source with a single visualization plugin will work as a potential source for many applications, each serving a different purpose. None of these applications will involve any more work from the developer or from the data analyst.
-
-Before publishing the application, the user will be allowed to fill missing information (e.g. missing labels in target language) and provide basic application meta data (name and description). After publishing, the application will be available online from a unique URL.
-
-\item \textbf{Audience}
-
-\textit{Description:} The end-user with no knowledge at all, just some basic computer skills.
-
-\textit{Motivation/Use case:} Audience wants to use the application and wants to understand it.
-
-\textit{Contribution:} The application generator will greatly simplify the process of creating new applications which will just by itself result in an increased number of generated applications. Therefore the audience will benefit just from the bare existence of the generator because without the generator, there would be way less applications and the data potential would be wasted. Plus thanks to the configuration phase, the applications will not be just raw visualizations and they will offer better comfort and user experience for the audience.
-\end{itemize}
+\textit{Fill in the gap}
 
 \section*{Goal of this thesis}
 
