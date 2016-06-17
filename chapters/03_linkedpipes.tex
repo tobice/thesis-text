@@ -120,6 +120,13 @@ The situation is very similar for \emph{visualizers} as well. Each visualizer is
 \subsection{Visualizers}
 
 As already explained, a \emph{visualizer} is a standalone SPA that lives on a unique URL within LinkedPipes Visualization web application. Part of this URL is a parameter which specifies the \emph{pipeline} output that should be visualized using this \emph{visualizer}. The output (or more correctly the \emph{pipeline evaluation}) is a named graph stored in the private triplestore. Each \emph{pipeline evaluation} is also represented by a record in the H2 database and this record contains the graph name. The numeric \texttt{id} of this record is passed through the aforementioned URL parameter. We can say, in this sense, that a \emph{visualizer} is a function that takes the \emph{pipeline evaluation} \texttt{id} as an argument and returns the actual \emph{visualization}.
+% * <tobiaspotocek@gmail.com> 2016-06-17T14:01:13.066Z:
+%
+% > pipeline evaluation
+%
+% I'm not sure about the correct naming. The visualizer visualizes pipeline evaluation results but what is passed through the parameter is the pipeline evaluation id. That is however an implementation detail...
+%
+% ^.
 
 A typical workflow of a \emph{visualizer} is that once the SPA is loaded, it starts making asynchronous HTTP requests to the backend to fetch the data that should be visualized. The requests are translated by controllers into API calls to the \emph{Model} layer.  The \emph{Model} layer converts API calls into SPARQL queries that fetch data from the named graph which is stored in the private triplestore and contains the \emph{pipeline evaluation}. The returned RDF data are extracted into a representation of native Scala objects and eventually converted to JSON and sent back to the client where they are visualized for the user.
 
