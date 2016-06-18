@@ -59,7 +59,7 @@ Thanks to this approach, the \emph{compatibility} can be quickly checked at the 
 
 \subsection{Component representation}
 
-To follow the Linked Data principles, LinkedPipes Visualization implementation of LDVM represents the  components and their configuration in RDF using a custom RDF vocabulary prefixed with \texttt{ldvm} \cite{ldvm_vocabulary}. That makes it possible for the LDVM components to be shared and exchanged with separate instances of LinkedPipes Visualization or possibly even with completely different LDVM based software that supports this RDF representation. This is, however, true only to an extent. Some of the components are truly transferable and independent on the actual software implementation, but many of them require to have a corresponding counterpart in the programming code. This applies to \emph{visualizers} (the tool actually needs to implement the visualization technique required by the \emph{visualzer} component) but also to some \emph{analyzers} or \emph{transformers} for which simple SPARQL operators are not sufficient.
+To follow the Linked Data principles, LinkedPipes Visualization implementation of LDVM represents the  components and their configuration in RDF using a custom RDF vocabulary prefixed with \texttt{ldvm} \cite{ldvm_vocabulary}. That makes it possible for the LDVM components to be shared and exchanged with separate instances of LinkedPipes Visualization or possibly even with completely different LDVM based software that supports this RDF representation. This is, however, true only to an extent. Some of the components are truly transferable and independent on the actual software implementation, but many of them require to have a corresponding counterpart in the programming code. This applies to \emph{visualizers} (the tool actually needs to implement the visualization technique required by the \emph{visualizer} component) but also to some \emph{analyzers} or \emph{transformers} for which SPARQL operators are not sufficient.
 
 \subsection{Discovery}
 
@@ -108,6 +108,7 @@ To be more accurate, LinkedPipes Visualization actually consists of several SPAs
 The backend is developed in Scala using Play Framework. This framework follows MVC architecture, nevertheless in this case the \emph{View} layer is significantly suppressed as its work is done by the thick client. The tool uses H2 relational database to persist arbitrary application data, and the triplestore Virtuoso as a private RDF data storage (that is required, for example, when evaluating \emph{pipelines}). 
 
 \subsection{Component registration}
+\label{sec:linkedpipes:component_registration}
 
 We mentioned that if the user uploads a definition of a new LDVM component, its added to the \emph{register}. What actually happens under the hood is that such a component gets inserted into the H2 database where it can be easily accessed during the \emph{discovery}. We also mentioned that some LDVM components require their counterparts directly in the code.
 
