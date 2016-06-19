@@ -1,3 +1,53 @@
 \chapter{Preliminaries}
 
-Open Data
+In this chapter, we will provide the reader with a brief introduction with some of the core concepts that will use in the rest of the thesis. Mainly, we will focus on RDF and Linked Data. Going into deep technical details is beyond the scope of this chapter. We will rather just attempt to explain the core ideas and especially how we are going to benefit from these concepts.
+
+\section{Need for semantic metadata}
+
+Let us start with a simple CSV file:
+
+\begin{verbatim}
+"First name","Last name","Age"
+"John","Doe",35
+"Jane","Roe",29
+\end{verbatim}
+
+CSV ("Comma-separated values") [cite] is a well-recognized format for tabular data and is easily machine-readable. There is a universal common understanding of how this format works, i.e., that it represents tabular data and therefore, when reconstructed by arbitrary software, it should be visualized as a table. Moreover, the usual assumption is that each row corresponds to an entity and each column corresponds to an entity attribute. The values in a particular column throughout the whole file belong to the same attribute. Using this assumption, the software can allow the user to filter or sort the entities by their attribute values.
+
+Unfortunately, we have just exhausted the whole potential of this format. There is no more information that can be automatically extracted. On the other hand, it takes just one look for a human being at the data set to find out, that the first row does not contain an entity but rather field descriptions and that entities in this data sets are actually persons with their names and ages listed. Of course that we could explicitly tell the software how it should understand this particular file but that is a hardly universal solution. The general problem is that the CSV format does not allow us to pack these \emph{semantic} meta-data with the data itself.
+
+The consequence is that the extent to which software (including \emph{application generators}) is able to automatically \emph{understand} data in CSV format (or tabular data in general) is very limited.
+
+\section{RDF}
+
+Resource Description Framework is a widely used model for describing data with metadata. Unlike the aforementioned CSV format (and clearly many other formats) it allows representing a piece of information in such a way that it contains both the information itself (e.g. "John Doe") and how this information should be understood (e.g. "John Doe" is a person's name). 
+
+In RDF, every piece of information is described as a relation between entities that are uniquely identified with URIs. Such a relation is expressed by a \emph{triplet} consisting of a \emph{subject}, a \emph{predicate} and an \emph{object}. Let us now use an RDF triplet to express the information that the second row in our CSV file is a person:
+
+\begin{verbatim}
+http://example.org/users/row2
+http://www.w3.org/1999/02/22-rdf-syntax-ns#type 
+http://xmlns.com/foaf/0.1/Person
+\end{verbatim}
+
+On the first line, there is the \emph{subject}, an entity representing the second row in that particular table. We chose a random unique URI to identify that entity. The second line is the \emph{predicate} defining the type of the relationship. In this case we are describing the type of this entity. The last line contains the \emph{object}. In this case the actual entity type (a person). 
+
+The \emph{object} does not necessarily have to be an entity. It could also be a literal. Let us now express the age of this person.
+
+\begin{verbatim}
+http://example.org/users/row2
+http://xmlns.com/foaf/0.1/age
+35
+\end{verbatim}
+
+Vocabularies
+
+%Note that the latter two URIs are not random. Those URIs are well defined and universally accepted URIs
+
+Linked Data model, Open Data
+
+Data sources (serialization, triplestores)
+
+SPARQL
+
+ 
