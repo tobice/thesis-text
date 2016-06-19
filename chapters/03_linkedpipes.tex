@@ -119,6 +119,7 @@ So if a user wants to create such a component, firstly, he needs to create the R
 The situation is very similar for \emph{visualizers} as well. Each visualizer is a standalone SPA that lives on a unique URL. When the evaluation of a \emph{pipeline} finishes, the user needs to be redirected to this URL. So just as there is a \texttt{switch} defining which plugin corresponds to which \emph{analyzer} (or \emph{visualizer}), there is a \texttt{switch} defining which URL corresponds to which \emph{visualizer} (a \emph{visualizer component} is also identified by a URI).
 
 \subsection{Visualizers}
+\label{sec:linkedpipes:visualizers}
 
 As already explained, a \emph{visualizer} is a standalone SPA that lives on a unique URL within LinkedPipes Visualization web application. Part of this URL is a parameter which specifies the \emph{pipeline} output that should be visualized using this \emph{visualizer}. The output (or more correctly the \emph{pipeline evaluation}) is a named graph stored in the private triplestore. Each \emph{pipeline evaluation} is also represented by a record in the H2 database and this record contains the graph name. The numeric \texttt{id} of this record is passed through the aforementioned URL parameter. We can say, in this sense, that a \emph{visualizer} is a function that takes the \emph{pipeline evaluation} \texttt{id} as an argument and returns the actual \emph{visualization}.
 % * <tobiaspotocek@gmail.com> 2016-06-17T14:01:13.066Z:
