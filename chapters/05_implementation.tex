@@ -4,36 +4,101 @@ In this chapter, we will go through our \emph{application generator}, explaining
 
 \section{Overview}
 
-Before we dive into technical details, let us walk the reader through the \emph{application generator} from a user perspective. We will start by describing a sample use case scenario.
+Before we dive into technical details, let us walk the reader through the \emph{application generator} features from a user perspective. We will start by describing a sample use case scenario and then we will continue with individual \emph{platform} features.
 
-\subsection{Sample use case}
+\subsection{Sample use case scenario}
 
-In this scenario, we will utilize the D3.js Chord Visualizer and the Asylum Seekers 2015 data set. Both will be properly described later in a separate chapter dedicated to this particular visualizer.
+In this scenario, we will utilize the D3.js Chord Visualizer and the Asylum Seekers 2015 data set. Both will be properly described later in a separate chapter dedicated to this particular visualizer. Let us say that our fictional user is a journalist writing an article on the refugee crisis. He comes across our \emph{application generator} and finds there the Asylum Seekers 2015 data set. The Figures \ref{fig:scenario-01-browse-data-sources} to \ref{fig:scenario-11-embedded-application} show step-by-step how the journalist can use our tool to create an interactive application and share it with his readers.
 
+The actual mechanics of this visualizer will be explained later in the aforementioned separate chapter. Nevertheless, on a more general level this scenario nicely illustrates the principles that we suggested in the system proposal (Section \ref{sec:proposal:features}). The selected data set is automatically \emph{analyzed} and an appropriate visualization is offered to the user (Figure \ref{fig:scenario-02-discovery-result}). The configuration phase allows the user to work with the data and to affect the final shape of the application before it gets published. He can select for the visualization only the data he (or his audience) is interested in (Figure \ref{fig:scenario-05-search-graph}). He can even extend the data set itself with missing information (Figure \ref{fig:scenario-08-custom-label-editor}). Finally, the application can be easily shared using its public URL (Figure \ref{fig:scenario-09-published-app}).
+
+What is also clear is that none of these steps require any advanced programming knowledge. The process is very \emph{non-developer friendly}. The only exception in this case is the preparation of the data set. Unfortunately, the original data are not available in RDF and the conversion has to be done by an expert. Nevertheless, once the data set is prepared and available in the \emph{application generator}, it can become a source for a large number of different applications.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_01_browse_data_sources.png}
-	\caption{Citadel on the Move: A sample generated application. Source of picture \cite{citadel_agt_doc}}
+	\caption{Use case scenario: Data source browser. The journalist selects the Asylum Seekers 2015 data set.}
 	\label{fig:scenario-01-browse-data-sources}
 \end{figure}
 
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_02_discovery_result.png}
-	\caption{Citadel on the Move: A sample generated application. Source of picture \cite{citadel_agt_doc}}
+	\caption{Use case scenario: Discovery result. The journalist can see that the Asylum Seekers 2015 data set can be visualized only using the D3.js Chord Visualizer. He runs the one discovered LDVM \emph{pipeline} that ends with this particular LDVM \emph{visualizer component}.}
 	\label{fig:scenario-02-discovery-result}
 \end{figure}
 
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_03_create_application.png}
-	\caption{Citadel on the Move: A sample generated application. Source of picture \cite{citadel_agt_doc}}
+	\caption{Use case scenario: Create application dialog. When the \emph{pipeline evaluation} is done, the user can proceed by creating an application.}
 	\label{fig:scenario-03-create-application}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_04_graph_sample.png}
+	\caption{Use case scenario: Configurator of D3.js Chord Visualizer. Immediately after the application is created, the journalist is presented with a random sample visualization of the data.}
+	\label{fig:scenario-04-graph-sample}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_05_search_graph}
+	\caption{Use case scenario: Search dialog. The journalist wants to create a visualization of asylum seekers coming from Syria. He uses the search feature to find Syria in the data set and adds it together with all target countries to the visualization \emph{list}.}
+	\label{fig:scenario-05-search-graph}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_06_ready_application}
+	\caption{Use case scenario: Visualization of selected countries. The journalist is now presented with the chord diagram of the countries he added into the \emph{list}.}
+	\label{fig:scenario-06-ready application}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_07_general_settings}
+	\caption{Use case scenario: General application settings. The journalist can also provide the application description (in this case he uses it to explicitly mention the source of the data).}
+	\label{fig:scenario-07-general-settings}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_08_custom_label_editor}
+	\caption{Use case scenario: Custom labels editor. The journalist is targeting Czech audience but the country names in the data set are in English. The configurator lets the journalist provide his own names that will override the default ones. }
+	\label{fig:scenario-08-custom-label-editor}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_09_published_app}
+	\caption{Use case scenario: Published application. This is what the journalist's readers will see when the application gets published. Using the menu on the side, the users can switch on/off individual countries in the chord diagram.}
+    \label{fig:scenario-09-published-app}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_10_embed_application}
+	\caption{Use case scenario: Embed application dialog. The journalist may decide to embed the chord diagram directly into his article.}
+    \label{fig:scenario-10-embed-application}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_scenario_11_embedded_application}
+	\caption{Use case scenario: Embedded application. In this form, stripped from all controls to the bare visualization, it is perfect for direct embedding into web pages.}
+    \label{fig:scenario-11-embedded-application}
 \end{figure}
 
 
 \subsection{User agenda}
+
+Everyone who wants to use our \emph{application generator} needs to create an account first. At this moment, a user can either create a standard local account protected by a password or he can log in with his Google account. No other providers are currently supported. As the user works with the \emph{application generator}, all his applications, data sources and discoveries are linked to his account and no one else can access it. E.g. an application can be configured only by its owner and before it is published, only the owner can access it.
+
+One exception are \emph{administrator} accounts which work similarly to root users known from Unix systems. Such users can access and update any applications, data sources or discoveries in the system. The first user to register in our \emph{application generator} automatically becomes an administrator.  The others have to be manually appointed (which is currently not possible through the user interface and has to be done directly in the database).
+
+Root
 
 \subsection{Managing data sources}
 
@@ -45,13 +110,15 @@ In this scenario, we will utilize the D3.js Chord Visualizer and the Asylum Seek
 
 \subsection{Miscellaneous}
 
-
+% Catalog
 
 \section{Inner architecture}
 
 % Alternative frontend
 
-% Platform vs 
+% Platform vs framework (what was this supposed to mean?)
+
+% Extending inner structures (user id)
 
 
 
