@@ -1,6 +1,6 @@
 \chapter{Preliminaries}
 
-In this chapter, we will provide the reader with a brief introduction with some of the core concepts that will use in the rest of the thesis. Mainly, we will focus on RDF and Linked Data. Going into deep technical details is beyond the scope of this chapter. We will rather just attempt to explain the core ideas and especially how we are going to benefit from these concepts.
+In this chapter, we will provide the reader with a brief introduction into some of the core concepts that we will use in the rest of the thesis. Mainly, we will focus on RDF and Linked Data. Going into deep technical details is beyond the scope of this chapter. We will rather just attempt to explain the core ideas and how we are going to benefit from these concepts.
 
 \section{Need for semantic metadata}
 
@@ -12,17 +12,17 @@ Let us start with a simple CSV file:
 "Jane","Roe",29
 \end{verbatim}
 
-CSV ("Comma-separated values") [cite] is a well-recognized format for tabular data and is easily machine-readable. There is a universal common understanding of how this format works, i.e., that it represents tabular data and therefore, when reconstructed by arbitrary software, it should be visualized as a table. Moreover, the usual assumption is that each row corresponds to an entity and each column corresponds to an entity attribute. The values in a particular column throughout the whole file belong to the same attribute. Using this assumption, the software can allow the user to filter or sort the entities by their attribute values.
+CSV ("Comma-separated values") \cite{csv} is a well-recognized format for tabular data and is easily machine-readable. There is a universal common understanding of how this format works, i.e., that it represents tabular data and therefore, when reconstructed by any arbitrary software, it should be visualized as a table. Moreover, the usual assumption is that each row corresponds to an entity and each column corresponds to an entity attribute. The values in a particular column throughout the whole file belong to the same attribute. Using this assumption, the software can allow the user to filter or sort the entities by their attribute values.
 
-Unfortunately, we have just exhausted the whole potential of this format. There is no more information that can be automatically extracted. On the other hand, it takes just one look for a human being at the data set to find out, that the first row does not contain an entity but rather field descriptions and that entities in this data sets are actually persons with their names and ages listed. Of course that we could explicitly tell the software how it should understand this particular file but that is a hardly universal solution. The general problem is that the CSV format does not allow us to pack these \emph{semantic} meta-data with the data itself.
+Unfortunately, we have just exhausted the whole potential of this format. There is no more information that can be automatically extracted. On the other hand, it takes just one look for a human being at the data set to find out that the first row does not contain an entity but rather field descriptions and that entities in this data sets are actually persons with their names and ages listed. Of course that we could explicitly tell the software how it should understand this particular file but that is a hardly universal solution. The general problem is that the CSV format does not allow us to pack these \emph{semantic} meta-data with the data itself.
 
 The consequence is that the extent to which software (including \emph{application generators}) is able to automatically \emph{understand} data in CSV format (or tabular data in general) is very limited.
 
 \section{RDF}
 
-Resource Description Framework is a widely used model for describing data with metadata. Unlike the aforementioned CSV format (and clearly many other formats) it allows representing a piece of information in such a way that it contains both the information itself (e.g. "John Doe") and how this information should be understood (e.g. "John Doe" is a person's name). 
+Resource Description Framework \cite{rdf} is a widely used model for describing data with metadata. Unlike the aforementioned CSV format (and many other formats) it allows representing a piece of information in such a way that it contains both the information itself (e.g. "John Doe") and how this information should be understood (e.g. "John Doe" is a person's name). 
 
-In RDF, every piece of information is described as a relation between entities that are uniquely identified with URIs. Such a relation is expressed by a \emph{triplet} consisting of a \emph{subject}, a \emph{predicate} and an \emph{object}. Let us now use an RDF triplet to express the information that the second row in our CSV file is a person:
+In RDF, every piece of information is described as a relation between entities. An entity is called a \emph{resource} and is uniquely identified by an URI. A relation is expressed by a \emph{triplet} consisting of a \emph{subject}, a \emph{predicate} and an \emph{object}. Let us now use an RDF \emph{triplet} to express the information that the second row in our CSV file is a person:
 
 \begin{verbatim}
 http://example.org/users/row2
@@ -30,9 +30,9 @@ http://www.w3.org/1999/02/22-rdf-syntax-ns#type
 http://xmlns.com/foaf/0.1/Person
 \end{verbatim}
 
-On the first line, there is the \emph{subject}, an entity representing the second row in that particular table. We chose a random unique URI to identify that entity. The second line is the \emph{predicate} defining the type of the relationship. In this case we are describing the type of this entity. The last line contains the \emph{object}. In this case the actual entity type (a person). 
+The first line contains the \emph{subject}, the second line the \emph{predicate} and the third line the \emph{object}. The \emph{subject} is in this case a \emph{resource} representing the second row in our table. We chose a random unique URI to identify that \emph{resource}. The \emph{predicate} describes what kind of relationship this is. The relationship in this case defines the type of the row \emph{resource}. The \emph{object} is the actual resource type, in this case, a person.
 
-The \emph{object} does not necessarily have to be an entity. It could also be a literal. Let us now express the age of this person.
+The \emph{object} does not necessarily have to be a resource. It could also be a literal. Let us now express the age of this person.
 
 \begin{verbatim}
 http://example.org/users/row2
@@ -40,14 +40,80 @@ http://xmlns.com/foaf/0.1/age
 35
 \end{verbatim}
 
-Vocabularies
+Data set represented in RDF would consist of many and many triplets which would together make up a \emph{directed graph}. A relation defined by a \emph{triplet} is a directed edge between two vertices, where the \emph{subject} resource is the source vertex and the \emph{object} resource is the target vertex. As the \emph{predicate} is also a \emph{resource}, it can actually be at the same time both an edge and a vertex.
 
-%Note that the latter two URIs are not random. Those URIs are well defined and universally accepted URIs
+\section{Vocabularies}
 
-Linked Data model, Open Data
+We chose the URI for our row \emph{resource} at random. The rest of the URIs in our example, however, are not random at all. On the contrary, those URIs are universally accepted with well-defined exact meanings. The idea is that when describing our data in RDF, instead of making up our own \emph{resources} for \emph{predicates} and \emph{objects} that no one would understand, we express the information using existing well-known \emph{resources} that everybody can understand.
 
-Data sources (serialization, triplestores)
+These well-known \emph{resources} are usually grouped into \emph{vocabularies} that cover different topics or areas. We have used two vocabularies in our example: The RDF Concepts Vocabulary (\texttt{http://www.w3.org/1999/02/22-rdf-syntax-ns}) \cite{rdf_vocab} which is the very base RDF vocabulary (we used it to define the resource type) and FOAF Vocabulary (\texttt{http://xmlns.com/foaf/0.1/}) \cite{foaf_vocab} which is a vocabulary for describing people and relationships between them.
 
-SPARQL
+Using the adjective \emph{well-known} was a bit misleading. If we come across an area that is not yet covered by any existing \emph{vocabulary}, we can define our own. This vocabulary will definitely not be well-known. But if our \emph{vocabulary} is good, the other users in the need of describing information in this particular area might adopt our \emph{vocabulary} which will eventually become well-known.
 
- 
+That brings us to the core idea: by re-using existing \emph{vocabularies} when representing information in RDF, we make that information universally understandable, exchangeable and machine-readable. But what is important, we are still not limited only to existing vocabularies. The world of RDF is by its nature decentralized. If we really find ourselves in the need of defining our own vocabulary, nobody can prevent us from doing that.
+
+These principles are refined by the Linked Data model \cite{ld}. This model is actually what encourages us to re-use existing vocabularies and also what requires the resource identificators to be URIs. And not just that. The URIs should be real live HTTP URIs that it is possible to look up and when one does so, one should get a description (ideally again in a standardized format) of the \emph{resource} identified by this URI. This technique is called \emph{dereferencing}. Typically, if we (or our software) come across an unknown vocabulary, we can \emph{dereference} the individual \emph{resources} that are part of this vocabulary to get an idea of what kind of information they represent.
+
+To sum it up: RDF lets us express any kind of information by augmenting the data itself with the meta-data (i.e., how the data should be understood). Thanks to the Linked Data model principles, there is a good chance that we will understand the data produced by others and that others will understand the data produced by us.
+
+\section{Serialization}
+
+What we have been describing until is just a model for information representation. In RDF, the information is expressed using \emph{triples} so in this section, we will focus on the \emph{triples} themselves and how they can be serialized and stored.
+
+There are many ways to represent RDF \emph{triples}. For example, even a standard HTML page markup can be augmented with RDF metadata. That is a pretty common practice which increases the page machine-readability. Then there are many formats focused on serializing just the pure RDF data. We will mention just one, Turtle \cite{turtle}. If we represented the whole CSV file that we used in the beginning of this chapter in RDF and serialized that RDF into Turtle, it would look like this:
+
+\begin{verbatim}
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<http://example.org/users/row2>
+    rdf:type foaf:Person ; 
+    foaf:givenName "John" ;
+    foaf:familyName "Doe" ;
+    foaf:age 35
+    .
+    
+<http://example.org/users/row3>
+    rdf:type foaf:Person ; 
+    foaf:givenName "Jane" ;
+    foaf:familyName "Roe" ;
+    foaf:age 29
+    .
+\end{verbatim}
+
+Firstly, you should notice that we omitted the first row with property descriptions. That information is already contained in the \emph{predicates}. Secondly, you should notice that we used \emph{prefixes} to avoid repeating shared portions of vocabulary URIs. Even though the \emph{prefixes} can be chosen arbitrarily (the \emph{prefix} is simply replaced with the URI it represents during interpretation), there is a general consensus on what prefixes should be used for which vocabularies. Lastly, you should notice that to avoid repeating the main \emph{resource} URI we used a special syntax feature where individual \emph{predicates} with \emph{objects} are separated by semicolons.
+
+RDF data serialized to Turtle can be saved to a file (with the *.ttl extension) and distributed and shared in similar fashion as the CSV file. For example, it can be used as a input data source for an \emph{application generator}.
+
+\section{Triplestores and SPARQL}
+
+Just as there are relational databases for tabular data, there are \emph{triplestores} for RDF data. They are used for storing and retrieving RDF data for which they offer a standard API interface. This interface is very often in a form of a SPARQL endpoint which is named after the query language  (SPARQL \cite{sparql}) used for accessing the data. Once again, the analogy to relational databases and SQL is straightforward and even the SPARQL syntax is very similar to the syntax of SQL.
+
+Going through the whole concept of SPARQL is way beyond the scope of this chapter. We will just give the reader an example of a SPARQL \texttt{SELECT} query to give him an idea of how it works.
+
+\begin{verbatim}
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?givenName ?familyName ?age
+WHERE {
+    ?person
+        rdf:type foaf:Person ; 
+        foaf:givenName ?givenName ;
+        foaf:familyName ?familyName ;
+        foaf:age ?age
+       . 
+}
+\end{verbatim}
+
+If we run this query on our data set of two persons, it would return us the original CSV table that we used at the beginning of this chapter. As you can see, the syntax is very similar to Turtle. The tokens starting with question marks are variables. When the query is executed, the query engine tries to bind the variables to values or resources so that the resulting \emph{triple} exists in the data store. If that happens, the \emph{triple} is added to the result.
+
+Besides \texttt{SELECT } queries that return results in a tabular manner, there are also \texttt{CONSTRUCT} queries that return the result as \emph{triples}. Another useful type of query is the \texttt{ASK} query which returns just a Boolean value and can be typically used for detecting certain characteristics of the data.
+
+The \emph{triples} in a triplestore can be organized into \emph{named graphs}. Each \emph{named graph} can represent a different data set within the triplestore. The SPARQL queries can be limited to a single \emph{named graph} which can increase its performance and also help to avoid conflicts between individual data sets.
+
+An example of such a \emph{triplestore} is Virtuoso \cite{virtuoso}. That is also the \emph{triplestore} that we will use in our \emph{application generator}.
+
+\section{Data format vs data type}
+
+Before we move on to the next chapter, we would like to establish a simple convention that we will stick to in the rest of this text. Whenever we use the expression \emph{data format}, we will be referring to the representation of that data, e.g. whether it is tabular data (CSV), Linked Data or something else. By \emph{data type}, on the other hand, we will be referring to the \emph{semantic} nature of that data (regardless of their \emph{format}), e.g. whether is is a list of persons or a list of cities.
