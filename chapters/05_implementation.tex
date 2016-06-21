@@ -167,6 +167,8 @@ We decided that we build our \emph{application generator} on top of LinkedPipes 
 
 The \emph{application generator} is part of the original LinkedPipes Visualization code base. We made this decision after consulting the authors of LinkedPipes Visualization. From the software architectonic perspective, it is probably not the cleanest approach, but it significantly sped up our work. The original code base contained many solutions and APIs that we could immediately use (for example the LDVM implementation API, various RDF tools etc.). Nevertheless, even though both tools live in the same code base, we made sure to keep them as separated as possible (Figure \ref{fig:application-generator-architecture} shows that clearly). So if we decided in the future to separate both tools or for example replace the underlying LDVM implementation, it should not be impossible.
 
+An important consequence of this unification is that the LDVM implementation instance is shared among the \emph{application generator} and LinkedPipes Visualization. That means that they both use the same set of registered LDVM \emph{components}. We benefited from this as well to an extent. Due to the lack of time, we did not manage to implement all user interfaces for our generator. For example, new LDVM \emph{components} are registered to the \emph{generator} through the LinkedPipes Visualization user interface.
+
 \subsection{Frontend}
 
 The \emph{application generator} frontend is completely new and independent on the original frontend. The original frontend already contained some work that we could at first glance use (e.g. existing \emph{visualizer} plugins). Unfortunately, couple of problems prevented us from doing so. Firstly, the AngularJS frontend was created just to showcase the capabilities of the underlying LVDM implementation. For this reason, its code was in a rather poor state with no documentation. Clearly, it would take us lots of time to get familiar with it. Secondly, this code was not written with certain features (like for example user support) in mind. Thirdly, our \emph{visualizers} (with the separated \emph{configurator} and \emph{application} interfaces) work very differently compared to the \emph{visualizers} of LinkedPipes Visualization. Having these three reasons in mind, we came to the conclusion that we would have to rewrite a major portion of the original code anyway and therefore we decided to start from the scratch. We also decided to go with a different development stack (we replaced AngularJS with React and related tools) which we believed would fit our needs better. 
@@ -189,17 +191,15 @@ Figure \ref{fig:application-generator-architecture} might suggest that our exten
 
 What is important is that all \emph{application generator} related Scala code exists in those two packages (\texttt{controllers.appgen} and \texttt{model.appgen}). Also the frontend strictly communicates only  with our controllers. Therefore it is easy to draw the line where LinkedPipes Visualization ends and our \emph{application generator} begins. Dependencies between our code and the original code base are shown on Figure \ref{fig:application-generator-architecture} and are always a matter of Scala code. The dependencies are in a form of utilizing the internal API of LinkedPipes Visualization. In rare cases, we re-use some low-level utilities from the original code base.
 
-\section{Scala Backend}
+\section{Scala backend utilities}
 
 % Simple, following the architecture of LinkedPipes Visualization
-
-% Two entry endpoints URLs: platform and application
 
 % Each visualizer has its own controller (explain why)
 
 % Extending inner structures (user id). The original ones are not being deleted
 
-% Framework: Cache? Controllers
+% Framework: Cache? Controllers?
 
 % RDF vocabularies
 
@@ -224,11 +224,119 @@ What is important is that all \emph{application generator} related Scala code ex
 
 \subsection{Modules}
 
-
+% webpack endpoints
 
 \section{Integrating a new visualizer}
 
+Now that the reader is equipped with all the necessary knowledge, we will walk him through the process of creating a brand new \emph{visualizer} to demonstrate the abilities of our framework. The \emph{visualizer} will be visualizing a graph (as understood in the graph theory) represented with the RGML vocabulary (which makes it very similar to the D3.js Chord Visualizer that will be properly described later, including the vocabulary). The purpose of this section is merely to get the reader familiar with the basic integration steps. The presented \emph{visualizer} will simply display number of vertices and edges of the graph and let the user configure the graph label.
+
 \subsection{LDVM component}
+
+We start be defining the LDVM \emph{visualizer component} using the \texttt{ldvm} vocabulary. As the whole definition would be pretty long, we will walk through it statement by statement and provide necessary explanations. Let us start with couple of prefixes for vocabularies that we are going to use.
+
+\scriptsize
+\begin{verbatim}
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ldvm: <http://linked.opendata.cz/ontology/ldvm/> .
+\end{verbatim}
+\normalsize
+
+Now let us add prefixes identifying the new \emph{visualizer}. The \texttt{v} stands for "visualizer", the \texttt{r} stands for "resource" and \texttt{graph} is the short name that we will be using for our \emph{visualizer}.
+
+\scriptsize
+\begin{verbatim}
+@prefix v-graph: <http://linked.opendata.cz/ontology/ldvm/visualizer/graph/> .
+@prefix v-graph-r: <http://linked.opendata.cz/resource/ldvm/visualizer/graph/> .
+\end{verbatim}
+\normalsize
+
+What follows now is the definition of the main RDF resource representing our \emph{visualizer} that binds everything together.
+
+\scriptsize
+\begin{verbatim}
+v-graph-r:GraphVisualizerTemplate a ldvm:VisualizerTemplate ;
+    rdfs:label "Graph Visualizer"@en;
+    rdfs:comment "Visualizes graph data"@en;
+    ldvm:componentConfigurationTemplate v-graph-r:Configuration ;
+    ldvm:inputTemplate v-graph-r:Input ;
+    ldvm:feature v-graph-r:GraphFeature ;
+    .
+\end{verbatim}
+\normalsize
+
+Do not be confused by the word \texttt{Template}. In LDVM, even the \emph{pipelines} themselves are represented in RDF. Each \emph{pipeline} consists of \emph{component instances} that are instantiated from \emph{component templates} just like this one.
+
+As you can see, this \emph{component} has a \emph{configuration}, one \emph{input} and one \emph{feature}. There is nothing important now about the \emph{configuration} and also the \emph{input} is pretty straightforward, so we will just drop here the definitions.
+
+\scriptsize
+\begin{verbatim}
+v-graph:GraphVisualizerConfiguration a rdfs:Class ;
+    rdfs:label "Graph Visualizer Configuration"@en;
+    rdfs:subClassOf ldvm:ComponentConfiguration ;
+    .
+  
+v-graph-r:Configuration a v-graph:GraphVisualizerConfiguration ;
+    dcterms:title "Default Configuration" ;
+    .
+
+v-graph-r:Input a ldvm:InputDataPortTemplate ;
+    dcterms:title "Graph data described using RGML vocabulary" ;
+    .
+\end{verbatim}
+\normalsize
+
+Let us now define the \texttt{GraphFeature}.
+
+\scriptsize
+\begin{verbatim}
+v-graph-r:GraphFeature a ldvm:MandatoryFeature ;
+    dcterms:title "The actual graph data, i. e. nodes and edges" ;
+    ldvm:descriptor v-graph-r:GraphDescriptor ;
+    .
+\end{verbatim}
+\normalsize
+
+As you can see, this \emph{feature} is \emph{mandatory} which means that the input data must meet the requirements defined by the \emph{feature descriptor}. So let us have a look at it.
+
+\scriptsize
+\begin{verbatim}
+v-graph-r:GraphDescriptor a ldvm:Descriptor ;
+    dcterms:title "Graph presence check" ;
+    ldvm:query """
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rgml: <http://purl.org/puninj/2001/05/rgml-schema#>
+
+        ASK {
+            ?graph rdf:type rgml:Graph ;
+                rgml:directed ?directed .
+
+            ?edge rdf:type rgml:Edge ;
+                rgml:source ?source ;
+                rgml:target ?target ;
+                rgml:weight ?weight .
+
+            ?source rdf:type rgml:Node .
+            ?target rdf:type rgml:Node .
+        }
+    """ ;
+    ldvm:appliesTo v-graph-r:Input ;
+    .
+\end{verbatim}
+\normalsize
+
+The SPARQL query contained in the \emph{descriptor} is looking for a graph instance and at least one edge between two vertices. This requirement is applied on the input that we have defined before. If we put this all together we get that \textit{the \emph{mandatory feature} requires the data flowing through the only \emph{component input} to contain a non-empty graph}. So we have just specified how the RDF data coming to our \emph{visualizer} should look like.
+
+What we have to do now is put all these lines together into a single *.ttl file (we have been using the Turtle syntax) and upload it to the \emph{application generator}. Unfortunately, the user interface for this task is not yet available inside the \emph{application generator} and we need to use LinkedPipes Visualization interface for it. So go to the homepage, open the left side menu, click \textbf{Components} and then the green \textbf{Add} button. It should get you to a screen that you can see on Figure \ref{fig:upload_component_definition}. Use the form to upload the definition.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_upload_component_definition.png}
+	\caption{LinkedPipes Visualization: Upload component definition}
+    \label{fig:upload_component_definition}
+\end{figure}
+
+Once this is done, the \emph{discovery} algorithm is able to utilize this new \emph{visualizer component} when discovering pipelines. If you now ran the \emph{discovery} on a data set containing some graph data inside LinkedPipes Visualization, it should find a \emph{pipeline} ending with this \emph{visualizer component}. Now we need to implement the corresponding \emph{visualizer plugin} for our \emph{application generator}.
 
 \subsection{Frontend module}
 
