@@ -154,15 +154,40 @@ When the user is happy with how the application looks, he can publish it by hitt
 
 Some \emph{visualizers} offer the option to publish the application in an embed mode. That means that the application's interface is adapted so that it can be inserted for example into an external online article. The interface is usually significantly reduced and stripped from unimportant  control elements. This functionality is not considered common for all \emph{visualizers}  as each \emph{visualizer} can approach it differently. For example, the D3.js Chord Visualizer we used in this section allows the user to create multiple chord diagrams within a single application. Each of these diagrams can be exported separately in the embed mode (a unique URL is generated for each diagram under which the diagram is accessible). See Figure \ref{fig:scenario-10-embed-application}. Clearly, this functionality is specific for D3.js Chord Visualizer.
 
-\section{Inner architecture}
+\section{General architecture}
 
-% Alternative frontend
+We decided that we build our \emph{application generator} on top of LinkedPipes Visualization (Section \ref{sec:system_proposal:integration}). We already described the architecture of this tool (Section \ref{sec:linkedpipes:architecture} and especially Figure \ref{fig:linked-pipes-visualization-architecture}). We will now explain how we integrated the \emph{application generator} into LinkedPipes Visualization. You will get the overall idea by referring to Figure \ref{fig:application-generator-architecture}.
 
-% Platform vs framework (what was this supposed to mean?)
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/05_application_generator_architecture.png}
+	\caption{Application Generator Architecture. Blocks with solid borders are part of the original LinkedPipes Visualization, blocks with dashed borders are newly implemented parts of the \emph{application generator}.} 
+	\label{fig:application-generator-architecture}
+\end{figure}
 
-% Extending inner structures (user id). The original ones are not being deleted
+The \emph{application generator} is part of the original LinkedPipes Visualization code base. We made this decision after consulting the authors of LinkedPipes Visualization. From the software architectonic perspective, it is probably not the cleanest approach, but it significantly sped up our work. The original code base contained many solutions and APIs that we could immediately use (for example the LDVM implementation API, various RDF tools etc.). Nevertheless, even though both tools live in the same code base, we made sure to keep them as separated as possible (Figure \ref{fig:application-generator-architecture} shows that clearly). So if we decided in the future to separate both tools or for example replace the underlying LDVM implementation, it should not be impossible.
 
+\subsection{Frontend}
 
+The \emph{application generator} frontend is completely new and independent on the original frontend. The original frontend already contained some work that we could at first glance use (e.g. existing \emph{visualizer} plugins). Unfortunately, couple of problems prevented us from doing so. Firstly, the AngularJS frontend was created just to showcase the capabilities of the underlying LVDM implementation. For this reason, its code was in a rather poor state with no documentation. Clearly, it would take us lots of time to get familiar with it. Secondly, this code was not written with certain features (like for example user support) in mind. Thirdly, our \emph{visualizers} (with the separated \emph{configurator} and \emph{application} interfaces) work very differently compared to the \emph{visualizers} of LinkedPipes Visualization. Having these three reasons in mind, we came to the conclusion that we would have to rewrite a major portion of the original code anyway and therefore we decided to start from the scratch. We also decided to go with a different development stack (we replaced AngularJS with React and related tools) which we believed would fit our needs better. 
+
+As a result, there are two existing user interfaces that live within the same application next to each other. The original LinkedPipes Visualization interface is accessible from the home page (the \texttt{/} URL). Our \emph{application generator} can be found at \texttt{/appgen} and individual published applications live at \emph{/app}.
+
+\subsection{Controllers}
+
+The vast majority of controllers in both LinkedPipes Visualization and the \emph{application generator} handle the asynchronous HTTP requests coming from the frontend (the only exception are the controllers handling the initialization of the SPAs). The role of a controller in this typical case is just to translate the HTTP request into an API call to the \emph{Model} layer and send the response back. All controllers together define a public remote API interface.
+
+Even though we could re-use some of the methods available from the LinkedPipes Visualization controllers (e.g. those for controlling the \emph{discovery} algorithm), we decided not to do that to avoid hidden dependencies between the frontend and the backend. Dependencies within the Scala code base (for example between the \emph{Controller} layer and the \emph{Model} layer) are easy the discover. If they break, the code will not compile. That is not true for the remote API. Therefore the \emph{application generator} frontend strictly uses only those remote API methods that are handled by the \emph{application generator} controllers. They all exist in a standalone \texttt{controllers.appgen} Scala package.
+
+\subsection{Model}
+
+The \emph{Model} layer consists of various repositories and services that handle the business logic. The repositories and services that specifically handle the \emph{application generator} business logic (e.g. application management, users etc) can all be found in the \texttt{model.appgen} package.
+
+The \emph{Model} layer among other things contains tools for working with RDF data, e.g. services converting RDF data in various vocabularies into Scala objects. While we were developing our \emph{visualizers}, we needed to add support for some new vocabularies to the code base. This is the only case when our code significantly overlaps with the original LinkedPipes Visualization code. However, this code is not specific to our \emph{application generator}, it actually extends the functionality of LinkedPipes Visualization.
+
+Figure \ref{fig:application-generator-architecture} might suggest that our extension of the \emph{Model} layer directly communicates with the H2 database. Strictly speaking, that is not true because we are utilizing some low level services to access the database and those services could still be considered part of the \emph{Model} layer.
+
+What is important is that all \emph{application generator} related Scala code exists in those two packages (\texttt{controllers.appgen} and \texttt{model.appgen}). Also the frontend strictly communicates only  with our controllers. Therefore it is easy to draw the line where LinkedPipes Visualization ends and our \emph{application generator} begins. Dependencies between our code and the original code base are shown on Figure \ref{fig:application-generator-architecture} and are always a matter of Scala code. The dependencies are in a form of utilizing the internal API of LinkedPipes Visualization. In rare cases, we re-use some low-level utilities from the original code base.
 
 \section{Scala Backend}
 
@@ -170,9 +195,13 @@ Some \emph{visualizers} offer the option to publish the application in an embed 
 
 % Two entry endpoints URLs: platform and application
 
-% Each visualizer has its own controller
+% Each visualizer has its own controller (explain why)
 
-% Cache?
+% Extending inner structures (user id). The original ones are not being deleted
+
+% Framework: Cache? Controllers
+
+% RDF vocabularies
 
 
 \section{Frontend development stack}

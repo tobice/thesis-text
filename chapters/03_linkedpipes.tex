@@ -98,14 +98,22 @@ Users with actual developer skills can extend LinkedPipes Visualization with new
 In the next section we will give the reader an overview of the inner architecture and used technologies. We will especially focus on how \emph{visualizers} work as those will essentially be our \emph{generated applications}.
 
 \subsection{Architecture}
+\label{sec:linkedpipes:architecture}
 
 LinkedPipes Visualization is a web application that consists of a backend running on a server and a frontend running on the client side (in a web browser). 
 
-The frontend is a so called Single-page application (SPA). That means that the application user interface lives completely in the browser and uses asynchronous HTTP requests (AJAX) to communicate with the backend. The data between the server and the client are sent serialized to JSON.
+The frontend is a so called Single-page application (SPA). That means that the application user interface lives completely in the browser and uses asynchronous HTTP requests (AJAX) to communicate with the backend. There are no page reloads or transitions between different pages with different URLs. That is all handled by the SPA within a single page. The data between the server and the client are sent serialized to JSON.
 
 To be more accurate, LinkedPipes Visualization actually consists of several SPAs, each dealing with a different task. Visualization is one SPA, component management is one SPA and each visualizer is also one SPA. The frontend is driven by the JavaScript framework AngularJS and the interface is created using modern web technologies, specifically HTML5 and CSS3. Several other JavaScript libraries are used as well (for example D3.js for creating rich visualizations).
 
-The backend is developed in Scala using Play Framework. This framework follows MVC architecture, nevertheless in this case the \emph{View} layer is significantly suppressed as its work is done by the thick client. The tool uses H2 relational database to persist arbitrary application data, and the triplestore Virtuoso as a private RDF data storage (that is required, for example, when evaluating \emph{pipelines}). 
+The backend is developed in Scala using Play Framework. This framework follows MVC architecture, nevertheless in this case the \emph{View} layer is significantly suppressed as its work is done by the thick client. The tool uses H2 relational database to persist arbitrary application data, and the triplestore Virtuoso as a private RDF data storage (that is required, for example, when evaluating \emph{pipelines}). Figure \ref{fig:linked-pipes-visualization-architecture} shows the overall architecture of Linked Pipes Visualization, including the data flow between individual layers.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/03_linked_pipes_visualization_architecture.png}
+	\caption{Linked Pipes Visualization Architecture. The arrow orientations suggest the typical request initiator between layers.} 
+	\label{fig:linked-pipes-visualization-architecture}
+\end{figure}
 
 \subsection{Component registration}
 \label{sec:linkedpipes:component_registration}
@@ -130,6 +138,6 @@ As already explained, a \emph{visualizer} is a standalone SPA that lives on a un
 %
 % ^.
 
-A typical workflow of a \emph{visualizer} is that once the SPA is loaded, it starts making asynchronous HTTP requests to the backend to fetch the data that should be visualized. The requests are translated by controllers into API calls to the \emph{Model} layer.  The \emph{Model} layer converts API calls into SPARQL queries that fetch data from the named graph which is stored in the private triplestore and contains the \emph{pipeline evaluation}. The returned RDF data are extracted into a representation of native Scala objects and eventually converted to JSON and sent back to the client where they are visualized for the user.
+A typical workflow of a \emph{visualizer} is that once the SPA is loaded, it starts making asynchronous HTTP requests to the backend to fetch the data that should be visualized. The requests are translated by controllers into API calls to the \emph{Model} layer.  The \emph{Model} layer converts API calls into SPARQL queries that fetch data from the named graph which is stored in the private triplestore and contains the \emph{pipeline evaluation}. The returned RDF data are extracted into a representation of native Scala objects and eventually converted to JSON and sent back to the client where they are visualized for the user (see Figure \ref{fig:linked-pipes-visualization-architecture}).
 
 The \emph{pipeline evaluation} might be too large or it still might not be in the proper format for the chosen visualization technique. It is a responsibility of a \emph{visualizer} to deal with these potential problems and that might require some more transformations along the way. Those can be done both on the client side and the server side, whichever way is more suitable. It is not always possible to send the whole data set directly to the client and it has to be somehow reduced on the server side. A typical example of such reduction is that the \emph{visualizer} lets the user apply some filters first. That means that it (ideally) never fetches (and visualizes) the whole data set at once but always only a subset specified by the user. 
