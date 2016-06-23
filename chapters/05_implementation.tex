@@ -593,7 +593,6 @@ In this subsection, we will simply prepare the controller that will be handling 
 
 \begin{verbatim}
 package controllers.appgen.api.visualizers
-
 import scaldi.Injector
 
 class GraphVisualizerApiController(implicit inj: Injector) extends VisualizerApiController { }
@@ -601,11 +600,167 @@ class GraphVisualizerApiController(implicit inj: Injector) extends VisualizerApi
 
 The package information clearly says where this class should belong. The \texttt{VisualizerApiController} will provide us with some utilities that will come handy later.
 
-\subsection{Fetch and display sample RDF data}
+\subsection{Extracting RDF data from the pipeline evaluation}
 
-% Completely free to do anything inside the components
+We said that our \emph{visualizer} would show the number of vertices and edges in the graph. For us that means that we need to access the RDF data produced by the \emph{pipeline}, extract this information from it, send it to the client and then display it on the screen. We start with accessing the RDF data.
 
-\subsection{Add editable graph label}
+Since it is RDF data, we will use SPARQL queries to fetch the information we need. 
+
+\begin{verbatim}
+package model.rdf.sparql.rgml.query
+import model.rdf.sparql.query.SparqlQuery
+
+class GraphQuery extends SparqlQuery {
+
+  def get: String =
+    """
+      | PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      | PREFIX rgml: <http://purl.org/puninj/2001/05/rgml-schema#>
+      |
+      | SELECT ?directed ?nodeCount ?edgeCount WHERE {
+      |   ?graph
+      |     rdf:type rgml:Graph ;
+      |     rgml:directed ?directed .
+      |
+      |   { SELECT (COUNT(*) AS ?nodeCount) WHERE { ?edge rdf:type rgml:Node . } }
+      |   { SELECT (COUNT(*) AS ?edgeCount) WHERE { ?edge rdf:type rgml:Edge . } }
+      | }
+      | LIMIT 1
+    """
+      .stripMargin
+}
+\end{verbatim}
+
+This is the recommended way of representing SPARQL queries in our Scala code. As you can see, the query counts all the edges and vertices (which are called \emph{nodes} in the RGML vocabulary) and also fetches the information about whether the graph is directed or not.
+
+The result of this query will be represented using a simple Scala case class. For simplicity, we just call it \texttt{Graph}.
+
+\begin{verbatim}
+package model.rdf.sparql.rgml
+
+case class Graph(directed: Boolean, nodeCount: Int, edgeCount: Int)
+\end{verbatim}
+
+Now we need a tool that will convert the fetched RDF data into this case class. Such a tool is called an \emph{extractor}.
+
+\begin{verbatim}
+package model.rdf.sparql.rgml.extractor
+
+import model.rdf.extractor.QueryExecutionResultExtractor
+import model.rdf.sparql.rgml.Graph
+import model.rdf.sparql.rgml.query.GraphQuery
+import org.apache.jena.query.QueryExecution
+
+
+class GraphExtractor extends QueryExecutionResultExtractor[GraphQuery, Graph] {
+
+  def extract(input: QueryExecution): Option[Graph] = {
+
+    try {
+      val resultSet = input.execSelect()
+
+      if (!resultSet.hasNext) return None
+
+      val solution = resultSet.nextSolution()
+      Some(Graph(
+        solution.getLiteral("directed").getBoolean,
+        solution.getLiteral("nodeCount").getInt,
+        solution.getLiteral("edgeCount").getInt))
+    } catch {
+      case e: org.apache.jena.sparql.engine.http.QueryExceptionHTTP => {
+        None
+      }
+    }
+  }
+}
+\end{verbatim}
+
+Apache Jena \footnote{https://jena.apache.org/} framework is used internally to work with RDF data. Our SPARQL query is a SELECT query which means that the results will be in a form of tabular data (i.e., a set of rows where each row contains the same columns). We assume that the data set contains only one graph, so we take the first row (if available) and convert it to the \texttt{Graph} case class.
+
+Finally, we need something that will execute the query and apply the extractor on the results.
+
+\begin{verbatim}
+package model.rdf.sparql.rgml
+//  ...imports
+
+class RgmlService(implicit val inj: Injector) extends RgmlService with Injectable {
+  var sparqlEndpointService = inject[SparqlEndpointService]
+
+  def graph(evaluation: PipelineEvaluation)(implicit session: Session): Option[Graph] = {
+    sparqlEndpointService.getResult(
+      evaluationToSparqlEndpoint(evaluation),
+      new GraphQuery(),
+      new GraphExtractor())
+  }
+\end{verbatim}
+
+As you can see, we defined \texttt{RgmlService} with the \texttt{graph} method. The \emph{pipeline evaluation} does not directly contain the data but rather points where the data are (i.e., it specifies the SPARQL endpoint and concrete named graphs with the data). We use \texttt{SparqlEndpointService} to access it and extract our graph from it. The function \texttt{evaluationToSparqlEndpoint} is just an utility that we omitted to keep the code short. % TODO: add it to a trait
+
+You might have noticed that we put all the files in the same package \texttt{model.rdf.sparql.rgml}. What we are doing is that we are adding support for RGML vocabulary to the LinkedPipes Visualization code base in a way that anyone can use it for their \emph{visualizers}, i.e., it is \emph{visualizer} independent.
+
+For the \texttt{RgmlService} to work properly, it has to be registered to the Dependency Injection container in \texttt{model.rdf.RdfModule}.
+
+Let us now move from the \emph{Model} layer to the \emph{Controller} layer. We will extend the controller we defined earlier with an action that will use this service to fetch graph and send it to the client serialized to JSON.
+
+\begin{verbatim}
+class GraphVisualizerApiController(implicit inj: Injector) extends VisualizerApiController {
+  val rgmlService = inject[RgmlService]
+
+  def getGraph(id: Long) = RestAsyncAction[EmptyRequest] { implicit request => json =>
+    withEvaluation(ApplicationId(id)) { evaluation =>
+      val graph = rgmlService.graph(evaluation)
+      Future(Ok(SuccessResponse(data = Seq("graph" -> graph))))
+    }
+  }
+}
+\end{verbatim}
+
+The \texttt{getGraph} action is mapped to a URL with a single parameter \texttt{id} (the URL mappings are defined in the file \texttt{src/conf/routes}, relative to the code base root). The \texttt{id} is an application ID. We use the \texttt{withEvaluation()} helper to load the appropriate \emph{pipeline evaluation}, then we fetch the graph using our \texttt{RgmlService} and send it to the client in a \texttt{SuccessReponse}. The API is designed to support \texttt{Futures} in case the requests are expected to be computationally heavy and need t.jso be performed asynchronously. This is not our case but we need to follow the API. That is why the response is wrapped by the \texttt{Future} call.
+
+In order for the \texttt{Graph} case class to be automatically converted to JSON, we need to define an \emph{implicit converter}. We can do it by adding following lines to \texttt{controllers.api.JsonImplicits} and import it to the controller:
+
+\begin{verbatim}
+implicit val graphWrites = Json.writes[Graph]
+\end{verbatim}
+
+\subsection{Making asynchronous requests from the client}
+
+Everything is prepared on the server-side. Now comes the client. When the application loads, we will make an synchronous HTTP request to fetch the graph information. Once we receive it, we store it in the \emph{state} and show it on the screen.
+
+We start by creating a JavaScript counterpart for the Scala \texttt{Graph} case class. Note that once again, all paths are relative to the \emph{visualizer} module.
+
+\begin{verbatim}
+// models.js
+
+import { Record } from 'immutable';
+
+export const Graph = Record({
+  directed: false,
+  nodeCount: 0,
+  edgeCount: 0
+});
+\end{verbatim}
+
+We create a simple explicit wrapper for the asynchronous HTTP request.
+
+\begin{verbatim}
+// api.js
+
+import rest from '../../../misc/rest'
+
+export async function getGraph(applicationId) {
+  const result = await rest('graphVisualizer/getGraph/' + applicationId, {});
+  return result.data.graph;
+}
+\end{verbatim}
+
+The keywords \texttt{async/await} are just syntactical sugar around \texttt{Promises}. They allow us to write \emph{asynchronous} code in a \emph{synchronous} manner.
+
+Now we will define a new \emph{duck} that will handle and provide API for fetching the graph information, storing it in the \emph{state} and selecting it from the \emph{state}.
+
+\subsection{Adding editable resource label}
+
+% TODO: Give credit to the LDVM guys
 
 \section{Advanced framework features}
 
@@ -627,4 +782,6 @@ The package information clearly says where this class should belong. The \texttt
 
 % Why the URL contains visualizer name
 
-% Explain that this kind of integration is incredibly flexible (first on the standalone/embed level, then in general, AngularJS, jQuery)
+% Explain that this kind of integration is incredibly flexible (first on the standalone/embed level, then in general, AngularJS, jQuery) 
+% Completely free to do anything inside the components
+
