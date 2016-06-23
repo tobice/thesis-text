@@ -7,6 +7,7 @@ In this chapter, we will go through our \emph{application generator}, explaining
 Before we dive into technical details, let us walk the reader through the \emph{application generator} features from a user perspective. We will start by describing a sample use case scenario and then we will continue with individual \emph{platform} features.
 
 \subsection{Sample use case scenario}
+\label{sec:implementation:use-case-scenario}
 
 In this scenario, we will utilize the D3.js Chord Visualizer and the Asylum Seekers 2015 data set. Both will be properly described later in a separate chapter dedicated to this particular visualizer. Let us say that our fictional user is a journalist writing an article on the refugee crisis. He comes across our \emph{application generator} and finds there the Asylum Seekers 2015 data set. The Figures \ref{fig:scenario-01-browse-data-sources} to \ref{fig:scenario-11-embedded-application} show step-by-step how the journalist can use our tool to create an interactive application and share it with his readers.
 
@@ -216,15 +217,36 @@ What is important is that all \emph{application generator} related Scala code ex
 
 \subsection{React-router}
 
+% Explain why routing is important (back button)
+
+\subsection{Immutable.js}
 
 
 \section{Frontend framework architecture (???)}
 
-\subsection{Ducks}
+\subsection{JavaScript bundles}
+
+% webpack endpoints / bundles -> /appgen
+
+\subsection{Code structure}
+
+% assets folder
+% explain where can be found what
 
 \subsection{Modules}
 
-% webpack endpoints
+% prefixing
+% problem with automatic name extraction from the folder name
+% module structure
+% routes
+
+\subsection{Ducks}
+
+\section{Process of creating a new application from the code perspective}
+
+Describing the inner mechanics for the whole \emph{application generator} would take us too long and this description is not that important for the reader anyway. We will just walk through the use case scenario again (Subsection \ref{sec:implementation:use-case-scenario}) and describe what is going on under the hood. Among other things, this should help the reader to better understand how integration of new \emph{visualizers} into the \emph{application generator} works.
+
+% TODO
 
 \section{Integrating a new visualizer}
 
@@ -336,19 +358,254 @@ What we have to do now is put all these lines together into a single *.ttl file 
     \label{fig:upload_component_definition}
 \end{figure}
 
-Once this is done, the \emph{discovery} algorithm is able to utilize this new \emph{visualizer component} when discovering pipelines. If you now ran the \emph{discovery} on a data set containing some graph data inside LinkedPipes Visualization, it should find a \emph{pipeline} ending with this \emph{visualizer component}. Now we need to implement the corresponding \emph{visualizer plugin} for our \emph{application generator}.
+Once this is done, the \emph{discovery} algorithm is able to utilize this new \emph{visualizer component} when discovering pipelines. If you now ran the \emph{discovery} inside LinkedPipes Visualization on a data set containing some graph data, it should find a \emph{pipeline} ending with this \emph{visualizer component}. Now we need to implement the corresponding \emph{visualizer plugin} for our \emph{application generator}.
 
 \subsection{Frontend module}
 
-\subsection{Configurator interface}
+As the first thing, we need to choose a unique short name for our \emph{visualizer}. When creating the RDF definition, we used the name \texttt{graph} as a RDF prefix. We will stick to this name.
 
-\subsection{Application interface}
+A \emph{visualizer} has its own module in the \texttt{javascripts/modules/visualizers} folder. So we start by creating the appropriate module folder called \texttt{graph} and putting the file \texttt{prefix.js} into it.
 
-\subsection{Backend}
+\begin{verbatim}
+import createPrefixer from '../../../misc/createPrefixer'
+
+export const MODULE_PREFIX = 'graph';
+export default createPrefixer(MODULE_PREFIX);
+\end{verbatim}
+
+As explained before, we will use the module name as a prefix for all our Redux \emph{actions} (or rather the prefix and the module name will be used as the \emph{visualizer} name). In this case, the prefix will also become part of the \emph{configurator} URL. Note that this is the actual and the only one \emph{source of truth} for the \emph{visualizer} name. The \texttt{MODULE\_PREFIX} value will be used when registering the plugin to the \emph{application generator}.
+
+From now on, all paths will be relative to the \emph{visualizer} module (located at \texttt{javascripts/modules/visualizers/graph}).
+
+\subsection{Configurator user interface}
+
+The \emph{configurator} interfaces are part of the main \emph{platform} bundle. That means that while configuring his applications, the user never leaves the \emph{platform} SPA and the transitions between screens are always very smooth as complete page reloads are not necessary.
+
+The integration is implemented through the router. The \emph{configurator} interface of every \emph{visualizer} defines its own routes that are registered to the \emph{platform} routes. Let us start with the main \texttt{Configurator} component defined in \texttt{pages/Configurator.js}.
+
+\begin{verbatim}
+import React, { Component, PropTypes } from 'react'
+
+class Configurator extends Component {
+  render() {
+    return (
+      <p>This is the graph visualizer configurator.</p>
+    )
+  }
+}
+export default Configurator;
+\end{verbatim}
+
+Now we create the routes file (\texttt{configuratorRoutes.js}) with the following content:
+
+\begin{verbatim}
+import React from 'react'
+import { Route } from 'react-router'
+import Configurator from './pages/Configurator'
+import { MODULE_PREFIX } from './prefix'
+
+export default function createRoutes(dispatch) {
+  return (
+    <Route component={Configurator} path={MODULE_PREFIX} />
+  );
+}
+\end{verbatim}
+
+Note that we used the \texttt{MODULE\_PREFIX} as the route path.
+
+In the final step, we register our routes. That is done in \texttt{../routes.js} (one level higher, in the parent \texttt{visualizers} module). First we have to import the routes in the file header.
+
+\begin{verbatim}
+import graphRoutes from './graph/configuratorRoutes'
+\end{verbatim}
+
+Then we need to find the right place in the file and add our routes there. The spot is clearly marked with \texttt{***Here*** you register all visualizer configurator routes} and contains a list of currently registered \emph{configurator} routes. We just need to add another line for our \texttt{graph} visualizer.
+
+\begin{verbatim}
+// ***Here*** you register all visualizer configurator routes
+
+routeFactory.register(dataCubeRoutes);
+routeFactory.register(googleMapsRoutes);
+routeFactory.register(chordRoutes);
+routeFactory.register(graphRoutes); // We added this line
+\end{verbatim}
+
+That is it. The last remaining step is to link the LDVM \emph{visualizer component} to this module but we will do that later. An actual URL pointing to this \emph{configurator}  could look like this: \texttt{/appgen/app/8/graph}. The number \texttt{8} is the application ID that is being configured (e.g. if the user selects this application for configuration, he is redirected to this URL). In case the \emph{visualizer} name in the URL does not correspond to the selected application (for example when the user forces a different value to the URL), the user is automatically redirected to the correct \emph{configurator}.
+
+% TODO: move this to another section to keep this section short
+
+The reader might ask why the \emph{configurator} is part of the URL when this information can be derived directly from the application ID. We will try to shortly justify our decisions. Our main goal was to allow the developer to define his own routes for the \emph{configurator} so that it can be navigated using URLs  (in our example, the \emph{configurator} uses just a single route but that is only because we wanted to keep it simple). In  \texttt{react-router}, the routes are defined in a hierarchical manner. That is perfect for our cause. The developer can create his own arbitrarily complex hierarchy of routes and simply plug it to the rest of the routes without being afraid of any conflicts.
+
+However, what we need in this case are \emph{dynamic} routes, i.e., depending on the selected application, we would choose the appropriate route definition of the \emph{configurator} demanded by the application. As it turns out, such \emph{dynamic} routes are supported by \texttt{react-router} but we were not aware of that in the early phases when we were designing this mechanism. So instead we chose this solution when the routes definition is registered under the \emph{visualizer} name and we just have to make sure that the user is always redirected to the right URL.
+
+What is important here is that this approach, despite being a bit cumbersome and illogical, does not in any way diminish the comfort of registering new \emph{configurators}. It should be possible to re-implement the mechanism to use the \emph{dynamic} routes (and therefore leave out the \emph{visualizer} name from the URL) without any API changes.
+
+Before moving to the next step, we will slightly improve the \texttt{Configurator} component.
+
+\begin{verbatim}
+import React, { Component, PropTypes } from 'react'
+import BodyPadding from '../../../../components/BodyPadding'
+import { Application } from '../../../app/models'
+import { Visualizer } from '../../../core/models'
+
+class Configurator extends Component {
+  static propTypes = {
+    application: PropTypes.instanceOf(Application).isRequired,
+    visualizer: PropTypes.instanceOf(Visualizer).isRequired
+  };
+
+  render() {
+    const { application, visualizer } = this.props;
+    return (
+      <BodyPadding>
+        <p>This is the graph visualizer configurator.</p>
+        <p>{application.name}</p>
+        <p>{visualizer.title}</p>
+      </BodyPadding>
+    )
+  }
+}
+
+export default Configurator;
+\end{verbatim}
+
+The objects representing the selected application and visualizer are  for your convenience automatically injected using \texttt{props} to the \texttt{Configurator} component (but they are available from the \emph{state} at any time). Here we just use them to print their names. We also used the \texttt{BodyPadding} component to add the standard padding around the text.
+
+\subsection{Application user interface}
+
+As explained, the \emph{application} interface of each \emph{visualizer} lives in a standalone JavaScript bundle. The \emph{application} interface that we are about to implement will support embedding. The interface will support two modes. There will be the default \emph{standalone} mode which besides the visualization itself will also display the application name and description. It will be accessible on the default root \texttt{/} URL. Then there will be the \emph{embed} mode containing just the visualization. It will be accessible on the \texttt{/embed} URL.
+
+We will start similarly to the \emph{configuration} interface by defining the main \texttt{Application} component in \texttt{components/Application.js}. Note that it is no longer in the \texttt{pages} folder.
+
+\begin{verbatim}
+import React, { Component, PropTypes } from 'react'
+import BodyPadding from '../../../../components/BodyPadding'
+import { Application as ApplicationModel } from '../../../app/models'
+import { Visualizer } from '../../../core/models'
+
+class Application extends Component {
+  static propTypes = {
+    application: PropTypes.instanceOf(ApplicationModel).isRequired,
+    visualizer: PropTypes.instanceOf(Visualizer).isRequired,
+    embed: PropTypes.bool
+  };
+
+  render() {
+    const { application, visualizer, embed } = this.props;
+    return (
+      <BodyPadding>
+        <p>This is the graph visualizer application.</p>
+        <p>It runs in {embed ? 'embed' : 'standalone'} mode</p>
+        <p>{application.name}</p>
+        <p>{visualizer.title}</p>
+      </BodyPadding>
+    )
+  }
+}
+
+export default Application;
+\end{verbatim}
+
+The content is at this moment almost identical to the \texttt{Configurator} component. It just displays the current application name and visualizer title. But this time it also shows whether it runs in the \emph{standalone} or \emph{embed} mode. 
+
+Now for each mode we will need a different component as each mode lives at a different URL. Let us start with \texttt{pages/Embed.js}.
+
+\begin{verbatim}
+import React from 'react'
+import Application from '../components/Application'
+
+export default props => <Application embed {...props} />
+\end{verbatim}
+
+And now \texttt{pages/Standalone.js}.
+
+\begin{verbatim}
+import React, { PropTypes } from 'react'
+import Application from '../components/Application'
+import ApplicationHeader from '../../../app/components/ApplicationHeader'
+
+const Standalone = props => (
+  <div>
+    <ApplicationHeader {...props} />
+    <Application {...props} />
+  </div>
+);
+
+export default Standalone;
+\end{verbatim}
+
+Note that both times, we re-use the \texttt{Application} component but in the \emph{standalone} mode we add a standard header that renders application name and description. What remains is to tie it all together with routes definition. We put it to \texttt{applicationRoutes.js} just next to \texttt{configuratorRoutes.js}.
+
+\begin{verbatim}
+import React from 'react'
+import { Route, IndexRoute } from 'react-router'
+import ApplicationLoader from '../../app/pages/ApplicationLoader'
+import NotFound from '../../platform/pages/NotFound'
+import Standalone from './pages/Standalone'
+import Embed from './pages/Embed'
+
+export default function createRoutes(dispatch) {
+  return (
+    <Route component={ApplicationLoader} path='/'>
+      <IndexRoute component={Standalone} />
+      <Route component={Embed} path='embed' />
+      <Route component={NotFound} path='*' />
+    </Route>
+  );
+}
+\end{verbatim}
+
+Note that the top level path is directly \texttt{/}. This routes definition will not be registered to any existing route hierarchy. It contains the complete routing information for this standalone SPA. For this reason, we use the \texttt{ApplicationLoader} as the top level component to load the application 
+from the server first. This has been done automatically for us in the case of \emph{configurator} interface.
+ 
+In the final step, we need to add a new webpack \emph{entry point}. We create a file \texttt{javascripts/entries/graph.js} (this time relative to the \texttt{assets} folder) with the following content. 
+
+\begin{verbatim}
+import createRoutes from '../modules/visualizers/graph/applicationRoutes'
+import initEntry from '../misc/initEntry'
+
+initEntry(createRoutes);
+\end{verbatim}
+
+We have to make sure to import the correct routes definition and also that the file name corresponds to the \emph{visualizer} name. Webpack will pick up this new \emph{entry point} automatically (if you are running webpack in the watch mode, you need to restart it) and generate a new JavaScript bundle of the same name.
+
+% TODO: explain the embed process. And how is this way so flexible
+
+\subsection{Linking LDVM component to the plugin}
+
+In this step, we will link the LDVM \emph{visualizer component} and the \emph{visualizer} plugin together. That is done through the \emph{application generator} user interface (not LinkedPipes Visualization interface this time).
+
+We need to sign in to the \emph{application generator} with an administrator account. We navigate to the \textbf{Dashboard}, select \textbf{Visualizers} and click the button \textbf{Add visualizer}. A dialog window will appear, containing a list of unused available LDVM \emph{visualizer components}. We select \textbf{Graph Visualizer} (which is the name we provided in the RDF definition)  and click \textbf{Add visualizer}. The the new \emph{visualizer} should appear in the table. We click its name to open a configuration dialog window (Figure \ref{fig:edit-visualizer}). We ignore the first two fields as they are related to LinkedPipes Visualization. The most important field is the name. We fill in \texttt{graph}. It is crucial that this value corresponds to the \emph{visualizer} module name, the prefix and the \emph{entry point} name. We also recommend filling in the \emph{visualizer} icon for better user experience. Currently, Material Icons \footnote{https://design.google.com/icons/} collection is used. We chose the \texttt{device\_hub} icon.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/05_edit_visualizer.png}
+	\caption{Configuration dialog window of a \emph{visualizer}.} 
+	\label{fig:edit-visualizer}
+\end{figure}
+This was the last mandatory step. At this moment, the \emph{visualizer} (even though it does not do anything) should be working, i.e., it should be possible to create a new application using this \emph{visualizer} from a data set containing graph data.
+
+\subsection{Scala backend}
+
+Surprisingly enough, we did not have to touch the Scala backend to register our new \emph{visualizer}. Technically speaking, it is really not necessary but only until the very moment when we need the \emph{visualizer} to actually \textit{do something useful}. That typically involves fetching and extracting the RDF data produced by the \emph{pipeline}. For that we do need the backend.
+
+In this subsection, we will simply prepare the controller that will be handling our client requests.
+
+\begin{verbatim}
+package controllers.appgen.api.visualizers
+
+import scaldi.Injector
+
+class GraphVisualizerApiController(implicit inj: Injector) extends VisualizerApiController { }
+\end{verbatim}
+
+The package information clearly says where this class should belong. The \texttt{VisualizerApiController} will provide us with some utilities that will come handy later.
 
 \subsection{Fetch and display sample RDF data}
 
+% Completely free to do anything inside the components
 
+\subsection{Add editable graph label}
 
 \section{Advanced framework features}
 
@@ -363,3 +620,11 @@ Once this is done, the \emph{discovery} algorithm is able to utilize this new \e
 \subsection{Embedding applications}
 
 \subsection{Miscellaneous}
+
+\section{Design choices regarding the framework}
+
+\subsection{Integration of new visualizers}
+
+% Why the URL contains visualizer name
+
+% Explain that this kind of integration is incredibly flexible (first on the standalone/embed level, then in general, AngularJS, jQuery)
