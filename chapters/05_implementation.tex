@@ -207,7 +207,11 @@ What is important is that all \emph{application generator} related Scala code ex
 
 \section{Frontend development stack}
 
+One of the goals of this chapter is to convince the reader that our \emph{application generator} can work as a \emph{framework} for developing new \emph{visualizers}. For that we need the reader to understand the \emph{application generator} on a code level. The backend architecture is fairly standard and especially the integration is simple. Most of the work happens in frontend which also uses a development stack that is rather new and very specific. In this section, we will try to explain the reader the core frontend technologies that we use so that he can later understand the integration process of a new \emph{visualizer}. The information that we are about to provide here is in no way related directly to the \emph{application generator}. It will be a short extract from the documentations of those particular tools. Anyone who feels already familiar with these tools, can skip this part.
+
 \subsection{ES6 and Babel compiler}
+
+% Modules
 
 \subsection{React}
 
@@ -1160,6 +1164,15 @@ class Configurator extends Component {
 That is it. If we now click the \textbf{More} button in the upper right corner of the \emph{configurator} interface and then select \textbf{Edit labels}, a pencil icon will appear next to the graph name (which will be "Unnamed graph" by default). Clicking that icon will open a dialog where we can define a language dependent values for this resource. By clicking \textbf{Save}, we update the \emph{state} and we can immediately see the change on the screen. By clicking \textbf{Save changes}, we save the changes to the server (the custom labels are part of the common configuration which means that it is automatically taken care of). We now have to add the \texttt{EditableLabel} component to the \texttt{Application} component as well to get it working in the \emph{application} interface.
 
 You might have noticed that we have repeated a lot of work for the \emph{application} and \emph{configurator} interface and their components are nearly identical. Firstly, in a more complex \emph{visualizer} those two interfaces would differ significantly more. Secondly, thanks to the React nature it is always very easy to refactor the code, put the shared aspects into a single component and then re-use it.
+
+The result of our work can be seen on Figure \ref{fig:graph-visualizer}. For more complex examples we suggest the user to check out the full implementations of the two completed visualizers, the D3.js Chord Visualizer and Google Maps Visualizer (both will be explained later).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/05_graph_visualizer}
+	\caption{\emph{Configurator} interface of the sample Graph Visualizer. The Redux development sidebar is enabled showing the \emph{state}.}
+    \label{fig:graph-visualizer}
+\end{figure}
 
 \section{Advanced framework features}
 
