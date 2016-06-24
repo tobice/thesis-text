@@ -180,7 +180,7 @@ As a result, there are two existing user interfaces that live within the same ap
 
 The vast majority of controllers in both LinkedPipes Visualization and the \emph{application generator} handle the asynchronous HTTP requests coming from the frontend (the only exception are the controllers handling the initialization of the SPAs). The role of a controller in this typical case is just to translate the HTTP request into an API call to the \emph{Model} layer and send the response back. All controllers together define a public remote API interface.
 
-Even though we could re-use some of the methods available from the LinkedPipes Visualization controllers (e.g. those for controlling the \emph{discovery} algorithm), we decided not to do that to avoid hidden dependencies between the frontend and the backend. Dependencies within the Scala code base (for example between the \emph{Controller} layer and the \emph{Model} layer) are easy the discover. If they break, the code will not compile. That is not true for the remote API. Therefore the \emph{application generator} frontend strictly uses only those remote API methods that are handled by the \emph{application generator} controllers. They all exist in a standalone \texttt{controllers.appgen} Scala package.
+Even though we could re-use some of the methods available from the LinkedPipes Visualization controllers (e.g. those for controlling the \emph{discovery} algorithm), we decided not to do that to avoid hidden dependencies between the frontend and the backend. Dependencies within the Scala code base (for example between the \emph{Controller} layer and the \emph{Model} layer) are easy to discover. If they break, the code will not compile. That is not true for the remote API. Therefore the \emph{application generator} frontend strictly uses only those remote API methods that are handled by the \emph{application generator} controllers. They all exist in a standalone \texttt{controllers.appgen} Scala package.
 
 \subsection{Model}
 
@@ -213,7 +213,7 @@ What is important is that all \emph{application generator} related Scala code ex
 
 \subsection{Redux}
 
-\subsection{Reslect}
+\subsection{Reselect}
 
 \subsection{React-router}
 
@@ -246,11 +246,13 @@ What is important is that all \emph{application generator} related Scala code ex
 
 Describing the inner mechanics for the whole \emph{application generator} would take us too long and this description is not that important for the reader anyway. We will just walk through the use case scenario again (Subsection \ref{sec:implementation:use-case-scenario}) and describe what is going on under the hood. Among other things, this should help the reader to better understand how integration of new \emph{visualizers} into the \emph{application generator} works.
 
-% TODO
+% TODO:
 
 \section{Integrating a new visualizer}
 
 Now that the reader is equipped with all the necessary knowledge, we will walk him through the process of creating a brand new \emph{visualizer} to demonstrate the abilities of our framework. The \emph{visualizer} will be visualizing a graph (as understood in the graph theory) represented with the RGML vocabulary (which makes it very similar to the D3.js Chord Visualizer that will be properly described later, including the vocabulary). The purpose of this section is merely to get the reader familiar with the basic integration steps. The presented \emph{visualizer} will simply display number of vertices and edges of the graph and let the user configure the graph label.
+
+Before we start, we would like to make one remark. We will walk the user through the whole process and along the way we will touch parts of the software that were not designed and developed by us but by the authors of LinkedPipes Visualization \cite{linked_pipes_visualization}. We do not want to take credit for those parts. Specifically, those are the parts shared with LinkedPipes Visualization, which means everything related to the LDVM implementation and low-level work with RDF data.
 
 \subsection{LDVM component}
 
@@ -727,7 +729,7 @@ implicit val graphWrites = Json.writes[Graph]
 
 Everything is prepared on the server-side. Now comes the client. When the application loads, we will make an synchronous HTTP request to fetch the graph information. Once we receive it, we store it in the \emph{state} and show it on the screen.
 
-We start by creating a JavaScript counterpart for the Scala \texttt{Graph} case class. Note that once again, all paths are relative to the \emph{visualizer} module.
+We start by creating a JavaScript counterpart for the Scala \texttt{Graph} case class. Note that once again, all paths are relative to the \emph{visualizer} module. Also to keep the text shorter, we will just state the file name at the beginning of each snippet.
 
 \begin{verbatim}
 // models.js
@@ -756,17 +758,416 @@ export async function getGraph(applicationId) {
 
 The keywords \texttt{async/await} are just syntactical sugar around \texttt{Promises}. They allow us to write \emph{asynchronous} code in a \emph{synchronous} manner.
 
-Now we will define a new \emph{duck} that will handle and provide API for fetching the graph information, storing it in the \emph{state} and selecting it from the \emph{state}.
+Now we will define a new \emph{duck} that will handle and provide API for fetching the graph information (using an \emph{action}), storing it in the \emph{state} (using a \emph{reducer}) and selecting it from the \emph{state} (using a \emph{selector}). Let us start with \emph{actions} (we will always put the currently required \texttt{imports} to the top of each code snippet; in the actual file they will all be together at the beginning).
 
-\subsection{Adding editable resource label}
+\begin{verbatim}
+// ducks/graph.js
 
-% TODO: Give credit to the LDVM guys
+import createAction from '../../../../misc/createAction'
+import withApplicationId from '../../../app/misc/withApplicationId'
+import prefix from '../prefix'
+import * as api from '../api'
+
+// Actions
+
+export const GET_GRAPH = prefix('GET_GRAPH');
+export const GET_GRAPH_START = GET_GRAPH + '_START';
+export const GET_GRAPH_ERROR = GET_GRAPH + '_ERROR';
+export const GET_GRAPH_SUCCESS = GET_GRAPH + '_SUCCESS';
+export const GET_GRAPH_RESET = GET_GRAPH + '_RESET';
+
+export function getGraph() {
+  return withApplicationId(id => {
+    const promise = api.getGraph(id);
+    return createAction(GET_GRAPH, { promise });
+  })
+}
+
+export function getGraphReset() {
+  return createAction(GET_GRAPH_RESET);
+}
+\end{verbatim}
+
+The \emph{action creator} \texttt{getGraph()} first uses the \texttt{withApplicationId} utility to extract the application ID from the \emph{state} and then calls the API function to make the HTTP request to the server. The request result is represented using a \texttt{Promise} which is \emph{dispatched} as an action payload. There is a \emph{redux middleware} running in the background that detects the \texttt{Promise}, dispatches \texttt{GET\_GRAPH\_START} and then depending on the result either \texttt{GET\_GRAPH\_ERROR} or \texttt{GET\_GRAPH\_SUCCESS}. We do not actually have to define all the \emph{action} constants but it is a good practice (note that we used the module prefixer). The \texttt{START}, \texttt{ERROR}, \texttt{SUCCESS} and \texttt{RESET} suffixes are defined by a convention.
+
+In the next step, we will implement the reducer that will store the graph.
+
+\begin{verbatim}
+// ducks/graph.js
+
+import { GET_APPLICATION_START } from '../../../app/ducks/application'
+import { Graph } from '../models'
+
+// Reducer
+
+const initialState = new Graph();
+
+export default function graphReducer(state = initialState, action) {
+  switch (action.type) {
+    case GET_APPLICATION_START:
+    case GET_GRAPH_RESET:
+      return initialState;
+
+    case GET_GRAPH_SUCCESS:
+      return new Graph(action.payload);
+  }
+
+  return state;
+};
+\end{verbatim}
+
+Note that the initial state is a valid (but empty) \texttt{Graph} object. That means that we can work with this object safely at any time (it will not be \texttt{null}).
+
+Finally, we will create \emph{selectors} that will allow us to easily extract the \texttt{Graph} from the state.
+
+\begin{verbatim}
+// ducks/graph.js
+
+import { createSelector } from 'reselect'
+import { createPromiseStatusSelector } from '../../../core/ducks/promises'
+import moduleSelector from '../selector'
+
+// Selectors
+
+export const graphStatusSelector = createPromiseStatusSelector(GET_GRAPH);
+export const graphSelector = createSelector([moduleSelector], state => state.graph);
+\end{verbatim}
+
+The first one selects the HTTP request status, the second one selects the actual graph. Now we need to integrate both the \emph{selectors} and the \emph{reducer} to the \emph{state} hierarchy.
+
+\begin{verbatim}
+// reducer.js
+
+import { combineReducers } from 'redux';
+import graph from './ducks/graph'
+
+const rootReducer = combineReducers({
+  graph
+});
+
+export default rootReducer;
+\end{verbatim}
+
+This is the root \emph{reducer} of the \emph{visualizer} module that combines all other reducers in the module together. It has to be registered to the parent reducer in the parent module.
+
+\begin{verbatim}
+import { combineReducers } from 'redux';
+import googleMaps from './googleMaps/reducer'
+import chord from './chord/reducer'
+import graph from './graph/reducer'
+
+const rootReducer = combineReducers({
+  googleMaps,
+  chord,
+  graph // We added this line
+});
+export default rootReducer;
+\end{verbatim}
+
+We have to do the same for the \emph{selectors} as well.
+
+\begin{verbatim}
+// selector.js
+
+import { createSelector } from 'reselect'
+import parentSelector from '../selector'
+import { MODULE_PREFIX } from './prefix'
+
+export const moduleSelector = createSelector(
+  [parentSelector],
+  parentState => parentState[MODULE_PREFIX]
+);
+export default moduleSelector;
+\end{verbatim}
+
+You might have noticed that we already used this file in \texttt{ducks/graph.js}. What is important here is that the key we use to register the \emph{reducer} is the same as the key we use in the \emph{selector}. They both access the same data in the same \emph{state} object (\emph{reducer} for updating, \emph{selector} for reading).
+
+Now that everything is ready, we create a simple component that will fetch and display the graph information. We start with the component life cycle methods.
+
+\begin{verbatim}
+// components/GraphLoader.js
+
+import React, { Component, PropTypes } from 'react'
+import { getGraph, getGraphReset } from '../ducks/graph'
+
+class GraphLoader extends Component {
+  componentWillMount() {
+    const { dispatch } = this.props;
+    dispatch(getGraph());
+  }
+  
+  componentWillUnmount() {
+    const { dispatch } = this.props;
+    dispatch(getGraphReset());
+  }
+}
+\end{verbatim}
+
+Once the component appears on the screen, it will initiate the request. When it is about to leave, it will reset the \emph{state} 
+(clean up after itself). We will \emph{connect} the component to Redux and inject the data that we need.
+
+\begin{verbatim}
+// components/GraphLoader.js
+
+import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
+import { getGraph, getGraphReset, graphSelector, graphStatusSelector } from '../ducks/graph'
+
+const selector = createStructuredSelector({
+  graph: graphSelector,
+  status: graphStatusSelector
+});
+
+export default connect(selector)(GraphLoader);
+\end{verbatim}
+
+It is always a good practice to explicitly define the \texttt{propTypes}.
+
+\begin{verbatim}
+// components/GraphLoader.js
+
+import { PromiseStatus } from '../../../core/models'
+import { Graph } from '../models'
+
+class GraphLoader extends Component {
+  static propTypes = {
+    dispatch: PropTypes.func.isRequired,
+    graph: PropTypes.instanceOf(Graph).isRequired,
+    status: PropTypes.instanceOf(PromiseStatus).isRequired
+  };
+  
+  // ...
+}
+\end{verbatim}
+
+Lastly, we implement the \texttt{render} method.
+
+\begin{verbatim}
+// components/GraphLoader.js
+
+import PromiseResult from '../../../core/components/PromiseResult'
+
+class GraphLoader extends Component {
+  // ...
+  
+  render() {
+    const { graph, status } = this.props;
+
+    if (!status.done) {
+      return <PromiseResult status={status} loadingMessage="Loading base graph info..." />
+    }
+
+    return (
+      <div>
+        <p><strong>Graph info</strong></p>
+        <p>Node count: {graph.nodeCount}</p>
+        <p>Edge count: {graph.edgeCount}</p>
+        <p>Directed: {graph.directed ? 'yes' : 'no'}</p>
+      </div>
+    )
+  }
+\end{verbatim}
+
+The \texttt{status.done} value changes to \texttt{true} only if the request successfully finishes (i.e., the \emph{action} \texttt{GET\_GRAPH\_SUCCESS} is \emph{dispatched}). Therefore once the value is \texttt{true} we can be sure that the graph information is correctly stored in the \emph{state}. Before this happens, we display the \texttt{PromiseResult} component which shows a nice loading bar and if the request fails, it displays an error message. 
+
+What remains to be done is to add the \texttt{GraphLoader} component to the \emph{configurator} and \emph{application} user interface.
+
+\begin{verbatim}
+// pages/Configurator.js
+
+import GraphLoader from '../containers/GraphLoader'
+
+class Configurator extends Component {
+  // ...
+
+  render() {
+    const { application, visualizer } = this.props;
+    return (
+      <BodyPadding>
+        <p>This is the graph visualizer configurator.</p>
+        <p>{application.name}</p>
+        <p>{visualizer.title}</p>
+        <GraphLoader />
+      </BodyPadding>
+    )
+  }
+}
+\end{verbatim}
+
+\begin{verbatim}
+// components/Application.js
+
+import GraphLoader from '../containers/GraphLoader'
+
+class Application extends Component {
+  // ...
+
+  render() {
+    const { application, visualizer, embed } = this.props;
+    return (
+      <BodyPadding>
+        <p>This is the graph visualizer application.</p>
+        <p>It runs in {embed ? 'embed' : 'standalone'} mode</p>
+        <p>{application.name}</p>
+        <p>{visualizer.title}</p>
+        <GraphLoader />
+      </BodyPadding>
+    )
+  }
+}
+\end{verbatim}
+
+\subsection{Saving and loading application configuration}
+
+The framework provides an optional solution for saving and loading the application configuration easily. The idea is very simple, the configuration consists of different bits and pieces of the \emph{state}. To save the configuration, we just serialize those bits and pieces into JSON and save it on the server. To load the configuration, we fetch it from the server, unserialize it from JSON and let the \emph{reducers} to update the \emph{state}.
+
+The configuration contains parts that are \emph{visualizer} specific and parts that are common for all \emph{visualizers} and we have to make sure that they both are saved and loaded properly together.
+
+We starting by creating a \texttt{dirty} \emph{duck} with a \emph{reducer} that will simply indicate with a boolean value whether the configuration has changed.
+
+\begin{verbatim}
+// ducks/dirty.js
+
+import { createSelector } from 'reselect'
+import moduleSelector from '../selector'
+import { createDirtyReducer } from '../../../app/ducks/dirty'
+
+// Reducer
+
+const actions = [ ];
+
+export default createDirtyReducer(actions);
+
+// Selectors
+
+export const dirtySelector = createSelector([moduleSelector], state => state.dirty);
+\end{verbatim}
+
+The \texttt{actions} constant contains the list of \emph{actions} that change the state. Whenever such an \emph{action} is dispatched, the \emph{dirty} status changes to \texttt{true}. The \emph{reducer} has to be properly registered in the module root \emph{reducer}.
+
+The next \emph{duck} will define the \emph{actions} for saving and loading the configuration. They will be created using framework factories that will ensure proper integration.
+
+\begin{verbatim}
+import prefix from '../prefix'
+import moduleSelector from '../selector'
+import { createPromiseStatusSelector } from '../../../core/ducks/promises'
+import { 
+  createGetConfiguration, createGetConfigurationReset, createSaveConfiguration 
+} from '../../../app/ducks/configuration'
+
+// Actions
+
+export const SAVE_CONFIGURATION = prefix('SAVE_CONFIGURATION');
+export const SAVE_CONFIGURATION_START = SAVE_CONFIGURATION + '_START';
+export const SAVE_CONFIGURATION_ERROR = SAVE_CONFIGURATION + '_ERROR';
+export const SAVE_CONFIGURATION_SUCCESS = SAVE_CONFIGURATION + '_SUCCESS';
+
+export const GET_CONFIGURATION = prefix('GET_CONFIGURATION');
+export const GET_CONFIGURATION_START = GET_CONFIGURATION + '_START';
+export const GET_CONFIGURATION_ERROR = GET_CONFIGURATION + '_ERROR';
+export const GET_CONFIGURATION_SUCCESS = GET_CONFIGURATION + '_SUCCESS';
+export const GET_CONFIGURATION_RESET = GET_CONFIGURATION + '_RESET';
+
+// Selectors
+
+export const saveConfigurationStatusSelector = createPromiseStatusSelector(SAVE_CONFIGURATION);
+export const getConfigurationStatusSelector = createPromiseStatusSelector(GET_CONFIGURATION);
+
+export const configurationSelector = createSelector(
+  [moduleSelector],
+  state => ({  })
+);
+
+// Actual actions created using factories
+export const saveConfiguration = 
+  createSaveConfiguration(SAVE_CONFIGURATION, configurationSelector);
+export const getConfiguration = 
+  createGetConfiguration(GET_CONFIGURATION);
+export const getConfigurationReset = 
+  createGetConfigurationReset(GET_CONFIGURATION_RESET);
+\end{verbatim}
+
+The \texttt{configurationSelector} defines what parts of the \emph{state} should get into the configuration. At this moment, the \emph{state} just contains the graph information which is available from the \emph{pipeline evaluation}. There is no point in making that part of the configuration. When the configuration is loaded from the server, the \emph{action} \texttt{GET\_CONFIGURATION\_SUCCESS} is \emph{dispatched} with the configuration in the payload. The \emph{reducers} can simply listen to this action and extract from the payload the information that is relevant to them. As the \emph{action} is prefixed, it will not cause any conflicts.
+
+The next step of integration is the \textbf{Save} button. Once again we use a framework factory to create the button component. The button is interactive which means it automatically indicates whether the configuration needs to be saved (using the \texttt{dirty} information) or whether the saving is in progress. We will add the button to the \texttt{Configurator} component.
+
+\begin{verbatim}
+import React, { PropTypes } from 'react'
+import { saveConfiguration, saveConfigurationStatusSelector } from '../ducks/configuration'
+import { dirtySelector } from '../ducks/dirty'
+
+import createSaveButton from '../../../app/containers/createSaveButton'
+
+export default createSaveButton(
+  saveConfiguration,
+  saveConfigurationStatusSelector,
+  dirtySelector);
+\end{verbatim}
+
+In the final step, we need to load the configuration when the \emph{configurator} (or \emph{application}) initiates.
+
+\begin{verbatim}
+// pages/Configurator.js
+
+import { getConfiguration, getConfigurationReset } from '../ducks/configuration'
+
+class Configurator extends Component {
+  // ...
+
+  componentWillMount() {
+    const { dispatch } = this.props;
+    dispatch(getConfiguration());
+  }
+
+  componentWillUnmount() {
+    const { dispatch } = this.props;
+    dispatch(getConfigurationReset());
+  }
+  
+  // ...
+}
+\end{verbatim}
+
+Similarly, we would load the configuration in the \texttt{Application} component.
+
+As a concrete example, we will let the user to edit graph label. To keep this subsection short, we will utilize one of the available framework utilities, custom label editor. This editor allows the user to specify alternative labels for RDF resources. Each RDF resource is identified with a URI. Unfortunately, we do not have the graph URI but for simplicity, we will just make up one.
+
+\begin{verbatim}
+// pages/Configurator.js
+
+import EditableLabel from '../../../app/containers/EditableLabel'
+import SaveButton from '../containers/SaveButton'
+
+class Configurator extends Component {
+  // ...
+
+  render() {
+    const { application, visualizer } = this.props;
+    return (
+      <BodyPadding>
+        <h3><EditableLabel uri="http://example.org/graph" label="Unnamed graph" /></h3>
+        <p>This is the graph visualizer configurator.</p>
+        <p>{application.name}</p>
+        <p>{visualizer.title}</p>
+        <GraphLoader />
+        <SaveButton />
+      </BodyPadding>
+    )
+  }
+}
+\end{verbatim}
+
+That is it. If we now click the \textbf{More} button in the upper right corner of the \emph{configurator} interface and then select \textbf{Edit labels}, a pencil icon will appear next to the graph name (which will be "Unnamed graph" by default). Clicking that icon will open a dialog where we can define a language dependent values for this resource. By clicking \textbf{Save}, we update the \emph{state} and we can immediately see the change on the screen. By clicking \textbf{Save changes}, we save the changes to the server (the custom labels are part of the common configuration which means that it is automatically taken care of). We now have to add the \texttt{EditableLabel} component to the \texttt{Application} component as well to get it working in the \emph{application} interface.
+
+You might have noticed that we have repeated a lot of work for the \emph{application} and \emph{configurator} interface and their components are nearly identical. Firstly, in a more complex \emph{visualizer} those two interfaces would differ significantly more. Secondly, thanks to the React nature it is always very easy to refactor the code, put the shared aspects into a single component and then re-use it.
 
 \section{Advanced framework features}
 
 \subsection{Saving and loading application configuration}
 
 \subsection{Multiple language support}
+
+%DFS
 
 \subsection{Label dereferencing}
 
@@ -782,6 +1183,9 @@ Now we will define a new \emph{duck} that will handle and provide API for fetchi
 
 % Why the URL contains visualizer name
 
+\subsection{Flexibility}
+
 % Explain that this kind of integration is incredibly flexible (first on the standalone/embed level, then in general, AngularJS, jQuery) 
 % Completely free to do anything inside the components
 
+ 
