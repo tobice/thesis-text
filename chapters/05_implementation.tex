@@ -199,8 +199,7 @@ One of the goals of this chapter is to convince the reader that our \emph{applic
 
 \subsection{ES6 and Babel compiler}
 
-% [cite - http://www.ecma-international.org/ecma-262/6.0/ECMA-262.pdf]
-The frontend is completely written using ECMAScript 2015 (known as ES6) which is the 6th version of ECMAScript standard. JavaScript is an implementation of ECMAScript, available in all mainstream browsers. ES6 introduces many new language constructs which are, however, not all supported by the current JavaScript implementation. We use Babel \footnote{https://babeljs.io/} transpiler which converts our ES6 code into standard JavaScript.
+The frontend is completely written using ECMAScript 2015 \cite{es6} (known as ES6) which is the 6th version of ECMAScript standard. JavaScript is an implementation of ECMAScript, available in all mainstream browsers. ES6 introduces many new language constructs which are, however, not all supported by the current JavaScript implementation. We use Babel \footnote{https://babeljs.io/} transpiler which converts our ES6 code into standard JavaScript.
 
 We will mention some of the features that we frequently use.
 
@@ -276,8 +275,7 @@ const result = math.add(math.PI, 2);
 \end{verbatim}
 
 \subsection{npm}
-% [cite - https://www.npmjs.com/]
-npm is a package manager for JavaScript. We use it to manage our JavaScript dependencies. They are all listed in the file \texttt{src/package.json}. Once installed, a package can be used with the standard \texttt{import} command.
+npm \cite{npm} is a package manager for JavaScript. We use it to manage our JavaScript dependencies. They are all listed in the file \texttt{src/package.json}. Once installed, a package can be used with the standard \texttt{import} command.
 
 \begin{verbatim}
 import moment from 'moment'
@@ -288,8 +286,7 @@ moment().format('MMMM Do YYYY, h:mm:ss a'); // prints current time and date, i.e
 Note that when importing a npm dependency, we do not use relative paths starting with a dot.
 
 \subsection{React}
-% [cite - https://facebook.github.io/react/]
-React is a JavaScript library for building user interfaces. The base building block is a React component.
+React \cite{react} is a JavaScript library for building user interfaces. The base building block is a React component.
 
 \begin{verbatim}
 import React from 'react'
@@ -389,9 +386,7 @@ If we were to use the MVC terminology, we would say that a React component is a 
 
 The component state fits the definition of the \emph{Model} layer. Nevertheless, this approach, i.e., storing everything in the state of React components, would not work for large-scale applications which would have a lot of state. The \emph{state} in this context can mean literary everything, starting all the data fetched from the server, ending with the list of open dialog windows. That is why we use Redux.
 
-% [cite https://github.com/reactjs/redux]
-% [cite https://facebook.github.io/flux/]
-Redux is,  as explained by the authors, a "predictable state container for JavaScript apps" that evolved from the Flux ideas. Flux is an application architecture that was designed specifically to work with React applications. Even though Redux is independent on React, they work extremely well together. 
+Redux \cite{redux} is, as explained by the authors, a "predictable state container for JavaScript apps" that evolved from the Flux ideas. Flux \cite{flux} is an application architecture that was designed specifically to work with React applications. Even though Redux is independent on React, they work extremely well together. 
 
 Setting up Redux with React is a bit complicated so we skip it. It is not really necessary because it is already done for us in the fronted code base and we can immediately start using it. The more important thing is to understand how it works.
 
@@ -504,13 +499,13 @@ In this case, we could actually significantly simplify the function as the \emph
 
 In a similar manner we could start adding more and more \emph{reducers} to fit the needs of the application (and the \emph{state} hierarchy would grow correspondingly). Our \emph{application generator} has only one single vast and deep \emph{state} that holds all the information. If we apply the React component hierarchy on this \emph{state} hierarchy (updated by the \emph{reducer} hierarchy), we get the user interface that is currently on the screen.  We can say that what you can see on the screen is a \emph{function} of the \emph{state}.
 
+% TODO: show action creators using promises and thunks
+
 \subsection{Reselect}
 
 We use the \texttt{mapStateToProps} function to extract the values from the \emph{state} required by a component. That worked really well for our simple examples but  it would not scale with the increasing size and depth of the \emph{state} object.
 
-% [cite - https://github.com/reactjs/reselect]
-
-The \emph{state} can be viewed as a database. It is a huge blob of data that any part of the application can access. It defines a clear API for making updates and the updates are always performed in transactions (that stems from the single-threaded nature of JavaScript but what also matters is that when an \emph{action} is \emph{dispatched}, it has to update all \emph{reducers} first before another \emph{action} can be \emph{dispatched}). What we miss is an API for selecting data from the database, i.e., the \emph{state}. We use Reselect for that.
+The \emph{state} can be viewed as a database. It is a huge blob of data that any part of the application can access. It defines a clear API for making updates and the updates are always performed in transactions (that stems from the single-threaded nature of JavaScript but what also matters is that when an \emph{action} is \emph{dispatched}, it has to update all \emph{reducers} first before another \emph{action} can be \emph{dispatched}). What we miss is an API for selecting data from the database, i.e., the \emph{state}. We use Reselect \cite{reselect} for that.
 
 We will re-use the last iteration of our example with the \texttt{valueReducer} and \texttt{clickCountReducer}.
 
@@ -530,7 +525,7 @@ const selector = createStructuredSelector({
 export default connect(selector)(Counter);
 \end{verbatim}
 
-A \emph{selector} is like a named database query. It extracts a specific piece of data from the \emph{state}. We defined two base \emph{selectors} that access directly the state and we combined them together. Our final \emph{selector} becomes the \texttt{mapStateToProps} function. What is important is that once a \emph{selector} is created, we do not have to care about how it is implemented. For us, it is just a query that returns the data we need. That separates us from the raw \emph{state} structure. Just like we have a \emph{reducer} hierarchy and a \emph{component} hierarchy, we can add a \emph{selector} hierarchy covering the whole \emph{state}.
+A Reselect \emph{selector} is like a named database query. It extracts a specific piece of data from the \emph{state}. We defined two base \emph{selectors} that access directly the state and we combined them together. Our final \emph{selector} becomes the \texttt{mapStateToProps} function. What is important is that once a \emph{selector} is created, we do not have to care about how it is implemented. For us, it is just a query that returns the data we need. That separates us from the raw \emph{state} structure. Just like we have a \emph{reducer} hierarchy and a \emph{component} hierarchy, we can add a \emph{selector} hierarchy covering the whole \emph{state}.
 
 Let us say that \texttt{state.auth.user.id} contains the ID of the currently authenticated user. We want to inject that ID into a component. This is the simple \texttt{mapStateToProps} approach:
 
@@ -590,8 +585,7 @@ dashboard/discoveries
 
 JavaScript API in modern web browsers allows us to change the URL without actually reloading the page.
 
-% [cite - https://github.com/reactjs/react-router]
-We use React-router as a routing library for React. To show you how it works, we borrow an example from their documentation.
+We use React-router \cite{react-router} as a routing library for React. To show you how it works, we borrow an example from their documentation.
 
 \begin{verbatim}
 import React from 'react'
@@ -636,8 +630,7 @@ As you might have noticed, all the tools in our stack introduce some kind of exp
 
 \subsection{Immutable.js}
 
-% [cite - http://facebook.github.io/immutable-js/]
-Immutable.js is a library containing  standard data structures that we may know for example from Java (e.g. \texttt{List}, \texttt{Map} or \texttt{Stack}). The core feature is that all the data structures are \emph{immutable} which means that they cannot be changed. If we change an instance of a \texttt{List} (e.g. by adding an element) we create a completely new instance and the old one remains unchanged. Consider the following example.
+Immutable.js \cite{immutable} is a library containing  standard data structures that we may know for example from Java (e.g. \texttt{List}, \texttt{Map} or \texttt{Stack}). The core feature is that all the data structures are \emph{immutable} which means that they cannot be changed. If we change an instance of a \texttt{List} (e.g. by adding an element) we create a completely new instance and the old one remains unchanged. Consider the following example.
 
 \begin{verbatim}
 import { List } from 'immutable'
@@ -1191,9 +1184,7 @@ import initEntry from '../misc/initEntry'
 initEntry(createRoutes);
 \end{verbatim}
 
-We have to make sure to import the correct routes definition and also that the file name corresponds to the \emph{visualizer} name. Webpack will pick up this new \emph{entry point} automatically (if you are running webpack in the watch mode, you need to restart it) and generate a new JavaScript bundle of the same name.
-
-% TODO: explain the embed process. And how is this way so flexible
+We have to make sure to import the correct routes definition and also that the file name corresponds to the \emph{visualizer} name. Webpack will pick up this new \emph{entry point} automatically (if you are running Webpack in the watch mode, you need to restart it) and generate a new JavaScript bundle of the same name.
 
 \subsection{Linking LDVM component to the plugin}
 
