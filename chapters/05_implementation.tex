@@ -192,20 +192,8 @@ Figure \ref{fig:application-generator-architecture} might suggest that our exten
 
 What is important is that all \emph{application generator} related Scala code exists in those two packages (\texttt{controllers.appgen} and \texttt{model.appgen}). Also the frontend strictly communicates only  with our controllers. Therefore it is easy to draw the line where LinkedPipes Visualization ends and our \emph{application generator} begins. Dependencies between our code and the original code base are shown on Figure \ref{fig:application-generator-architecture} and are always a matter of Scala code. The dependencies are in a form of utilizing the internal API of LinkedPipes Visualization. In rare cases, we re-use some low-level utilities from the original code base.
 
-\section{Scala backend utilities}
-
-% Simple, following the architecture of LinkedPipes Visualization
-
-% Each visualizer has its own controller (explain why)
-
-% Extending inner structures (user id). The original ones are not being deleted
-
-% Framework: Cache? Controllers?
-
-% RDF vocabularies
-
-
 \section{Frontend development stack}
+\label{sec:implementation:frontend-development-stack}
 
 One of the goals of this chapter is to convince the reader that our \emph{application generator} can work as a \emph{framework} for developing new \emph{visualizers}. For that we need the reader to understand the \emph{application generator} on a code level. The backend architecture is fairly standard and especially the integration is simple. Most of the work happens in frontend which uses a development stack that is rather new and very specific. In this section, we will try to explain the reader the core frontend technologies that we use so that he can later understand the integration process of a new \emph{visualizer}. The information that we are about to provide here is in no way related directly to the \emph{application generator}. It will be a short extract from the documentations of these tools and we will only aim to provide just enough information so that the reader can understand our code. Anyone who feels already familiar with these tools, can skip this part.
 
@@ -395,6 +383,7 @@ class GreetOnMount extends React.Component {
 We have used two life cycle methods, \texttt{componentWillMount} which is triggered when the component is about to appear, and \texttt{componentWillUnmount} which is triggered when the component is about to disappear from the screen. These methods are especially useful for components that fetch data from the server. The first method can be used to initiate the request and the second method to cancel the request or possibly do some cleaning up.
 
 \subsection{Redux}
+\label{sec:implementation:frontend-development-stack:redux}
 
 If we were to use the MVC terminology, we would say that a React component is a \emph{controller-view}. It both handles the interaction with the user and the visual representation. In our code, we usually try to distinguish between controllers and views. We create either a component that is rather a controller, i.e., it handles user input but does not focus on the visuals, or a component that is rather a view, i.e., there is no business logic going on and the component focuses only on representing the data on the screen. By composing components of these two types we build the whole user interface.
 
@@ -719,32 +708,172 @@ class UserView extends React.Component {
 
 If this component does not receive a \texttt{User} instance through the \texttt{props}, a warning is thrown.
 
-\section{Frontend framework architecture (???)}
+\section{Frontend framework architecture}
+
+In this section, we will give the reader a brief overview of the  overall structure of the frontend code and we will also explain several design ideas that are specific to our code. In the previous section (Section \ref{sec:implementation:frontend-development-stack}) we described several tools that together make up the development stack that we use. Clearly, there is no monolithic framework. Each tool solves only one problem and even though they have been all designed to work well together and complement each other, there is missing an overall architecture and design patterns for large scale applications (something that a well-established monolithic framework usually offers).
+
+There exist recommendations and patterns but they evolve just as quickly and erratically as the modern world of JavaScript frontend itself. While developing the \emph{application generator} (and making it a \emph{framework}) we had to choose the right patterns for us and sometimes even come up with some new patterns on our own.
+
+This involves literary everything from the very basic questions of how our code should be organized to which library should we use to generate forms or how we should implement visual feedback for asynchronous requests. In this section we will focus mainly on the basic aspects which involve the code organization. It will all become useful when we start integrating our own \emph{visualizer}.
 
 \subsection{JavaScript bundles}
 
-% webpack endpoints / bundles -> /appgen
+As explained, our frontend code is written in ES6 and has to be compiled (or more correctly \emph{transpiled}) into standard JavaScript that any browser can understand. The frontend code base consists of large amount of (not only) ES6 files which are all transpiled and put together into a single JavaScript file which we call a \emph{bundle}. This bundle is loaded to the web browser and contains everything that is required to run the SPA. We use Webpack bundler \footnote{http://webpack.github.io/} to put our code together and Babel \footnote{http://babeljs.io/} transpiler to convert our code.
+
+The disadvantage of this approach is that this bundle is typically very large and therefore takes some time to load. Before it loads, the user does not see anything on the screen. On the other hand, once it is loaded, the user experience is very smooth because we do not have to make any more request to the server to fetch additional resources.
+
+Our \emph{application generator} consists of several bundles. The main is the \emph{platform} bundle which contains the whole \emph{platform} user interface and also \emph{configurator} interfaces for all registered \emph{visualizers}. Then every registered \emph{visualizer} has its own bundle that contains only the \emph{application} interface. This bundle is used for published applications and as it does not contain the whole platform, it is significantly smaller and faster to load.
+
+Even though we have multiple bundles, all the code exists in one spot. The reason is that there is very little code that is used only in a single bundle and therefore it would not make sense to separate it in any way. What defines a bundle is an \emph{entry point} which is a simple JavaScript file where Webpack starts the bundling process.
 
 \subsection{Code structure}
 
-% assets folder
-% explain where can be found what
+The frontend code is all in the folder \texttt{src/app/assets\_webpack/appgen}. We will refer to this folder as to the \texttt{assets} folder. There are two subfolders \texttt{javascripts} and \texttt{stylesheets} with self-explanatory names. What is interesting is that the styles are also included into the bundle.  Let us now quickly walk through the folders in \texttt{javascripts}.
+
+\begin{itemize}
+\item \textbf{components} -- useful single-purpose React components
+\item \textbf{containers} -- the top level React components that are connected to Redux
+\item \textbf{entries} -- Webpack entry points (each file here corresponds to a bundle)
+\item \textbf{misc} -- various utilities
+\item \textbf{modules} -- the actual code
+\item \textbf{store} -- instantiation of Redux \emph{store}
+
+\end{itemize}
+\subsection{Ducks}
+
+Our code contains lots of Redux \emph{actions}, \emph{reducers} and Reselect \emph{selectors}. A common pattern is to put all \emph{actions} into the \texttt{actions.js} file, all \emph{reducers} into the \texttt{reducers.js} file and all selectors into a \texttt{selectors.js} file. In our \emph{application generator}, we decided to adopt the \emph{duck} format \footnote{https://github.com/erikras/ducks-modular-redux}. The idea is that we put all \emph{actions}, \emph{reducers} and \emph{selectors} related to the same functionality into a single file called a \emph{duck}. 
+
+We take the example from Section \ref{sec:implementation:frontend-development-stack:redux} where we were explaining how Redux works and rewrite it into the duck format. This would be a single file (i.e., an ES6 module).
+
+\begin{verbatim}
+// Actions 
+
+export const INCREMENT = ’INCREMENT’;
+export function increment() {
+  return { type: INCREMENT };
+}
+
+export const DECREMENT = ’DECREMENT’;
+export function decrement() {
+  return { type: DECREMENT };
+}
+
+// Reducer
+
+export default function valueReducer(state = 0, action) {
+  switch (action.type) {
+    case INCREMENT:
+      return state + 1
+    case DECREMENT:
+      return state - 1
+    default:
+      return state
+    }
+}
+
+// Selectors
+
+export const valueSelector = state => state.value;
+\end{verbatim}
+
+This \emph{duck} covers the complete functionality regarding incrementing and decrementing a value. It exports public API for updating the value (\emph{action creators}), reading the value (\emph{selectors}) and it defines how the value should be represented and updated (\emph{reducer}). The \emph{action types} are exported as well which means that anyone can listen to these \emph{dispatched} \emph{actions}. In \emph{object-oriented programming} terminology we could say that the \emph{action creators} correspond to object \emph{setters} and \emph{selectors} to object \emph{getters}.
 
 \subsection{Modules}
 
-% prefixing
-% problem with automatic name extraction from the folder name
-% module structure
-% routes
-% named URLs
+Clearly, having all React components and all \emph{ducks} in a single place is not viable for large applications. Therefore we introduce a \emph{module} which is the base organization unit in our code (please do not confuse it with ES6 modules). A \emph{module} is similar to a \emph{package} from Java. It usually covers one area of functionality. For example, we have an \texttt{auth} \emph{module} that covers everything related to authenticating and registering users. Also every registered \emph{visualizer} has its own \emph{module}.
 
-\subsection{Ducks}
+A \emph{module} is in the first place a folder with standardized content. Let us walk through folders that a \emph{module} typically contains.
 
-\section{Process of creating a new application from the code perspective}
+\begin{itemize}
+\item \textbf{components} -- React components that focus mainly on the visuals (\emph{view} components)
+\item \textbf{containers} -- React components that are connected to Redux and handle business logic (\emph{controller} components)
+\item \textbf{dialogs} -- React components for dialog windows
+\item \textbf{ducks} -- \emph{ducks} required in this module
+\item \textbf{misc} -- various utilities
+\item \textbf{pages} -- React components that are bound to React-router routes
+\end{itemize}
 
-Describing the inner mechanics for the whole \emph{application generator} would take us too long and this description is not that important for the reader anyway. We will just walk through the use case scenario again (Subsection \ref{sec:implementation:use-case-scenario}) and describe what is going on under the hood. Among other things, this should help the reader to better understand how integration of new \emph{visualizers} into the \emph{application generator} works.
+All \emph{action types} in one \emph{module} should have a common prefix corresponding to the \emph{module} name. Firstly, when an \emph{action} is dispatched, we can easily identify which \emph{module} it came from. Secondly, we do not have to worry about conflicting \emph{action types} (with the prefix we are creating a separated namespace). Therefore each \emph{module} should contain a \texttt{prefix.js} file.
 
-% TODO:
+\begin{verbatim}
+// prefix.js
+
+import createPrefixer from '../../../misc/createPrefixer'
+
+export const MODULE_PREFIX = 'example';
+export default createPrefixer(MODULE_PREFIX);
+\end{verbatim}
+
+The \texttt{MODULE\_PREFIX} should contain the \emph{module} name, i.e., the folder name containing the \emph{module}. We tried to come up with a solution which would automatically populate this constant with the folder name but that is, to our best knowledge, not possible due to how Webpack bundling process works. 
+
+This is how we would use it in our \emph{duck} (following the \emph{module} structure, the \emph{duck} should be placed in \texttt{ducks/value.js}). We apologize for the a bit unfortunate name "value".
+
+\begin{verbatim}
+// ducks/value.js
+
+import prefix from '../prefix.js'
+
+// Actions 
+
+export const INCREMENT = prefix(’INCREMENT’);
+export function increment() {
+  return { type: INCREMENT };
+}
+
+export const DECREMENT = prefix(’DECREMENT’);
+export function decrement() {
+  return { type: DECREMENT };
+}
+\end{verbatim}
+
+The \emph{action types} are now \texttt{example/INCREMENT} or \texttt{example/DECREMENT}.
+
+The \emph{modules} are meant to be nested, on the file system level (nesting folders) but also on the \emph{state} level.  Each \emph{module} has to define a root \emph{reducer} combining all its nested \emph{reducers}.
+
+\begin{verbatim}
+// reducer.js
+
+import { combineReducers } from 'redux'
+import value from './ducks/value' // the default export points to the reducer
+
+const rootReducer = combineReducers({
+  value
+});
+
+export default rootReducer;
+\end{verbatim}
+
+This root \emph{reducer} has to be added to the root \emph{reducer} of the parent \emph{module} in a similar manner. 
+
+Complementary to \emph{reducers} are \emph{selectors}. Each \emph{module} defines its root \emph{selector}.
+
+\begin{verbatim}
+// selector.js
+
+import { createSelector } from 'reselect'
+import parentSelector from '../selector'
+import { MODULE_PREFIX } from './prefix'
+
+export const moduleSelector = createSelector(
+  [parentSelector],
+  parentState => parentState[MODULE_PREFIX]
+);
+export default moduleSelector;
+\end{verbatim}
+
+Note that the logic is inverted to how the \emph{reducers} are composed. Here we use the parent \emph{selector} to access the \emph{state} of the parent \emph{module} and we select the piece that belongs to our \emph{module}. This is given by the APIs of Redux and Reselect. We just have to make sure to use the same key when registering both the \emph{reducer} and the \emph{selector} (the \emph{module} name should be used as the key).
+
+Using this approach, the \emph{state} hierarchy corresponds to the \emph{module} folder hierarchy. What is important is that this defines a clear way of how the application can be arbitrarily and endlessly extended with very little risk of conflicts. \emph{Modules} can be arbitrarily renamed and moved around. We just have to make sure to always connect the \emph{reducer} and the \emph{selector} to the right spot.
+
+A \emph{module} can also contain routes that would be composable in a similar manner. The route structure, however, does not strictly follow the folder structure as the situation with routing is more complicated. For example, a \emph{module} representing a \emph{visualizer} defines two sets of routes: one for the \emph{configurator} interface and one for the \emph{application} interface.
+
+%%% Během psaní té další kapitoly jsem si myslel, že tato kapitola bude potřeba
+%%% pro pochopení. Teď už si nemůžu vzpomenout proč. Tak ji tady zatím 
+%%% nechávám zakomentovanou
+
+%\section{Process of creating a new application from the code perspective}
+
+%Describing the inner mechanics for the whole \emph{application generator} would take us too long and this description is not that important for the reader anyway. We will just walk through the use case scenario again (Subsection \ref{sec:implementation:use-case-scenario}) and describe what is going on under the hood. Among other things, this should help the reader to better understand how integration of new \emph{visualizers} into the \emph{application generator} works.
 
 \section{Integrating a new visualizer}
 
@@ -973,7 +1102,7 @@ The objects representing the selected application and visualizer are  for your c
 
 \subsection{Application user interface}
 
-As explained, the \emph{application} interface of each \emph{visualizer} lives in a standalone JavaScript bundle. The \emph{application} interface that we are about to implement will support embedding. The interface will support two modes. There will be the default \emph{standalone} mode which besides the visualization itself will also display the application name and description. It will be accessible on the default root \texttt{/} URL. Then there will be the \emph{embed} mode containing just the visualization. It will be accessible on the \texttt{/embed} URL.
+As explained, the \emph{application} interface of each \emph{visualizer} lives in a standalone JavaScript bundle. The \emph{application} interface that we are about to implement will support embedding. It will run in two different modes. There will be the default \emph{standalone} mode which besides the visualization itself will also display the application name and description. It will be accessible on the default root \texttt{/} URL. Then there will be the \emph{embed} mode containing just the visualization. It will be accessible on the \texttt{/embed} URL.
 
 We will start similarly to the \emph{configuration} interface by defining the main \texttt{Application} component in \texttt{components/Application.js}. Note that it is no longer in the \texttt{pages} folder.
 
@@ -1034,7 +1163,7 @@ const Standalone = props => (
 export default Standalone;
 \end{verbatim}
 
-Note that both times, we re-use the \texttt{Application} component but in the \emph{standalone} mode we add a standard header that renders application name and description. What remains is to tie it all together with routes definition. We put it to \texttt{applicationRoutes.js} just next to \texttt{configuratorRoutes.js}.
+Note that both times, we re-use the \texttt{Application} component but in the \emph{standalone} mode we add a standard header that renders the application name and description. What remains is to tie it all together with routes definition. We put it to \texttt{applicationRoutes.js} just next to \texttt{configuratorRoutes.js}.
 
 \begin{verbatim}
 import React from 'react'
@@ -1055,10 +1184,9 @@ export default function createRoutes(dispatch) {
 }
 \end{verbatim}
 
-Note that the top level path is directly \texttt{/}. This routes definition will not be registered to any existing route hierarchy. It contains the complete routing information for this standalone SPA. For this reason, we use the \texttt{ApplicationLoader} as the top level component to load the application 
-from the server first. This has been done automatically for us in the case of \emph{configurator} interface.
+Note that the top level path is directly \texttt{/}. This routes definition will not be registered to any existing route hierarchy. It contains the complete routing information for this standalone SPA. For this reason, we use the \texttt{ApplicationLoader} as the top level component to load the application from the server first. This has been done automatically for us in the case of \emph{configurator} interface.
  
-In the final step, we need to add a new webpack \emph{entry point}. We create a file \texttt{javascripts/entries/graph.js} (this time relative to the \texttt{assets} folder) with the following content. 
+In the final step, we need to add a new Webpack \emph{entry point}. We create a file \texttt{javascripts/entries/graph.js} (this time relative to the \texttt{assets} folder) with the following content. 
 
 \begin{verbatim}
 import createRoutes from '../modules/visualizers/graph/applicationRoutes'
@@ -1075,7 +1203,7 @@ We have to make sure to import the correct routes definition and also that the f
 
 In this step, we will link the LDVM \emph{visualizer component} and the \emph{visualizer} plugin together. That is done through the \emph{application generator} user interface (not LinkedPipes Visualization interface this time).
 
-We need to sign in to the \emph{application generator} with an administrator account. We navigate to the \textbf{Dashboard}, select \textbf{Visualizers} and click the button \textbf{Add visualizer}. A dialog window will appear, containing a list of unused available LDVM \emph{visualizer components}. We select \textbf{Graph Visualizer} (which is the name we provided in the RDF definition)  and click \textbf{Add visualizer}. The the new \emph{visualizer} should appear in the table. We click its name to open a configuration dialog window (Figure \ref{fig:edit-visualizer}). We ignore the first two fields as they are related to LinkedPipes Visualization. The most important field is the name. We fill in \texttt{graph}. It is crucial that this value corresponds to the \emph{visualizer} module name, the prefix and the \emph{entry point} name. We also recommend filling in the \emph{visualizer} icon for better user experience. Currently, Material Icons \footnote{https://design.google.com/icons/} collection is used. We chose the \texttt{device\_hub} icon.
+We need to sign in to the \emph{application generator} with an administrator account. We navigate to the \textbf{Dashboard}, select \textbf{Visualizers} and click the button \textbf{Add visualizer}. A dialog window will appear, containing a list of unused available LDVM \emph{visualizer components}. We select \textbf{Graph Visualizer} (which is the name we provided in the RDF definition)  and click \textbf{Add visualizer}. The new \emph{visualizer} should appear in the table. We click its name to open a configuration dialog window (Figure \ref{fig:edit-visualizer}). We ignore the first two fields as they are related to LinkedPipes Visualization. The most important field is the name. We fill in \texttt{graph}. It is crucial that this value corresponds to the \emph{visualizer} module name, the prefix and the \emph{entry point} name. We also recommend filling in the \emph{visualizer} icon for better user experience. Currently, Material Icons \footnote{https://design.google.com/icons/} collection is used. We chose the \texttt{device\_hub} icon.
 
 \begin{figure}
 	\centering
@@ -1200,7 +1328,7 @@ You might have noticed that we put all the files in the same package \texttt{mod
 
 For the \texttt{RgmlService} to work properly, it has to be registered to the Dependency Injection container in \texttt{model.rdf.RdfModule}.
 
-Let us now move from the \emph{Model} layer to the \emph{Controller} layer. We will extend the controller we defined earlier with an action that will use this service to fetch graph and send it to the client serialized to JSON.
+Let us now move from the \emph{Model} layer to the \emph{Controller} layer. We will extend the controller we defined earlier with an action that will use this service to fetch the graph information and send it to the client serialized to JSON.
 
 \begin{verbatim}
 class GraphVisualizerApiController(implicit inj: Injector) extends VisualizerApiController {
@@ -1215,7 +1343,7 @@ class GraphVisualizerApiController(implicit inj: Injector) extends VisualizerApi
 }
 \end{verbatim}
 
-The \texttt{getGraph} action is mapped to a URL with a single parameter \texttt{id} (the URL mappings are defined in the file \texttt{src/conf/routes}, relative to the code base root). The \texttt{id} is an application ID. We use the \texttt{withEvaluation()} helper to load the appropriate \emph{pipeline evaluation}, then we fetch the graph using our \texttt{RgmlService} and send it to the client in a \texttt{SuccessReponse}. The API is designed to support \texttt{Futures} in case the requests are expected to be computationally heavy and need t.jso be performed asynchronously. This is not our case but we need to follow the API. That is why the response is wrapped by the \texttt{Future} call.
+The \texttt{getGraph} action is mapped to a URL with a single parameter \texttt{id} (the URL mappings are defined in the file \texttt{src/conf/routes}, relative to the code base root). The \texttt{id} is an application ID. We use the \texttt{withEvaluation()} helper to load the appropriate \emph{pipeline evaluation}, then we fetch the graph using our \texttt{RgmlService} and send it to the client in a \texttt{SuccessReponse}. The API is designed to support \texttt{Futures} in case the requests are expected to be computationally heavy and need to be performed asynchronously. This is not our case but we need to follow the API. That is why the response is wrapped by the \texttt{Future} call.
 
 In order for the \texttt{Graph} case class to be automatically converted to JSON, we need to define an \emph{implicit converter}. We can do it by adding following lines to \texttt{controllers.api.JsonImplicits} and import it to the controller:
 
@@ -1286,7 +1414,7 @@ export function getGraphReset() {
 }
 \end{verbatim}
 
-The \emph{action creator} \texttt{getGraph()} first uses the \texttt{withApplicationId} utility to extract the application ID from the \emph{state} and then calls the API function to make the HTTP request to the server. The request result is represented using a \texttt{Promise} which is \emph{dispatched} as an action payload. There is a \emph{redux middleware} running in the background that detects the \texttt{Promise}, dispatches \texttt{GET\_GRAPH\_START} and then depending on the result either \texttt{GET\_GRAPH\_ERROR} or \texttt{GET\_GRAPH\_SUCCESS}. We do not actually have to define all the \emph{action} constants but it is a good practice (note that we used the module prefixer). The \texttt{START}, \texttt{ERROR}, \texttt{SUCCESS} and \texttt{RESET} suffixes are defined by a convention.
+The \emph{action creator} \texttt{getGraph()} first uses the \texttt{withApplicationId} utility to extract the application ID from the \emph{state} and then calls the API function to make the HTTP request to the server. The request result is represented using a \texttt{Promise} which is \emph{dispatched} as an action payload. There is a \emph{redux middleware} running in the background that detects the \texttt{Promise}, dispatches \texttt{GET\_GRAPH\_START} and then depending on the result either \texttt{GET\_GRAPH\_ERROR} or \texttt{GET\_GRAPH\_SUCCESS}. We do not actually have to define all the \emph{action} constants but it is good practice (note that we used the module prefixer). The \texttt{START}, \texttt{ERROR}, \texttt{SUCCESS} and \texttt{RESET} suffixes are defined by a convention.
 
 In the next step, we will implement the reducer that will store the graph.
 
@@ -1670,7 +1798,9 @@ The result of our work can be seen on Figure \ref{fig:graph-visualizer}. For mor
 
 \section{Advanced framework features}
 
-\subsection{Saving and loading application configuration}
+% Some of them already described, i.e., saving and loading the configuration.
+
+\subsection{Request cache}
 
 \subsection{Multiple language support}
 
@@ -1679,8 +1809,6 @@ The result of our work can be seen on Figure \ref{fig:graph-visualizer}. For mor
 \subsection{Label dereferencing}
 
 \subsection{Custom label editor}
-
-\subsection{Embedding applications}
 
 \subsection{Miscellaneous}
 
