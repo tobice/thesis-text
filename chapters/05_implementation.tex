@@ -207,7 +207,7 @@ What is important is that all \emph{application generator} related Scala code ex
 
 \section{Frontend development stack}
 
-One of the goals of this chapter is to convince the reader that our \emph{application generator} can work as a \emph{framework} for developing new \emph{visualizers}. For that we need the reader to understand the \emph{application generator} on a code level. The backend architecture is fairly standard and especially the integration is simple. Most of the work happens in frontend which also uses a development stack that is rather new and very specific. In this section, we will try to explain the reader the core frontend technologies that we use so that he can later understand the integration process of a new \emph{visualizer}. The information that we are about to provide here is in no way related directly to the \emph{application generator}. It will be a short extract from the documentations of those particular tools. Anyone who feels already familiar with these tools, can skip this part.
+One of the goals of this chapter is to convince the reader that our \emph{application generator} can work as a \emph{framework} for developing new \emph{visualizers}. For that we need the reader to understand the \emph{application generator} on a code level. The backend architecture is fairly standard and especially the integration is simple. Most of the work happens in frontend which uses a development stack that is rather new and very specific. In this section, we will try to explain the reader the core frontend technologies that we use so that he can later understand the integration process of a new \emph{visualizer}. The information that we are about to provide here is in no way related directly to the \emph{application generator}. It will be a short extract from the documentations of these tools and we will only aim to provide just enough information so that the reader can understand our code. Anyone who feels already familiar with these tools, can skip this part.
 
 \subsection{ES6 and Babel compiler}
 
@@ -470,9 +470,9 @@ const mapStateToProps = state => ({
 export default connect(mapStateToProps)(Counter);
 \end{verbatim}
 
-This way we \emph{connected} the component to the \emph{store}. The \emph{dispatch} function is automatically injected to the component as a \emph{prop} which means that we can start \emph{dispatching} actions to modify the \emph{state}. The \emph{state} (in our case just a single integer) is also injected to the component through the \emph{props} but we have to specifically define how that should happen using the \emph{mapStateToProps} function.
+This way we \emph{connected} the component to the \emph{store}. The \emph{dispatch} function is automatically injected to the component as a \emph{prop} which means that we can start \emph{dispatching} actions to modify the \emph{state}. The \emph{state} (in our case just a single integer) is also injected to the component through the \emph{props} but we have to specifically define how that should happen using the \texttt{mapStateToProps} function.
 
-The process makes up a nice circle. The user clicks the button in the component and an \emph{action} is \emph{dispatched} to the \emph{reducer}. The \emph{reducer} updates the \emph{state} and the \emph{store} notifies the component of a change. The component re-renders with the updated value. The whole process is predictable and very explicit.
+The process makes up a circle. The user clicks the button in the component and an \emph{action} is \emph{dispatched} to the \emph{reducer}. The \emph{reducer} updates the \emph{state} and the \emph{store} notifies the component of a change. The component re-renders with the updated value. As the \emph{state} can be changed only using \emph{actions}, the system behavior is predictable and very explicit. Redux offers a development mode in which it is very easy to monitor the \emph{actions} flowing through the system and how they change they \emph{state} (Figure \ref{fig:graph-visualizer}).
 
 The \emph{reducers} can be composed and combined. Let us now add another reducer that will simply count the number of clicks.
 
@@ -513,18 +513,211 @@ const mapStateToProps = state => state;
 
 In this case, we could actually significantly simplify the function as the \emph{state} structure directly corresponds to the \emph{props} that we want to inject.
 
-In a similar manner we could start adding more and more \emph{reducers} to fit the needs of the application. Our \emph{application generator} has only one single vast and deep \emph{state} that holds all the information. If we apply the React component hierarchy on this \emph{state} hierarchy (updated by the \emph{reducer} hierarchy), we get the user interface that is currently on the screen.  We can say that what you can see on the screen is a \emph{function} of the \emph{state}.
+In a similar manner we could start adding more and more \emph{reducers} to fit the needs of the application (and the \emph{state} hierarchy would grow correspondingly). Our \emph{application generator} has only one single vast and deep \emph{state} that holds all the information. If we apply the React component hierarchy on this \emph{state} hierarchy (updated by the \emph{reducer} hierarchy), we get the user interface that is currently on the screen.  We can say that what you can see on the screen is a \emph{function} of the \emph{state}.
 
 \subsection{Reselect}
 
-Database
+We use the \texttt{mapStateToProps} function to extract the values from the \emph{state} required by a component. That worked really well for our simple examples but  it would not scale with the increasing size and depth of the \emph{state} object.
+
+% [cite - https://github.com/reactjs/reselect]
+
+The \emph{state} can be viewed as a database. It is a huge blob of data that any part of the application can access. It defines a clear API for making updates and the updates are always performed in transactions (that stems from the single-threaded nature of JavaScript but what also matters is that when an \emph{action} is \emph{dispatched}, it has to update all \emph{reducers} first before another \emph{action} can be \emph{dispatched}). What we miss is an API for selecting data from the database, i.e., the \emph{state}. We use Reselect for that.
+
+We will re-use the last iteration of our example with the \texttt{valueReducer} and \texttt{clickCountReducer}.
+
+\begin{verbatim}
+import {  createStructuredSelector } from 'reselect'
+
+// ... the component
+
+const valueSelector = state => state.value;
+const clickCountSelector = state => clickCount;
+
+const selector = createStructuredSelector({
+  value: valueSelector,
+  clickCount: clickCountSelector
+});
+
+export default connect(selector)(Counter);
+\end{verbatim}
+
+A \emph{selector} is like a named database query. It extracts a specific piece of data from the \emph{state}. We defined two base \emph{selectors} that access directly the state and we combined them together. Our final \emph{selector} becomes the \texttt{mapStateToProps} function. What is important is that once a \emph{selector} is created, we do not have to care about how it is implemented. For us, it is just a query that returns the data we need. That separates us from the raw \emph{state} structure. Just like we have a \emph{reducer} hierarchy and a \emph{component} hierarchy, we can add a \emph{selector} hierarchy covering the whole \emph{state}.
+
+Let us say that \texttt{state.auth.user.id} contains the ID of the currently authenticated user. We want to inject that ID into a component. This is the simple \texttt{mapStateToProps} approach:
+
+\begin{verbatim}
+const mapStateToProps = state => ({
+  userId: state.auth.user.id
+});
+\end{verbatim}
+
+With a smart \emph{selector} hierarchy, we could do this.
+
+\begin{verbatim}
+import { createSelector } from 'reselect'
+import { userSelector } from './selectors'
+
+const selector = createSelector(
+  [userSelector],
+  user => ({ userId: user.id }));
+\end{verbatim}
+
+Whereas in the first example, we actually have to know the complete \emph{state} hierarchy to extract this piece of information (and that can very often change due to refactoring), in the second example we are completely separated from the \emph{state} hierarchy and we just need to know the schema of the user object that the \texttt{userSelector} returns.
+
+The selectors can do some extra calculations. Using a simple math formula we calculate the number of increment clicks. Clearly, we could maintain this information in another \emph{reducer} but as we can derive this information from information that is already in the state, it would be duplication.
+
+\begin{verbatim}
+const incrementCountSelector = createSelector(
+  [valueSelector, clickCountSelector],
+  (value, clickCount) => (clickCount + value) / 2);
+\end{verbatim}
+
+The \emph{selectors} can be arbitrarily combined.
+
+\begin{verbatim}
+const decrementCountSelector = createSelector(
+  [clickCountSelector, incrementCountSelector],
+  (clickCount, incrementCount) => clickCount - incrementCount);
+\end{verbatim}
+
+Every time the \emph{state} is updated, the \emph{selectors} are recalculated and consequently the \emph{components} are re-rendered. The \emph{selectors} are actually slightly smarter than that. The \emph{selector} output is automatically cached and if its input does not change, the cached value is returned instead. Therefore the \emph{selectors} can be used even for heavy computations.
 
 \subsection{React-router}
 
-% Explain why routing is important (back button)
+As one would expect, our \emph{application generator} will consist of many different screens with different functionality. We need a mechanism for transitioning between those screens. Although many approaches are viable, we prefer the one with classic URLs, i.e., every different screen has its own URL. It has clear benefits as the user navigates through the interface as if it was a standard web page (e.g. even with the back button support).
+
+Our \emph{application generator} is a SPA which means that each URL will contain the part corresponding to the actual physical address of the SPA (the entry URL) and the part maintained only by the frontend JavaScript application.
+
+\begin{verbatim}
+Sample URL: 
+http://localhost:9000/appgen/dashboard/discoveries
+
+SPA entry URL: 
+http://localhost:9000/appgen/
+
+Virtual URL part maintained by the SPA: 
+dashboard/discoveries
+\end{verbatim}
+
+JavaScript API in modern web browsers allows us to change the URL without actually reloading the page.
+
+% [cite - https://github.com/reactjs/react-router]
+We use React-router as a routing library for React. To show you how it works, we borrow an example from their documentation.
+
+\begin{verbatim}
+import React from 'react'
+import { Route, IndexRoute } from 'react-router'
+
+const App = ({ children }) => (
+    <div>
+      <h1>Welcome to our app</h1>
+      {children}
+    </div>
+  );
+
+const About = () => <h2>About</h2>
+
+const Users = ({ children }) => (
+    <div>
+      <h2>Users</h2>
+      {children}
+    </div>
+  );
+
+const User = ({ params: { userId }}) => <div>User: <strong>{userId}</div>
+
+const NoMatch = () => <h2>Not found</h2>
+
+const routes = (
+    <Route path="/" component={App}>
+      <Route path="about" component={About}/>
+      <Route path="users" component={Users}>
+        <Route path=":userId" component={User}/>
+      </Route>
+      <Route path="*" component={NoMatch}/>
+    </Route>
+  );
+\end{verbatim}
+
+The React-router uses JSX for routes definition which makes it very declarative. For each route, we define a React component that is activated when the URL matches this particular route. The URL segment that has to be matched is defined by the \texttt{path} attribute, the component by the \texttt{component} attribute. The routes definition is hierarchical specifying the complete URL schema.
+
+When a URL is matched, all components along the path of matching routes through the routes definition are activated. For example, for the URL \texttt{/users/15} the components \texttt{App}, \texttt{Users} and \texttt{User} are activated. The child component is always passed to the parent component through the \texttt{children prop}. 
+
+As you might have noticed, all the tools in our stack introduce some kind of explicit composability. That is very useful because it will make all parts of our  \emph{application generator} easily extendable and re-usable.
 
 \subsection{Immutable.js}
 
+% [cite - http://facebook.github.io/immutable-js/]
+Immutable.js is a library containing  standard data structures that we may know for example from Java (e.g. \texttt{List}, \texttt{Map} or \texttt{Stack}). The core feature is that all the data structures are \emph{immutable} which means that they cannot be changed. If we change an instance of a \texttt{List} (e.g. by adding an element) we create a completely new instance and the old one remains unchanged. Consider the following example.
+
+\begin{verbatim}
+import { List } from 'immutable'
+
+const list = new List();
+const listUpdated = list.push(5);
+
+list.size === 0;
+listUpdated.size === 1;
+\end{verbatim}
+
+This library has many advantages. Firstly, it provides an extremely strong and well documented API which goes beyond the capabilities of standard JavaScript collections (\texttt{object} or \texttt{array}). The API fits better into the functional nature of our code. Secondly, it works really well with \emph{reducers}. As explained, a \emph{reducer} has to always return a new state which is sometimes a bit complicated using the standard JavaScript API. In the following example, we need to create a new copy of an object containing users identified by their IDs.
+
+\begin{verbatim}
+function usersReducer(state = {}, action) {
+  switch (action.type) {
+    case ADD_USER: 
+      return Object.assign({}, state, {
+        action.payload.id: action.payload.id
+      })
+    default:
+      return state;
+  }
+}
+\end{verbatim}
+
+Now consider the version with Immutable.js.
+
+\begin{verbatim}
+import { Map } from 'immutable'
+
+function usersReducer(state = new Map(), action) {
+  switch (action.type) {
+    case ADD_USER: 
+      return state.set(action.payload.id, action.payload.id);
+    default:
+      return state;
+  }
+}
+\end{verbatim}
+
+Thirdly, there are some speed benefits as this is what makes the Reselect caching actually possible. A \emph{selector} recalculates only when the input arguments change. If an input argument was a standard mutable object, it would be very complicated (and expensive) to determine whether it changed. We would be keeping a reference to that object and have no idea whether the object was changed in the mean time. On the other hand, if we keep a reference to an immutable structure and the reference does not change, then we can be sure that the content of the referenced structure also did not change and we can re-use the cached value. Similar mechanism is used also for React components, i.e., it is possible to avoid unnecessary re-renders.
+
+Lastly, Immutable.js library offers the \texttt{Record} data structure which is essentially a \texttt{Map} (i.e., a \emph{key-value} storage, just like a standard JavaScript \texttt{object}) but with an enforced schema.
+
+\begin{verbatim}
+const User = Record({
+  id: 0,
+  name: 'Anonymous user'
+});
+
+const user = new User({ id: 5, gender: 'male' });
+
+user.id === 5;
+user.name === 'Anonymous user';
+user.gender === null;
+\end{verbatim}
+
+Any values that are missing during the instantiation are replaced with the default values and any values that are not part of the schema are removed. Unlike the standard immutable \texttt{Map}, a \texttt{Record} properties can be accessed using the standard dot notation (it even supports destructing). It is also very useful when we are defining the \texttt{propTypes} of a React component.
+
+\begin{verbatim}
+class UserView extends React.Component {
+  static propTypes = {
+    user: React.PropTypes.instanceOf(User).isRequired
+  }
+}
+\end{verbatim}
+
+If this component does not receive a \texttt{User} instance through the \texttt{props}, a warning is thrown.
 
 \section{Frontend framework architecture (???)}
 
@@ -543,6 +736,7 @@ Database
 % problem with automatic name extraction from the folder name
 % module structure
 % routes
+% named URLs
 
 \subsection{Ducks}
 
