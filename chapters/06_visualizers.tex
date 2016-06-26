@@ -1,7 +1,48 @@
 \chapter{Visualizers}
 
+To show the capabilities or our designed \emph{framework} and \emph{platform}, we decided to implement two concrete visualizers: D3.js Chord Visualizer and Google Maps Visualizer.
+
 \section{D3.js Chord Visualizer}
 
 \section{Google Maps Visualizer}
 
+Google Maps Visualizer focuses on visualizing geospatial information. It shows RDF resources containing GPS coordinates on a map in a form of markers. If the data set supports it, it allows the user to filter the resources.
+
+This \emph{visualizer} was already implemented in LinkedPipes Visualization, so we were able to re-use the LDVM \emph{visualizer component} definition and also all the backend code responsible for extracting RDF data from the \emph{pipeline evaluation}. We only had to implement the frontend part, specifically the \emph{configurator} and \emph{application} interfaces.
+
+For these reasons, this chapter will be rather short and it will not go into technical details. Instead, we will rather focus on the comparison between the original \emph{visualizer}, which is part of LinkedPipes Visualization, and our own implementation that utilizes the capabilities of the \emph{application generator}. 
+
 \subsection{Sample data set}
+
+We will demonstrate the capabilities of this \emph{visualizer} using only a single data set, \textbf{Registry of business subjects in Czech Republic} [cite and use the real name]. As the name suggests, this data set contains business subjects. Each business subject has GPS coordinates of its residence. These entities will be visualized on the map.
+
+Each business subject is put into two categories. The \emph{primary category} and the \emph{secondary category} . The data set contains list of available categories. The user will be allowed to filter the business subjects using these categories.
+
+\subsection{Filtering}
+
+Filtering is an essential part of this \emph{visualizer}. It works similarly to what the reader might be used to for example from browsing products in electronic shops. Just for now, let us say that the data set does not contain geospatial entities but rather laptops. A laptop has properties like brand, screen size or operating system. Each of these properties defines a \emph{filter} (e.g. brand) with a list of available \emph{values} (e.g. Asus, Dell, Apple etc). The user can select an arbitrary number of \emph{values} for each \emph{filter} to create filtering criteria. For a laptop to be included in the result set, it has to match all the criteria (conjunction). For a laptop to match a criterion, its property \emph{value} corresponding to the criterion \emph{filter} must be one of the \emph{values} selected by the user. For example, by selecting Asus and Dell as the brand, 15 inches as the screen size and Windows 10 as the operating system, the user will get all 15-inch laptops with Windows 10 manufactured either by Asus or Dell.
+
+If the user selects all \emph{values} for a \emph{filter}, it is just as if the \emph{filter} was not there at all. It has no impact on the result set. On the other hand, if the user selects no \emph{values} for a \emph{filter}, the results set is always empty (no laptops can meet the criteria).
+
+Available \emph{filters} and their \emph{values} has to be explicitly defined in the data set. In our sample data set, as already mentioned, those are the \emph{primary category} and \emph{secondary category}.
+
+\subsection{Configurator and application user interface}
+
+\emph{Configurator} and \emph{application} interfaces are very similar. Both of them feature a map and a sidebar on the left with \emph{filters}. The key difference is that in the \emph{configurator} interface, the \emph{filters} can be display in two modes: configuration and preview. The \emph{application} interface shows the \emph{filters} always in the same way which corresponds to the preview mode.
+
+The idea is that by configuring the \emph{filters} the user can significantly affect the shape of the \emph{published} application. Here are some examples.
+
+\begin{itemize}
+\item A \emph{filter} can be \textbf{disabled}. A disabled \emph{filter} is interpreted as if all its \emph{values} have been selected, i.e., it has no impact on the selected output. This filter is completely hidden in the published application.
+\item A \emph{value} can be \textbf{enforce}. That means that it is always selected.
+\item A \emph{value} can be \textbf{disabled}. That means that it cannot be selected.
+\item A \emph{filter} can be switched between \textbf{checkbox} mode and \textbf{radio} mode. In checkbox mode, an arbitrary number of \emph{filter} \emph{values} can be selected. In radio mode, only one \emph{value} can be selected. The mode names correspond to the appropriate form controls.
+
+\end{itemize}
+Thanks to the enforcing and disabling certain \emph{values}, it is possible to create default filters that are always applied. That essentially means that the published application can be based just on a subset of the input data. If we go back to our example with laptops, one could generate a browser of Dell laptops filterable by screen size. To achieve that, one would have to disable the operating system \emph{filter}, enforce the Dell \emph{value} and disable all other \emph{values} for the brand \emph{filter}. By either fixing or disabling all \emph{filters} and \emph{values}, it is actually possible to generate a completely static application which might also make sense in certain situations.
+
+% TODO: marker infowindows/tooltips, fixing zoom level and location, show/hide filters, language support, custom labels editor
+
+\subsection{Advantages over LinkedPipes Visualization}
+
+\subsection{Summary}
