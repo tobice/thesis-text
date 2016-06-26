@@ -59,7 +59,7 @@ Thanks to this approach, the \emph{compatibility} can be quickly checked at the 
 
 \subsection{Component representation}
 
-To follow the Linked Data principles, LinkedPipes Visualization implementation of LDVM represents the  components and their configuration in RDF using a custom RDF vocabulary prefixed with \texttt{ldvm} \cite{ldvm_vocabulary}. That makes it possible for the LDVM components to be shared and exchanged with separate instances of LinkedPipes Visualization or possibly even with completely different LDVM based software that supports this RDF representation. This is, however, true only to an extent. Some of the components are truly transferable and independent on the actual software implementation, but many of them require to have a corresponding counterpart in the programming code. This applies to \emph{visualizers} (the tool actually needs to implement the visualization technique required by the \emph{visualizer} component) but also to some \emph{analyzers} or \emph{transformers} for which SPARQL operators are not sufficient.
+To follow the Linked Data principles, LinkedPipes Visualization implementation of LDVM represents the  components and their configuration in RDF using a custom RDF vocabulary prefixed with \texttt{ldvm} \cite{ldvm_vocabulary}. That makes it possible for the LDVM components to be shared and exchanged with separate instances of LinkedPipes Visualization or possibly even with completely different LDVM based software that supports this RDF representation. This is, however, true only to an extent. Some of the components are truly transferable and independent on the actual software implementation, but many of them require to have a corresponding counterpart in the programming code (we will refer to this counterpart as to a \emph{plugin}). This applies to \emph{visualizers} (the tool actually needs to implement the visualization technique required by the \emph{visualizer} component) but also to some \emph{analyzers} or \emph{transformers} for which SPARQL operators are not sufficient.
 
 \subsection{Discovery}
 
@@ -91,7 +91,7 @@ More advanced users that understand RDF on a lower technical level and are capab
 	\label{fig:linked-pipes-components}
 \end{figure}
 
-Users with actual developer skills can extend LinkedPipes Visualization with new \emph{visualizers} and more advanced \emph{analyzers} and \emph{visualization transformers}. That involves developing both the RDF definition using the \texttt{ldvm} vocabulary and the corresponding counterpart in programming code. 
+Users with actual developer skills can extend LinkedPipes Visualization with new \emph{visualizers} and more advanced \emph{analyzers} and \emph{visualization transformers}. That involves developing both the RDF definition using the \texttt{ldvm} vocabulary and the corresponding \emph{plugin} in programming code. 
 
 \section{Implementation}
 
@@ -118,7 +118,7 @@ The backend is developed in Scala using Play Framework. This framework follows M
 \subsection{Component registration}
 \label{sec:linkedpipes:component_registration}
 
-We mentioned that if the user uploads a definition of a new LDVM component, its added to the \emph{register}. What actually happens under the hood is that such a component gets inserted into the H2 database where it can be easily accessed during the \emph{discovery}. We also mentioned that some LDVM components require their counterparts directly in the code.
+We mentioned that if the user uploads a definition of a new LDVM component, it is added to the \emph{register}. What actually happens under the hood is that such a component gets inserted into the H2 database where it can be easily accessed during the \emph{discovery}. We also mentioned that some LDVM components require to be accompanied by a complementary \emph{plugin} in the code..
 
 Let us start with \emph{analyzers} and \emph{visualization transformers}. These components perform transformations on the RDF data. Typically, this is done using SPARQL operators but sometimes that is not enough and the transformation needs to be implemented using an actual programming language (Scala in this case). The backend code contains a simple \texttt{switch} that defines which snippet of code should be executed for which component (the \emph{snippet} is actually a well-defined \emph{plugin} implementing given plugin interface). Here we would like to remind the reader that components are defined and represented in RDF using the \texttt{ldvm} vocabulary. That means that each component is actually an RDF resource with a unique URI. This URI is used in the \texttt{switch} to identify the components. 
 
