@@ -1,0 +1,89 @@
+\chapter{System proposal}
+
+Based on the information we gathered in the previous chapters, we will now propose our own \emph{application generator}. We will give a detailed description and justification of the characteristics and features that our system will have. 
+
+At the beginning of the chapter covering Related Work (Section \ref{sec:rw:definition}), we attempted to define what a \emph{data-driven application generator} is. We admitted that this definition is rather vague and subjective but it is important because it gives as a starting point for making our own tool of this kind. We will now briefly repeat that definition.
+
+A \emph{data-driven application generator} is a tool that takes an input data set provided by the user and produces an \emph{application} based on that data set. Defining an \emph{application} is rather difficult. For us, the main aspect is \emph{interactivity}, i.e., the generated \emph{application} will let the user interact in some way with the source data set. Moreover, a generated \emph{application} should be persistent and to an extent independent on the \emph{generator}. When the \emph{generator} is closed, the \emph{application} should not seize to exist.
+
+\section{Proposed features}
+\label{sec:proposal:features}
+
+In Section \ref{sec:rw:features}, we presented a list features that we focused on when examining individual related tools. This list of features allowed us to compare the tools between each other in a more organized way. This list also contains the exact features that we would like our tool to have. Let us walk through that list again and explain why we think our \emph{application generator} should support these features.
+
+\begin{itemize}
+\item \emph{Linked Data support}. The majority of the examined tools supported only some kind of tabular data. That proved itself to be a very limiting factor. Each tool required the user to somehow provide the missing \emph{semantic} information (e.g. by describing the data using a \emph{schema}) and even then the tool either generated applications that looked all more or less the same (Miga Data Viewer, Citadel on the Move), or required the user to manually build the whole application (Tableau, Avelca, Exhibit). Linked Data carry way more \emph{semantic} information with them and can be \emph{understood} by the \emph{application generator}. That means that the process of generating applications can be automated (the user does not have to explain to the \emph{generator} what the input data mean) and also as the Linked Data can express way more kinds of information, way more types of applications can be generated from that data.
+% * <tobiaspotocek@gmail.com> 2016-06-17T18:59:01.462Z:
+%
+% > Miga Data Viewer
+%
+% Do I need to make a reference back to the Related Work chapter whenever I mention one of the tools?
+%
+% ^.
+\item \emph{Extendability}. All applications generated for example by Miga Data Viewer looked more or less the same. As explained in the previous paragraph, that was caused to a large extent by the characteristics of the tabular data. Linked Data, on the other hand, are way more versatile. Plus we can hardly imagine that we could come up with a universal solution that would work for any type of data. Therefore making the \emph{generator} extendable is a necessity.
+\item \emph{Data analysis}. A \emph{generator} that automatically analyzes the input data and makes decisions based on how it \emph{understands} the data, is definitely a more capable \emph{generator}. This is directly related to the \emph{Linked Data support}. It is the Linked Data that allow such analysis possible (we are not claiming that it is not possible to run some kind of smart analysis on tabular data, but as it would involve lots of guessing, the results might be debatable). Just to repeat what we have already said: such a smart \emph{application generator} can significantly speed up the process of application generation by making it automated (to an extent) and it can support significantly more types of information with significantly more types of applications.
+\item \emph{Online sharing}. Being able to \emph{share} the final generated application with others is the purpose of all these efforts. We aim to use the whole potential of the data around us and keeping our findings just to ourselves would clearly waste that potential.
+\item \emph{Non-developers friendly}. Miga Data Viewer or Exhibit proved that even tools that require their users to have some programming skills, can help a lot by reducing the amount of work necessary for generating an application. Also these tools typically offered a high level of flexibility. Nevertheless, most of our potential users have zero developer skills and we would like to allow these users to generate applications using our \emph{application generator}.
+\item \emph{Platform}. Tools in the form of an online platform (Avelca, Tableau, Citadel on the Move, Payola) clearly make the whole agenda around applications (creating, managing, sharing) simpler for the user. We want our tool to work as a platform as well.
+\item \emph{Configuration}. We have seen two extremes among the examined tools. LinkedPipes Visualization simply produced the visualization and gave user no possibility to configure it before publishing. Tools like Tableau, Avelca or Exhibit, on the other hand, represented the other extreme. The user had to actually \emph{build} the whole application from scratch. Miga Data Viewer was somewhere in between. Most of the application was automatically generated but the user was still allowed to change certain aspects. This is the way that we would like to choose for our \emph{application generator} as well. We want to find a compromise solution that would allow the user to quickly generate new applications and yet it would still give him some space to influence how the application should look like before it gets published.
+\end{itemize}
+
+\section{Advantages and disadvantages of integration into LinkedPipes Visualization}
+\label{sec:system_proposal:integration}
+
+We proposed that some kind of \emph{data analysis} should be a part of our \emph{application generator}. Automatic analysis of Linked Data, however, is a vast topic. Within the scope of this thesis, we would be probably able to come up only with a very basic solution consisting of simple rules such as  \textit{"This entity is an address or GPS coordinates, let us display it on a map."} or \textit{"These are some statistical data, let us visualize it using a graph"}. We can say that Miga Data Viewer works in similar way.
+
+We believe that it is not always necessary to reinvent what has been already invented and that we would rather give ourselves a head start by re-using an existing solution. For various reasons, we decided to integrate our \emph{application generator} into LinkedPipes Visualization. Let us now walk through those reasons.
+
+\begin{enumerate}
+\item Through LinkedPipes Visualization we get a strong analytical and visualization framework that we can immediately use. We will utilize the \emph{discovery} algorithm which will automatically tell use how the input data can be visualized, i.e., what kinds of applications can be generated.
+\item We will greatly benefit from the LinkedPipes Visualization implementation of LVDM. Firstly, it will make our generator easily extendable to support new types of data through new LDVM components. Secondly, any LDVM component following the format defined by this implementation will automatically work in our generator as well (with the limitations explained in Section \ref{sec:linkedpipes:component_registration}).
+\item On a programming level, LinkedPipes Visualization already contains lots of ready-to-use solutions for working with RDF data (querying Virtuoso triplestore, converting RDF to JSON etc.). It also offers a programmatical API providing access to the \emph{discovery} algorithm (launching, accessing results etc).
+\item Finally, we admit that what played an important role in our decision process was the fact that we had direct personal access to the authors of LinkedPipes Visualization. That significantly sped up our work.
+
+\end{enumerate}
+This decision has also disadvantages. The original guidelines for this thesis suggest that the user should be able to combine together different views for different types of data. Such views should be possible to display in a selected predefined layout before publishing the app. We have seen this approach for example in Tableau. However, LinkedPipes Visualization visualizers use a completely different approach. They are typically very domain specific. Each visualizer focuses on a single type of data, for example map data, and then offers a rich (but static) user interface which is specifically designed to work with this particular type of data (for example, it displays controls allowing the user to filter the visualized data). This is a direct consequence of the underlying LDVM pipeline \emph{discovery} algorithm.
+
+Unfortunately, if we are to build on top LinkedPipes Visualization, our applications (which will directly correspond to the \emph{visualizers}) cannot look and work much differently. Nevertheless, both approaches are viable and both have their advantages and disadvantages. By adopting the approach of domain-specific applications, we will reduce the application configurability and it will not be possible to generate dashboard-like applications known from Tableau. On the other hand, our domain-specific applications will offer richer user interfaces allowing more advanced work with the visualized data.
+
+\section{Contribution}
+
+We already classified LinkedPipes Visualization as an \emph{application generator} when we were comparing related tools. The reader might ask how exactly is our \emph{application generator} going to be better. 
+
+\subsection{Configuration phase}
+
+In LinkedPipes Visualization, when the user selects and executes a \emph{pipeline}, he is redirected to the corresponding \emph{visualizer} user interface. That generates the actual \emph{visualization} from the \emph{pipeline evaluation}. In the context of LinkedPipes Visualization, that is the generated application. In our \emph{application generator}, we will introduce a configuration phase that will precede the publication. Each \emph{visualizer} will consist of two user interfaces: a \emph{configurator} interface and an \emph{application} interface. 
+
+The \emph{configurator} interface will let the user to shape the application before publishing. The configuration possibilities will differ depending on the \emph{visualizer}, but typically the user will be allowed to filter the data (select a subset) and tune the level of interactivity for the audience. For example, he could either create a completely static visualization with pre-filtered data (e.g. a static graph), or he could let the audience decide what they want to see (i.e., let the audience decide what kind of graph they want to see). This will greatly increase the re-usability of data sets and \emph{visualizers}. A single data source with a single \emph{visualizer} will work as a potential source for many applications, each serving a different purpose (and a different target audience).
+
+The \emph{application} interface is what the end-user (the audience) is going to see. When describing how a \emph{visualizer} works in LinkedPipes Visualization (Section \ref{sec:linkedpipes:visualizers}), we stated that a \emph{visualizer} is a function that takes the \emph{pipeline evaluation} as an argument and returns the actual \emph{visualization}. In our \emph{application generator}, the \emph{application} interface will be a function with two arguments: the \emph{pipeline evaluation} and the configuration created in the \emph{configurator}.
+
+By introducing the configuration phase, we created another level of abstraction. The process of generating a new application (which includes the configuration phase now) requires no programming skills. It is very \emph{non-developer friendly}. But it does require certain understanding of the data. Not to mention that the data produced by the \emph{pipeline} might not be in a perfect state and therefore making sense out of the data (e.g. creating a meaningful graph) might require quite a lot of effort. In LinkedPipes Visualization, any user has to put in this effort when using the generated \emph{visualization}. In our \emph{application generator}, only the user generating the application will have to make this sacrifice while in the configuration phase, but the end user (the audience) will get only the final refined application.
+
+We should mention that some features will be available in all \emph{configurators} regardless of the \emph{visualizer}. The user will be allowed to fill missing information (e.g. missing labels) and provide basic application meta data (name and description).
+
+We should also eliminate any confusion in the terminology that might have arisen in this section. A \emph{visualizer} is the last LDVM component in a \emph{pipeline}. It consists of the RDF definition and of the actual implementation in the code (the \emph{plugin}). The RDF definition is always the same, but the  \emph{plugin} will differ for LinkedPipes Visualization and of our \emph{application generator}. In the latter case, a \emph{visualizer} will consist of the aforementioned \emph{configurator} interface and \emph{application} interface. In a sense, it will work as an \emph{application template} for generating new applications. Nevertheless, we will stick to the term \emph{visualizer} in the rest of this text.
+
+\subsection{Platform}
+
+LinkedPipes Visualization is a technical successor of Payola but it dropped most of Payola's platform features along the way. We will give them back, at least to the extent that makes sense for our cause. As our applications will be configurable, we will build an agenda around application management. That includes also support for registering and authenticating users.
+
+Moreover, one of the Payola's important features was sharing and re-using of the \emph{plugins}. This also works in LinkedPipes Visualization. The \emph{discovery} algorithm is using all available LDVM components. But when a user wants to specifically run the \emph{discovery} algorithm on a \emph{data source} that already exists in the system, it is not possible. We will make a simple database of available data sets part of our \emph{application generator}. The idea is that some users will be responsible for producing interesting data sets and the platform will allow them to share the data sets with other users who will use them to generate applications. Also a simple catalog of published applications will be part of the platform.
+
+In general, the whole user interface of LinkedPipes Visualization is rather bare and simplistic as its point is merely to show the capabilities of the underlying LDVM \emph{discovery} algorithm. Our aim, on the other hand, will be to create a more refined and polished product. Obviously, this aspect is rather subjective and we will let the reader to be the judge of that.
+
+\subsection{Framework}
+
+In Section \ref{sec:linkedpipes:component_registration} we described how new LDVM components  can be integrated into the code of LinkedPipes Visualization. As this tool defines a clear way how it can be extended, we can say it also fits into the role of a framework for implementing new types of Linked Data visualizations. Also when we were talking about the advantages and disadvantages of integrating our generator into LinkedPipes Visualization (Section \ref{sec:system_proposal:integration}), we mentioned that on a programming level, we will be able to utilize various available APIs for working with RDF data. Unfortunately, LinkedPipes Visualization offers no such help for development of the \emph{visualizer} user interface.
+
+Our \emph{visualizers} are different. In front of all, they are more complicated because they consist of two different user interfaces, the \emph{configurator} and \emph{application}. The framework will have to define a clear way how to seamlessly integrate both of these interfaces into the generator.
+
+We will define a recommended structure for the \emph{configurators} which will speed up their implementation. Thanks to this unified structure, it will be possible to leverage ready-to-use solutions for some common tasks, e.g. saving and loading the application configuration, universal support for multiple languages and adding/editing labels of RDF data. On the server side, we will provide a universal persistent request cache to increase the performance of published applications. None of these features are currently available in LinkedPipes Visualization.
+
+Naturally, thanks to the framework, the user will not have to deal with any of the platform related tasks (e.g. authentication or authorization) and the platform features will be provided to him via explicit API (e.g. access to currently authenticated user).
+
+\section{Visualizers}
+
+To showcase the capabilities of our \emph{platform} and \emph{framework}, we will implement and present to the user two \emph{visualizers}. The first one will be a brand new D3.js Chord Visualizer based, as the name suggest, on the D3.js chord layout, capable of visualizing directed weighted graphs. The other one will be based on the existing LinkedPipes Visualization map visualizer. The RDF definition will remain the same, we will just re-implement the \emph{visualizer} for our \emph{application generator}.
+
+	
