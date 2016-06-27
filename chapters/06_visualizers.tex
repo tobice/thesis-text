@@ -4,8 +4,126 @@ To show the capabilities or our designed \emph{framework} and \emph{platform}, w
 
 \section{D3.js Chord Visualizer}
 
-\section{Google Maps Visualizer}
+The D3.js Chord Visualizer is a brand new \emph{visualizer} that has not existed before in LinkedPipes Visualization. The core of this \emph{visualizer} is a chord diagram which is a method of visualizing the relationships among a group of entities (the data are usually represent using a square matrix). The diagram is in a form of a circle around which the entities are drown. The relationships between the entities are represent using arcs connecting them.
 
+\begin{figure}
+	\centering
+	\includegraphics[width=110mm]{img/06_chord_example.png}
+	\caption[Sample chord visualization]{Sample chord visualization (image source\footnotemark)  }
+	\label{fig:chord-example}
+\end{figure}
+
+\footnotetext{http://bl.ocks.org/mbostock/4062006}
+
+\subsection{Sample data sets}
+
+We used three different data sets to demonstrate the abilities of this \emph{visualizer}.
+
+\begin{enumerate}
+
+\item \textbf{Registry of contracts of Czech Republic}
+% [cite: http://internal.opendata.cz/dataset/gov-cz-smlouvy]
+
+Database of contracts between private businesses and public government organizations (ministries, towns etc). The chord diagram could be used to visualize economic activity between individual business entities.
+
+\item \textbf{UNHCR Population Statistics – Asylum seekers by months} 
+% [cite: http://popstats.unhcr.org/en/asylum_seekers_monthly]
+
+This database contains information about people from all over the world asking for asylum outside of their home countries. The database contains concrete numbers of people coming from one country to another, divided by months. The chord visualizer would be able to nicely visualize the trends of people moving around the globe.
+% * <tobiaspotocek@gmail.com> 2016-06-27T15:29:26.094Z:
+%
+% > globe
+%
+% Jirka Helmich: kde jste ho vzal, jak jste ho vyrobil, citace ETL http://2016.eswc-conferences.org/sites/default/files/papers/Accepted%20Posters%20and%20Demos/ESWC2016_DEMO_Linked_Pipes_ETL.pdf
+%
+% ^ <tobiaspotocek@gmail.com> 2016-06-27T15:29:46.740Z:
+%
+% Toto zmiňuji o něco dále. Jakým způsobem jsou data sety převedeny do RDF a do RGML vocabulary. Musím to nějakým způsobem zmínit už zde?
+%
+% ^.
+
+\item \textbf{OpenFlights – Air routes} 
+% [cite: http://openflights.org/]
+
+Database of airports and air routes between them from all over the world. Although air routes are not as informative as actual passenger numbers between individual destinations (that information is to our best knowledge not available), they still give a pretty good idea about overall traffic and people movements. Using a chord diagram, we can visualize traffic intensity between individual airports. This data set is also by far the largest one, consisting of around 8000 airports and almost 70000 air routes.
+
+\end{enumerate}
+These data sets are very different but they all contain information about some kind of relations which can be (with various results) visualized using a chord diagram. 
+
+\subsection{LDVM visualizer component}
+
+As this \emph{visualizer} was completely new, we had to start by defining the LDVM \emph{visualizer component}.
+
+The core aspect is defining the component \emph{descriptor}, i. e., what the data should look like so that our \emph{visualizer} can visualize it. Obviously, our goal was to design a universal visualizer that could work with any data containing relationships, not just the three mentioned data sets. Therefore we focused on describing the universal shared nature of the data.
+
+In the very beginning, we were considering the option of creating a brand new RDF vocabulary. The chord visualization was pretty uncommon in the world of Linked Data, so it would be justifiable to come up with a specialized vocabulary. Nevertheless, after some further analysis we came to realization that what the chord diagram actually visualizes is a weighted (optionally directed) multi-graph (as understood in the graph theory).
+
+Let us look at our data sets again:
+
+\begin{itemize}
+\item The main entity in the Registry of contracts is (not surprisingly) a contract. A contract has two parties. The transition to graph vocabulary is very clear here. A contract is an edge, each party is a vertex. In this case, the graph is undirected as the partners are equal. There can be multiple contracts between two parties, so it is a multi graph. As we are not interested in the individual contracts, but rather in the number of them, all contracts between two parties could be aggregated into a single weighted undirected edge.
+\item The asylum seekers data set consists of individual records where each record contains a period of time, country of origin, country of asylum and a number of people stating how many people sought asylum during that period of time between those two countries in this specified direction. Clearly, each record corresponds to an edge and each country corresponds to a vertex. The weight of an edge represents number of people. Unlike in the previous example, this time the graph is directed as it actually matters which direction the people went. Therefore a relationship between two vertices is asymmetrical. That can also be visualized using the chord diagram.
+\item The air routes data set is a combination of the previous two cases. Each air route corresponds to an edge which is directed but is not by default weighted. To express the strength of a relationship, all edges of the same direction between two airports should be merged into one weighted edge.
+\end{itemize}
+
+% [cite: http://www.cs.rpi.edu/research/groups/pb/punin/public_html/RGML/EXTREME/rgml_ext.html]
+Now that we had described the actual universal nature of the data visualizable by the chord diagram (a graph), it became much clearer what kind of vocabulary we would need. We were pretty certain that we would hardly be the first with the need to describe a graph in RDF. Unsurprisingly, it did not take us long to come across the RGML vocabulary which was designed with this exact purpose in mind.
+
+\subsection{Describing graphs using RGML vocabulary}
+
+Let us briefly describe the vocabulary. It contains these three most important classes: \texttt{rgml:Graph}, \texttt{rgml:Node} and \texttt{rgml:Edge}. The purpose of those classes is self-explanatory, nevertheless, we would like to make two remarks. Firstly, until now we have been using the term \emph{vertex} which is probably more common in graph theory. To maintain consistency with the RGML vocabulary, from now on, we will strictly stick to the term \emph{node}. Secondly, whenever we will use the term graph, we will be speaking about an actual graph structure described using the RGML vocabulary, not the RDF named graph.
+
+The vocabulary also defines several different properties but we will describe only those most important ones. Each edge can define its source node and target node using properties \texttt{rgml:source} and \texttt{rgml:target}. Clearly, an edge is intrinsically directed. The question is whether it should be also always understood as directed. That is defined by a graph boolean property \texttt{rgml:directed}. The vocabulary allows to use this property also directly on edges which makes it possible to create mixed graphs, i. e., graphs containing both directed and undirected graphs. We did not find this feature useful for our purposes so we do not support it. There is also the \texttt{rgml:label} property which we decided to ignore and use  \texttt{rdfs:label} instead. One of the reasons was that the \emph{framework} (see Subsection \ref{sec:implementation:advanced-features:label-dereferencering}) would not be able to automatically fetch missing labels defined with the \texttt{rgml:label} property.
+
+Let us now have a look at a concrete example. This is a data sample from the registry of contracts data set:
+
+\begin{verbatim}
+PREFIX gr: <http://purl.org/goodrelations/v1#>
+PREFIX rejstriky: <http://linked.opendata.cz/ontology/domain/seznam.gov.cz/rejstriky/>
+PREFIX profiles: <http://linked.opendata.cz/ontology/buyer-profiles/>
+PREFIX smlouvy: <http://linked.opendata.cz/resource/domain/seznam.gov.cz/smlouvy/>
+PREFIX businessentity: 
+    <http://linked.opendata.cz/resource/domain/seznam.gov.cz/rejstriky/business-entity/>
+
+<http://linked.opendata.cz/resource/business-entity/CZ00283924> a gr:BusinessEntity ;
+    rejstriky:smlouva smlouvy:260167803 
+    .
+        
+smlouvy:260167803 a rejstriky:Smlouva ;
+    rejstriky:partner businessentity:67028144 
+    .
+\end{verbatim}
+
+The second resource of type \texttt{rejstriky:Smlouva} is a contract between the first entity (the one of type \texttt{gr:BusinessEntity}) and the entity marked as \texttt{rejstriky:partner} of the contract. Augmented with the RGML vocabulary, the data would look like this:
+
+\begin{verbatim}
+PREFIX rgml: <http://purl.org/puninj/2001/05/rgml-schema#> .
+PREFIX smlouvy: <http://linked.opendata.cz/resource/domain/seznam.gov.cz/smlouvy/>
+PREFIX businessentity: 
+    <http://linked.opendata.cz/resource/domain/seznam.gov.cz/rejstriky/business-entity/>
+
+smlouvy:260167803 rdf:type rgml:Edge ;
+    rgml:source <http://linked.opendata.cz/resource/business-entity/CZ00283924> ;
+    rgml:target rejstriky:partner businessentity:67028144 ;
+    rgml:weight "1" 
+    .
+    
+<http://linked.opendata.cz/resource/business-entity/CZ00283924> rdf:type rgml:Node .
+businessentity:67028144 rdf:type rgml:Node . 
+\end{verbatim}
+
+We used the word \emph{augmented} on purpose because we believe that it perfectly describes what happened here. We did not add any information that was not already there. We just used a different vocabulary to express the same information. A vocabulary that our visualizer understands.
+
+Nevertheless, it is clear that some kind of data transformation has to be performed. For this particular data set we created a reusable LDVM analyzer component that is responsible for this augmentation. That means that it can take any data in the suggested format and enhance it with the RGML vocabulary to make it understandable by the chord \emph{visualizer}.
+
+\section{Google Maps Visualizer}
+% * <tobiaspotocek@gmail.com> 2016-06-27T13:27:17.697Z:
+%
+% > Google Maps Visualizer}
+%
+% Visualizer ještě projde nějakým tím lehkým faceliftingem, tak teprve pak doplním obrázky do kapitoly.
+%
+% ^.
 Google Maps Visualizer focuses on visualizing geospatial information. It shows RDF resources containing GPS coordinates on a map in a form of markers. If the data set supports it, it allows the user to filter the resources.
 
 This \emph{visualizer} was already implemented in LinkedPipes Visualization, so we were able to re-use the LDVM \emph{visualizer component} definition and also all the backend code responsible for extracting RDF data from the \emph{pipeline evaluation}. We only had to implement the frontend part, specifically the \emph{configurator} and \emph{application} interfaces.

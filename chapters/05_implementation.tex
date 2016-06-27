@@ -1856,6 +1856,7 @@ The problem here is to determine what languages are actually available (i.e., wh
 For example, whenever we fetch something from the server, the incoming data are \emph{dispatched} as a payload of some \texttt{SUCCESS} action. Our special \emph{reducer} searches that payload and if it finds any new languages, it adds them to the \emph{state}. An updated language switch is consequently displayed to the user.
 
 \subsection{Label dereferencing}
+\label{sec:implementation:advanced-features:label-dereferencering}
 
 It is pretty common that an RDF resource contains a label which we can display to the user. But sometimes it is not available in frontend, maybe because it was simply not fetched from the server, maybe because it is not present in the data set at all. The frontend framework offers another useful component that attempts to fix this problem.
 
