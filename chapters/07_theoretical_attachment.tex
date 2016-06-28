@@ -1,0 +1,63 @@
+\chapter{Theoretical attachment}
+
+In this chapter, we will describe and analyze two algorithms that we implemented when developing the D3.js Chord Visualizer (Section \ref{sec:visualizers:chord}).
+
+\section{Calculating the graph adjacency matrix for the chord diagram}
+
+A graph represented in RDF presented a certain challenge. In our first implementation (when we needed quick results) we would simply load the whole graph into memory, represent it using Scala native data structures and then work with this representation. This approach proved itself sufficient and actually pretty efficient for small graphs (for example the asylum seekers data set, see Subsection \ref{sec:visualizers:chord:data-sets} for data sets description). Compared to SPARQL queries (which involve accessing the hard drive or even communication over network in case the triple store is on a separate machine), in-memory operations are way faster and fetching couple of hundreds nodes and edges in every request was bearable (we needed just two queries to fetch the nodes and the edges).
+% * <tobiaspotocek@gmail.com> 2016-06-28T20:49:09.257Z:
+%
+% > (which involve accessing the hard drive or even communication over network in case the triple store is on a separate machine)
+%
+% Přístupové časy do paměti, na disk a po síti se liší řádově, což předpokládám patří k základním znalostem matfyzáků. Či je i toto potřeba podložit?
+%
+% ^.
+
+The situation changed (the performance dropped) when we started experimenting with the air routes data set, containing around 8000 airports and almost 70000 routes. To improve performance and support even bigger graphs, we decided to re-implement the service so that the complexity of any operation would depend on the size of the input, not on the size of the graph. That typically means, that we would never do operations like loading all nodes or edges into memory. Obviously, we can guarantee this assumption only in our own code. The triple store (e. g. Virtuoso) might work differently.
+
+Let us have a look at how generating the adjacency matrix for the chord diagram works. An adjacency matrix for a directed graph is a square matrix where the $(i, j)$ value indicates whether there is an edge going from the node $i$ to the node $j$. Typically this value is either $1$ (nodes are connected in this direction) or $0$ (nodes are not connected in this direction). In our case, however, the graph is a directed weighted multigraph. Such a graph is impossible to represent using this kind of adjacency matrix because we would need to distinguish somehow between having two nodes connected by $10$ edges of weight $1$ or by $1$ edge of weight $10$.  But as we have explained in Section \ref{sec:visualizers:chord:rgml}, these two situations are considered equal which is given by the characteristics of the chord visualization. The \emph{visualizer} performs a simple aggregation which sums the weights of all multi-edges. Therefore the $(i,j)$ value actually corresponds to the sum of weights of all edges going from $i$ to $j$.
+
+The input of our function is a list of nodes (more specifically their URIs) of size $n$, for which we want to generate the adjacency matrix. Let us denote the number of all nodes in the graph by $N$ and the number of all edges in the graph by $M$. Let us denote the maximum number of edges between two nodes by $c$. That means that $M$ is $O(cN^2)$ and that we can perform the aggregation mentioned above in $O(c)$ for any two nodes.
+% * <tobiaspotocek@gmail.com> 2016-06-28T21:10:37.217Z:
+%
+% > Let us denote the maximum number of edges between two nodes by $c$.
+%
+% V původním textu jsem měl předpoklad, že c je konstanta, nicméně se ukázalo, že to tak úplně konstanta není u všech data setů.
+%
+% ^.
+
+How much is $c$?  The situation is the simplest with the asylum seekers data set. One edge using its weight represents the number of asylum applicants between two countries in a particular month. The data set contains data for only one year, there is $12$ months to a year, and that is $c$. That means that $c$ is a constant and we can leave it out from the complexities. The situation gets more complicated with the other two data sets. As of the air routes data set, one edge corresponds to one air route between two cities. We can assume that $c$ in this case will not be very high, which is given firstly by the limited size of both airports and also by the limited demand of people wanting to travel between two cities. Unfortunately, we are not able to make any more accurate assumptions. Similarly to the contracts data set, where one edge corresponds to a contract between two companies. Therefore we will include $c$ in all complexities but the reader should keep in mind what this number is and that it typically will not grow out of proportions.
+
+Our adjacency matrix has $n^2$ values. The \emph{straightforward} algorithm would be to make a SPARQL query for every two nodes $(i, j)$ to fetch the edges going from $i$ to $j$ and calculate the aggregated weight. The overall complexity would be $O(cn^2)$ which is as fast as it can be (it is simply not possible to generate a square matrix of size $n$ faster than $O(n^2)$  and the aggregation is $O(c)$). The problem here is that we make $O(n^2)$ SPARQL queries and as we have already explained, a SPARQL query is by far slower than any in-memory operation. So our primary target became to reduce the number of SPARQL queries.
+
+Let us write down the final algorithm that we ended up with:
+
+\begin{enumerate}
+\item For each node, fetch all its incident edges (both outgoing and incoming). Put all fetched edges in a single data structure and remove duplicates.
+\item Put all nodes in a Scala \texttt{Set} which is a data structure with $O(1)$  \emph{MEMBER} operation.
+\item Create an empty adjacency matrix.
+\item Iterate over the fetched edges and if an edge connects two nodes that are both in our \texttt{Set}, update the corresponding value in the adjacent matrix.
+\item Return the matrix.
+\end{enumerate}
+
+The important improvement is that even though we fetch more edges than we need (some of them we do not need at all, some of them are fetched twice), suddenly we perform only $O(n)$ SPARQL queries (for each node we need two queries, one for outgoing edges, one for incoming) which means a huge performance boost. According to our experiments, this approach is more than 4 times faster in the air routes data set than the very first one which involved fetching the whole graph. Note that we did not conduct any exact reproducible benchmarking, we simply measured the times of HTTP requests on the client which gave us the improvement from around $7$ seconds to around $1.5$ second (and that is very noticeable when working with the user interface). But what is the complexity of this algorithm?
+
+Let us denote the number of all fetched nodes by $m$. Note that it includes duplicates as well. In the first step, we first fetch the edges, which is $O(m)$, and then we remove the duplicates. That does not add any extra complexity as we can simply iterate through all edges again and use a hash table to remove duplicates. All edges are identified by unique URIs which makes this very straightforward (plus we are leveraging Scala data structures to do all this work for us anyway). The second step is $O(n)$ using the same logic and the third step, initializing the matrix, is clearly $O(n^2)$. In the fourth step we iterate over all edges, now without duplicates. That means that the actual number will be less than $m$, but let us just consider it as $O(m)$. Each iteration is done in constant time (we just access the matrix and update the value with the current edge’s weight) which gives us the overall $O(m)$ complexity for this step.
+
+Putting this all together, we get the complexity of $O(MAX(n^2, m))$. The cardinal question now is how much is $m$. For sparse graphs where a node has typically just a few incident edges, we get close to $O(n^2)$ as $m$ is $O(n)$ (for each input node we fetch just a few edges). On the other hand, for very dense graphs (close to complete graphs) where $M \sim cN^2$, we get $m \sim ncN$ as every input node is adjacent to almost all nodes in the graph and therefore it has almost $cN$ incident edges (we must not forget to count the multi edges). And all of them are fetched.
+
+This clearly breaks one of the assumptions that we promised to guarantee in the beginning. The complexity of this approach does depend (in some special cases) on the size of the whole graph. Specifically, this approach might get slow for very large dense graphs. The other \emph{straightforward} algorithm which is truly $O(cn^2)$ (as it makes one SPARQL query with constant size response for every potential edge between input nodes) could give better results. On the other hand, none of the graphs from our three data sets resembled a complete graph.
+
+The truth is that it is almost impossible to decide what is the best solution as there are too many factors that a theoretical analysis cannot comprehend. For example, if the triple store was on a different machine with increased network latency, then reducing the number of SPARQL queries to minimum would become an absolute necessity. We experimented with different approaches as described in the previous paragraphs, and for those three data sets that we are working with, this last approach gave us the best results. Also our analysis shows a good potential for scalability when working with larger graphs.
+
+One question remains to be answered though. In the first step of our algorithm, why don’t we, instead of fetching all incident edges of a particular node, fetch just those that we need, i. e., between this particular node and the rest of input nodes? We could surely generate such a SPARQL query. We could even possibly generate a query that would return the whole subgraph induced by given input nodes. Unfortunately, our experience shows that such complicated queries, that are dynamically generated from an arbitrary number of input parameters (the input nodes) or use very often \texttt{UNIONs}, do not perform reliably well. That means that they do not finish or take significantly longer than couple of separate SPARQL queries providing the same functionality. For example, we found out that it is usually faster to use two queries to fetch edges between two nodes (one for every direction) instead of one query with a \texttt{UNION}. And that is a very simple example. Another problematic aspect is that sometimes it is necessary to use more advanced SPARQL constructs in such queries. That always creates a risk that such a feature will not be properly supported by the triple store. Therefore we chose to prefer simpler but more reliable SPARQL queries and do any complex calculations by ourselves.
+
+
+
+
+
+
+
+
+
+

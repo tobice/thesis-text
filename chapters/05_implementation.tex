@@ -1826,6 +1826,8 @@ class GraphVisualizerApiController(implicit inj: Injector) extends VisualizerApi
 The solution works on a request level (it uses all available request information, including URL, POST data and the current user to identify the request). What is important is that the requests are cached persistently in the database which means that the cache will survive even application crashes. The solution is very basic and the point is just to demonstrate the capabilities. The default caching solution for the Play Framework is Ehcache \footnote{http://www.ehcache.org/} but that supports persistent caching only in the paid version.
 
 \subsection{Multiple language support}
+\label{sec:implementation:advanced-features:multiple-language-support}
+
 
 RDF may contain values (typically labels) in multiple languages. If correctly extracted, such a value is represented using the \texttt{model.rdf.LocalizedValue} Scala case class which, serialized to JSON, looks like this:
 
@@ -1874,6 +1876,7 @@ If \texttt{country.label} is empty, the component will make a request to the ser
 Note that the \texttt{Label} component wraps the \texttt{LocalizedValue} component which means that if the label supports multiple languages, the correct language variant will be displayed. Also note that the component is smart enough so even if you display 100 labels at once, only one request with 100 URIs will be sent to the server.
 
 \subsection{Custom labels editor}
+\label{sec:implementation:advanced-features:custom-labels-editor}
 
 We have already explained how the custom labels editor work (Subsection \ref{sec:implementation:frontend-development-stack:redux}). Using a component \texttt{EditableLabel} you can allow the user to provide his own labels for any RDF resource. Here we would just like to say that this component internally uses the aforementioned \texttt{Label} component. That means that \texttt{EditableLabel} supports multiple languages and also if the label is missing and is not provided by the user, it is fetched from the server.
 

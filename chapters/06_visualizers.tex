@@ -3,6 +3,7 @@
 To show the capabilities or our designed \emph{framework} and \emph{platform}, we decided to implement two concrete visualizers: D3.js Chord Visualizer and Google Maps Visualizer.
 
 \section{D3.js Chord Visualizer}
+\label{sec:visualizers:chord}
 
 The D3.js Chord Visualizer is a brand new \emph{visualizer} that has not existed before in LinkedPipes Visualization. The core of this \emph{visualizer} is a chord diagram which is a method of visualizing the relationships among a group of entities (the data are usually represent using a square matrix). The diagram is in a form of a circle around which the entities are drown. The relationships between the entities are represent using arcs connecting them.
 
@@ -16,6 +17,7 @@ The D3.js Chord Visualizer is a brand new \emph{visualizer} that has not existed
 \footnotetext{http://bl.ocks.org/mbostock/4062006}
 
 \subsection{Sample data sets}
+\label{sec:visualizers:chord:data-sets}
 
 We used three different data sets to demonstrate the abilities of this \emph{visualizer}.
 
@@ -70,6 +72,7 @@ Let us look at our data sets again:
 Now that we had described the actual universal nature of the data visualizable by the chord diagram (a graph), it became much clearer what kind of vocabulary we would need. We were pretty certain that we would hardly be the first with the need to describe a graph in RDF. Unsurprisingly, it did not take us long to come across the RGML vocabulary which was designed with this exact purpose in mind.
 
 \subsection{Describing graphs using RGML vocabulary}
+\label{sec:visualizers:chord:rgml}
 
 Let us briefly describe the vocabulary. It contains these three most important classes: \texttt{rgml:Graph}, \texttt{rgml:Node} and \texttt{rgml:Edge}. The purpose of those classes is self-explanatory, nevertheless, we would like to make two remarks. Firstly, until now we have been using the term \emph{vertex} which is probably more common in graph theory. To maintain consistency with the RGML vocabulary, from now on, we will strictly stick to the term \emph{node}. Secondly, whenever we will use the term graph, we will be speaking about an actual graph structure described using the RGML vocabulary, not the RDF named graph.
 
@@ -114,7 +117,233 @@ businessentity:67028144 rdf:type rgml:Node .
 
 We used the word \emph{augmented} on purpose because we believe that it perfectly describes what happened here. We did not add any information that was not already there. We just used a different vocabulary to express the same information. A vocabulary that our visualizer understands.
 
-Nevertheless, it is clear that some kind of data transformation has to be performed. For this particular data set we created a reusable LDVM analyzer component that is responsible for this augmentation. That means that it can take any data in the suggested format and enhance it with the RGML vocabulary to make it understandable by the chord \emph{visualizer}.
+Nevertheless, it is clear that some kind of data transformation has to be performed. For this particular data set we created a reusable LDVM \emph{analyzer component} that is responsible for this augmentation. That means that it can take any data in the suggested format and enhance it with the RGML vocabulary to make it understandable by the chord \emph{visualizer}.
+	
+% [cite - http://etl.linkedpipes.com/]    
+A similar approach was applied for the other two data sets as well. Unlike the contracts, these data sets were not already in RDF, they were simple CSV files. We converted them to RDF with an external (but related) tool, LinkedPipes ETL. As we were responsible for the conversion, we used directly the RGML vocabulary for the output, as there was no point in creating an intermediate step.
+
+When we were describing the individual data sets, we mentioned several times the need (or possibility) to perform an aggregation on the data (for example, merging all contracts into one weighted undirected edge). We decided to leave this part to the \emph{visualizer}. Because of the way the chord diagram works, it does not matter whether the underlying graph contains 10 edges of weight 1 between two nodes, or a single edge of weight 10. Therefore the \emph{visualizer} will behave the same and if necessary, it will perform the aggregation itself. It is important to note that this aggregation will be performed on the server-side, i.e., it will not be required to transfer the whole data set to the client first. 
+
+Besides the mentioned augmentation, it is necessary to provide one piece of extra information for the \emph{visualizer}, and that is whether the graph is directed or undirected. We do that by creating an instance of \texttt{rgml:Graph} which will contain that information.
+
+\begin{verbatim}
+PREFIX rgml: <http://purl.org/puninj/2001/05/rgml-schema#> .
+PREFIX : <http://linked.opendata.cz/ontology/temporary/chord#>
+
+:graph rdf:type rgml:Graph ;
+    rgml:directed false
+    .
+\end{verbatim}
+
+%[cite - "specification" -> RGML]
+%[cite - https://www.w3.org/TR/rdf-schema/ rdfs]
+%[cite - https://www.w3.org/TR/sparql11-property-paths/ sparql11-propert-paths]
+
+Here we feel it is important to mention one limitation of this \emph{visualizer}. The RGML vocabulary requires the individual nodes and edges to be tied to a concrete instance of \texttt{rgml:Graph} using predicates \texttt{rgml:nodes} and \texttt{rgml:edges}. The problematic aspect here is that, according to the specification [cite rgml], both of these predicates expect RDF Bag as the value.
+
+RDF Bag \cite{rdf_vocab} is a container whose structure resembles linked list and it is pretty inconvenient to work with using standard SPARQL queries. As of selecting all graph nodes using a single \texttt{SELECT} query, RDF Schema defines a special property \texttt{rdfs:member} which should make it possible. However, this property has to be explicitly supported by the SPARQL engine 
+\footnote{\url{https://lists.w3.org/Archives/Public/public-rdf-dawg-comments/2007Jun/0005.html}} which is not always the case 
+\footnote{\url{http://stackoverflow.com/a/16130842/576997}}, definitely not for Virtuoso
+\footnote{\url{http://stackoverflow.com/questions/27124941/how-to-run-rdfsmember-on-a-sparql-endpoint}}
+\footnote{\url{http://stackoverflow.com/questions/27046770/add-rdfs-inference-rules-support-in-endpoint-sparql}} (our experiments showed that as well). Some engines offer their own proprietary solutions 
+\footnote{\url{http://answers.semanticweb.com/questions/18056/querying-rdf-lists-collections-with-sparql}} to address this issue but that was something we wanted to avoid. Eventually, we had more luck with \emph{property paths} defined by the SPARQL 1.1 standard [cite sparql11-property-paths] which actually do allow selecting Bag content with a single query.  As of constructing a Bag of nodes using  a \texttt{CONSTRUCT} query, it does not seem to be possible at all 
+\footnote{\url{https://www.w3.org/2009/sparql/wiki/Feature:Constructing\_containers\_and\_collections}}. This is something that an \emph{analyser} augmenting the data with RGML vocabulary would typically need. The point of this paragraph was to show that the support of this RDF container is not ideal and that we would rather avoid using it.
+
+We decided to make a compromise. We simply always expect that all existing edges and nodes belong to the same graph. In other words, this \emph{visualizer} does not officially support multiple graphs within the same data set. Practically, it does to a certain extent. The nodes of different graphs will not be connected in any way, so basically our \emph{visualizer} will consider them separated connected components within a single graph. As the user will be allowed to specify the graph nodes that he wants to visualize, this will not have any practical impact on the visualization (he will manually select the subgraph he is interested in). The only situation when this would cause undesired behavior would be the case when some graphs would be directed and some graphs undirected. 
+
+So even though this limitation exists, we do not consider it limiting for the user. Typically, the \emph{visualizer} will be working with a data set produced by a \emph{pipeline} which means the \emph{visualizer} will be operating within a single named RDF graph and in this situation any conflicts are unlikely. Of course, if the user selects a data source with a large number of different graphs (for example by choosing a whole SPARQL endpoint without specifying the named graph), it might be difficult for him to make any meaningful visualizations.
+
+The initial question in this part was how would the \emph{descriptor} of a LDVM \emph{visualizer component} look like. Based on the thought process described in the previous paragraphs, we ended up with the following result:
+
+\begin{verbatim}
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rgml: <http://purl.org/puninj/2001/05/rgml-schema#>
+
+ASK {
+    ?graph rdf:type rgml:Graph ;
+        rgml:directed ?directed 
+        .
+            
+    ?edge rdf:type rgml:Edge ;
+        rgml:source ?source ;
+        rgml:target ?target ;
+        rgml:weight ?weight 
+        .
+            
+    ?source rdf:type rgml:Node .
+    
+    ?target rdf:type rgml:Node .
+}
+\end{verbatim}
+
+To be more precise according to \cite{ldvm_use_cases}, this is the \emph{descriptor} of the only \emph{mandatory feature} of LDVM chord \emph{visualizer component}.
+
+\subsection{Making the graph searchable with FRESNEL vocabulary}
+
+% TODO: add a figure with too many nodes
+
+Until now we have been discussing how to describe the data themselves and how to make them visualizable with the chord diagram. Now let us move to another challenge. The chord diagram can effectively visualize only a limited number of nodes. According to our experiments, this number is somewhere around 30. That does not mean that the diagram is not able to visualize more, it just means that it might be hard for the user to make out any sense out of such diagram (see Figure). Plus there might be related performance issues. Unfortunately, the graphs we are working with have hundreds or even thousand of nodes. Clearly, we need to come up with a way to allow the user to explore the graph and define what should be visualized.
+
+Our first obvious choice we considered was some kind of filtering. But we quickly realized that it was not really applicable to our testing data sets as they do not provide any information (like a hierarchical structure) that we could use. We needed something more universal.
+
+The contracts were the first data set that we experimented with. Each contract is between two parties which are organizations or business entities, usually identified with their name or their VAT number. We tried to imagine how a user would interact with such data and we came to the conclusion that one of the possible use cases would be that the user already knows what he is looking for (in this case, a name of a contractor, or its VAT number) and wants to visualize this particular company and its partners. So the approach would be to let the user simply search through the graph for the nodes he is interested in. That brings up many further questions, at this moment mainly how to define what data (more specifically, which node properties) should be searchable.
+
+The input data are in RDF which means that each node can have an arbitrary (and possibly very large) number of properties. Obviously, we could use a fixed set of searchable properties (for example \texttt{rdfs:label} would be one candidate) but that would not be very flexible if we wanted to support data from different domains in the future. Instead, we decided to let the data set itself define the searchable properties. The only thing missing was a vocabulary that would allow us to express such facts.
+
+% [cite: https://www.w3.org/2004/09/fresnel FRESNEL]
+We went through similar thought process as in the previous part, considering our own proprietary vocabulary, but eventually we ended up with FRESNEL. This vocabulary is fairly complicated, so we will just explain the main ideas. It makes it possible to extend existing RDF data with presentational metadata. More specifically, it allows to define what information should be presented and how it should be presented. This does not exactly sound like what we need here but what is important, it allows us to do what we need.
+
+One of the two main FRESNEL concepts are \emph{lenses}. A \emph{lens} is representing a “view” on data (it is very similar to a projection from database theory). A \emph{lens} defines a type of resource and a list of its properties that should be presented when using this \emph{lens}. In our case, we do not present those properties, we search them.
+
+Here is an example of a \emph{lens} which specifies searchable properties in the contracts data set:
+
+\begin{verbatim}
+PREFIX fresnel:  <http://www.w3.org/2004/09/fresnel#>
+PREFIX : <http://linked.opendata.cz/ontology/temporary/chord#>
+PREFIX gr: <http://purl.org/goodrelations/v1#>
+PREFIX profiles: <http://linked.opendata.cz/ontology/buyer-profiles/>
+
+:searchableLens rdf:type fresnel:Lens ;
+    fresnel:purpose "searchable" ;
+    fresnel:classLensDomain rgml:Node ;
+    fresnel:showProperties ( gr:legalName profiles:dic ) 
+    .
+    
+profiles:dic
+    rdfs:label "DIČ"@cs ;
+    rdfs:label "DIC"@en 
+    .
+    
+gr:legalName
+    rdfs:label "Název subjektu"@cs ;
+    rdfs:label "Legal name"@en 
+    .
+\end{verbatim}
+
+Notice two things. Firstly, using the \texttt{fresnel:purpose} property we specify what the \emph{lens} should be used for (the \emph{visualizer} will be looking for a \emph{lens} with the \emph{searchable} purpose). Secondly, what we do here is that we add labels for the searchable properties. The labels are used later when creating the user interface.
+
+From now on, we will refer to this \emph{lens} as to the \emph{searchable lens}.
+
+We believe that this is one of the moments that clearly show that our \emph{application generator} is truly data-driven as even the user interface dynamically adapts to the data itself. We do admit that this statement depends on one’s perspective. The \emph{searchable} lens could be considered a part of the application configuration. But from a bigger perspective, this is nothing else than just some extra metadata that are part of the data set. They can be used by any \emph{visualizer}, not just this one, and the actual application configuration begins in later phases. Note that we already came across this dilemma when we were describing the Miga Data Viewer (see Section \ref{sec:related-work:miga-data-viewer}).
+
+Here we should mention couple of limitations that this approach has. Mainly, all the searchable properties must be literals. For example, if a node has an address which is not a literal but a structured RDF resource of type \texttt{schema:PostalAddress}, then the individual fields (street, city, country) cannot be searched. Moreover, there are couple of drawbacks stemming from the actual implementation, but that will be mentioned later.
+
+One last thing in this part. We need to accordingly extend the LDVM \emph{visualizer component}. This becomes another \emph{feature} of the component but unlike the graph data, this one is not \emph{mandatory}. Without the graph data, the \emph{visualizer canno}t work, there is nothing to visualize. Without the \emph{searchable lens}, the usability of the \emph{visualizer} will be limited (it just displays a random sample visualization of the graph) but the core functionality will not be breached. So we extend the component with an \emph{optional feature} with the following \emph{descriptor}:
+
+\begin{verbatim}
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rgml: <http://purl.org/puninj/2001/05/rgml-schema#>
+PREFIX fresnel:  <http://www.w3.org/2004/09/fresnel#>
+ASK {
+    ?searchableLens rdf:type fresnel:Lens ;
+        fresnel:purpose "searchable" ;
+        fresnel:classLensDomain rgml:Node ;
+        fresnel:showProperties ?properties
+        .
+}
+\end{verbatim}
+
+\subsection{Configurator user interface}
+
+Until now we have been discussing the data. Their format, nature, description. Let us now move to the actual application user interface which is built on top of the data. 
+
+% TODO: ref to the figure with too many nodes
+
+As we already mentioned, the chord diagram is only capable of visualizing around 30 nodes. Obviously, it can visualize more, but 30 is an upper bound for when the user is still able to make some sense out of the visualization. To deal with this limitation, we decided to introduce a concept of \emph{named lists}. While in the \emph{configurator}, the user can create a list, give it a name and add nodes to it (Figure \ref{fig:chord-named-list}). When he is happy with the result, he hits the \textbf{Visualize} button, and a chord diagram showing relationships between selected nodes is generated. The diagram is interactive. When user hovers over nodes or chords (edges), adjacent entities are highlighted and a label with some extra information is shown. The user can create multiple \emph{named lists}. Each list basically represents a different visualization and all visualizations can exist together within a single application.
+\begin{figure}
+	\centering
+	\includegraphics[width=50mm]{img/06_chord_named_list.png}
+	\caption{D3.js Chord Visualizer: Named list}
+    \label{fig:chord-named-list}
+\end{figure}
+
+The process of adding nodes to a \emph{named list} is leveraging the FRESNEL \emph{searchable lense}. When the user desires to add more nodes to the  list, he opens a dialog using which he can search the graph nodes. Let us say that the user is working with the air routes data set and is interested in British airports. All he has to do is open the dialog and search for “United Kingdom” (Figure \ref{fig:chord-search-dialog}). This works because each airport has a country attached to it and this particular property is marked as searchable with the FRESNEL vocabulary.
+
+This rather elegant way allows the user to work with the graph data. Adding the nodes one by one is nevertheless still a little cumbersome. To improve usability, we implemented a functionality which enables the user to select not just one node from the search result, but also all its related nodes (in graph theory we would say all adjacent nodes). This proves itself to be very useful as it addresses pretty common scenarios. Let us say we are interested in all air routes coming to Prague. Or we want all asylum seekers coming to Czech Republic. Or we want all business partners of a certain company. This functionality allows us to get results for all these cases. On top of that, the \emph{configurator} respects properties of the graph, i. e., if the graph is directed, the user can specify which nodes interest him, whether those connected by outgoing edges or incoming edges.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_chord_search_dialog}
+	\caption{D3.js Chord Visualizer: Search dialog}
+    \label{fig:chord-search-dialog}
+\end{figure}
+
+It is important to say here that all of this works only when the \emph{searchable lens} is available. Without the \emph{searchable lens} the \emph{visualizer} is not able to reason in any way about the graph and does not offer any way to browse the nodes (the number of nodes can be very large). In this case it simply displays a random sample of the graph.
+
+Now is the time to talk about one crucial limitation of this way of visualizing relationships. In the previous paragraphs we mentioned an example of what we might be interested in: all asylum seekers coming to Czech Republic. Let us start there. We create a new list, search for Czech Republic and add all countries from which there are incoming asylum applications. The Figure \ref{fig:chord-immigration-to-cr-1} shows the results.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_chord_immigration_to_cr_1}
+	\caption{D3.js Chord Visualizer: Immigration to Czech Republic}
+    \label{fig:chord-immigration-to-cr-1}
+\end{figure}
+
+At first glance it might seem that the highest numbers of asylum seekers in Czech Republic come from Syria, Iraq and Afghanistan. This information might be true but it definitely does not stem from this exact visualization. The given figure is static, so it is not apparent, but in a live visualization it is possible to examine actual sources and targets of displayed chords. Having done that, one quickly finds out that those huge chords from Syria, Afghanistan and Iraq are pointing to Turkey and Serbia and Kosovo. So where is the problem?
+
+It is important to realize how the chord diagram works. It displays relationships between nodes. We selected all countries that have at least some (but probably very minimal) traffic of asylum seekers with Czech Republic. The problem is that the traffic in between those other countries is significantly higher and the actual traffic we are interested in (Czech Republic) is almost irrelevant. The chord diagram visualizes that very clearly.
+
+Our visualizer offers some limited tools to deal with this. For example, we can temporarily remove some nodes from the visualization. If we do that with Turkey and Serbia and Kosovo, we suddenly get much better results (Figure \ref{fig:chord-immigration-to-cr-2}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_chord_immigration_to_cr_2}
+	\caption{D3.js Chord Visualizer: Immigration to Czech Republic without Turkey and Serbia and Kosovo}
+    \label{fig:chord-immigration-to-cr-2}
+\end{figure}
+
+Even though there is still lots of unrelated and distracting information, we can suddenly see, for example, that there is a large amount of people from Ukraine coming to Czech Republic. The \emph{large amount} in this case is 453 people (compared to the total of 130 000 applications in Turkey).
+
+We solved (or at least diminished) the problem by hiding information. The diagram is supposed to visualize immigration to Czech Republic but there are two countries missing, so it does not correspond to reality. One could say that this diagram actually \emph{lies}. Is this an acceptable way? We believe that this is the strength of our \emph{visualizer} as it allows live interaction with the data. Yes, we temporarily hid some information but we did not remove it . The countries did not disappear from the list. Anyone can always put Turkey and Serbia and Kosovo back in to see the full picture.
+
+One more remark. If you look at Figure \ref{fig:chord-immigration-to-cr-2} again, you still cannot see the node representing Czech Republic. Once again, it is a feature of the chord diagram, not a bug. The relationships here are asymmetrical (the underlying graph is directed). People are coming to Czech Republic, not leaving it. In this visualization, the full circle represents all people seeking asylum from selected countries. There are (almost) no asylum seekers from Czech Republic in this case, so we cannot see Czech Republic. It makes sense but obviously, it is not very practical. For this reason, our \emph{visualizer} offers an option to display asymmetrical chords as symmetrical (i. e., the direction will be ignored). It is a trick, but it gives nice results (Figure \ref{fig:chord-immigration-to-cr-3}).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_chord_immigration_to_cr_3}
+	\caption{D3.js Chord Visualizer: Immigration to Czech Republic without Turkey and Serbia and Kosovo, with enforced symmetrical chords}
+    \label{fig:chord-immigration-to-cr-3}
+\end{figure}
+
+Besides all the chord related functionality, this \emph{visualizer} also leverages available \emph{platform} and \emph{framework} features, which includes the integration itself but more specifically multiple language support (Subsection \ref{sec:implementation:advanced-features:multiple-language-support}) and custom labels editor (Subsection \ref{sec:implementation:advanced-features:custom-labels-editor}). As you might have noticed on Figure \ref{fig:chord-named-list} with the Visegrad named list, there are countries labeled with Czech names even though the data set itself contains only English variants. The Czech translations have been provided using the custom labels editor. You also could have noticed that the column descriptions in the search dialog (Figure \ref{fig:chord-search-dialog}) are Czech as well. The language variants are included directly in the data set and the \emph{framework} automatically extracts them (Subsection \ref{sec:implementation:advanced-features:label-dereferencering}).
+
+\subsection{Application user interface}
+
+The \emph{application} interface is very similar to the \emph{configurator}. The end user is not allowed to manipulate with the \emph{named lists} (create, delete, search for new nodes) but he can switch between them and toggle individual nodes in lists. 
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=50mm]{img/06_chord_publish_configuration_interface}
+	\caption{D3.js Chord Visualizer: Published application interface configuration}
+    \label{fig:chord-publish-configuration-interface}
+\end{figure}
+
+The \emph{application} interface is to an extent configurable. The application owner can decide to hide the lists, disable list switching or disable node selecting (Figure \ref{fig:chord-publish-configuration-interface}). The idea is still the same. The published application should be tailored to the target audience. For example if necessary, the whole application can be reduced to the chord diagram itself and all interactive elements are either disabled or hidden (Figure \ref{fig:chord-visegrad-published}).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_chord_visegrad_published}
+	\caption{D3.js Chord Visualizer: Published application which is completely static (regarding interactivity, the data are loaded live) but the user can still see this list of visualized countries. (Note: we are aware that Germany is not a Visegrad member but without Germany there would not be much to visualize.)}
+    \label{fig:chord-visegrad-published}
+\end{figure}
+
+The chord \emph{visualizer} also offers improved ways of sharing the output via embedding (i. e., inserting the visualizations in external web pages). Each diagram defined by a \emph{named list} can be embedded separately using a unique URL (Figure \ref{fig:chord-embed-configuration}). For example, the user might create several different visualizations based on the same data set and then use all of them in a single article.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_chord_embed_configuration}
+	\caption{D3.js Chord Visualizer: Embed application dialog}
+    \label{fig:chord-embed-configuration}
+\end{figure}
+
+\subsection{Implementation details}
+
+% [cite: https://d3js.org/]
+In frontend, the actual chord visualization is powered by the D3.js library. This library was not exactly designed with React in mind and had to be somehow integrated into the application. Besides that, the frontend is simply following concepts that have been described before (Section \ref{sec:implementation:integrating-visualizer}).
+
+% TODO: reformulate 
+What we have done in backend was more interesting. We implemented two brand new backend services, \texttt{FresnelService} (responsible for extracting FRESNEL \emph{lenses} and searching the data set) and \texttt{RgmlService} (responsible for loading graph related data from the data set). In the following chapters, we will focus on some of the more interesting problems that we came across when developing these services. Specifically, we will talk about working in general with a graph represented in RDF, about calculating the adjacency matrix for the chord diagram and lastly about implementing the full text search on top of the fresnel vocabulary.
 
 \section{Google Maps Visualizer}
 % * <tobiaspotocek@gmail.com> 2016-06-27T13:27:17.697Z:
@@ -131,6 +360,8 @@ This \emph{visualizer} was already implemented in LinkedPipes Visualization, so 
 For these reasons, this chapter will be rather short and it will not go into technical details. Instead, we will rather focus on the comparison between the original \emph{visualizer}, which is part of LinkedPipes Visualization, and our own implementation that utilizes the capabilities of the \emph{application generator}. 
 
 \subsection{Sample data set}
+
+%[cite: http://internal.opendata.cz/sparql?default-graph-uri=&query=%0D%0Aselect+*+where+%7B%0D%0A%0D%0A%3Chttp%3A%2F%2Flinked.opendata.cz%2Fresource%2Fdataset%2Fmzp.cz%2Fippc%3E++%3Fo+%3Fp+%0D%0A%7D+LIMIT+100&format=text%2Fhtml&timeout=0&debug=on]
 
 We will demonstrate the capabilities of this \emph{visualizer} using only a single data set, \textbf{Registry of business subjects in Czech Republic} [cite and use the real name]. As the name suggests, this data set contains business subjects. Each business subject has GPS coordinates of its residence. These entities will be visualized on the map.
 
