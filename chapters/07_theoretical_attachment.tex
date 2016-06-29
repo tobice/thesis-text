@@ -52,12 +52,130 @@ The truth is that it is almost impossible to decide what is the best solution as
 
 One question remains to be answered though. In the first step of our algorithm, why don’t we, instead of fetching all incident edges of a particular node, fetch just those that we need, i. e., between this particular node and the rest of input nodes? We could surely generate such a SPARQL query. We could even possibly generate a query that would return the whole subgraph induced by given input nodes. Unfortunately, our experience shows that such complicated queries, that are dynamically generated from an arbitrary number of input parameters (the input nodes) or use very often \texttt{UNIONs}, do not perform reliably well. That means that they do not finish or take significantly longer than couple of separate SPARQL queries providing the same functionality. For example, we found out that it is usually faster to use two queries to fetch edges between two nodes (one for every direction) instead of one query with a \texttt{UNION}. And that is a very simple example. Another problematic aspect is that sometimes it is necessary to use more advanced SPARQL constructs in such queries. That always creates a risk that such a feature will not be properly supported by the triple store. Therefore we chose to prefer simpler but more reliable SPARQL queries and do any complex calculations by ourselves.
 
+\section{Sampling the graph using Forest Fire algorithm}
 
+When the \emph{searchable} lens (see Subsection \ref{sec:visualizers:chord:fresnel}) is not available or the user has not created any named lists yet, the D3.js Chord Visualizer displays a sample visualization. It takes a random subgraph and shows it to the user. The reason behind this is that we want to give the user at least some idea of what kind of data is in the graph. The size of the sample is at this moment 30 nodes which is, as we already mentioned, roughly the number of nodes that can still be reasonably visualized using the chord diagram. Also if the whole graph is less than 30 nodes (which is not that unimaginable), then the sample visualization actually displays all there is to see and can be published as it is.
 
+Sampling the graph, i. e., choosing the nodes for the sample visualization, turned out to be an interesting problem. Given how the chord diagram works, our main concern was that the sampling method should ideally return nodes that have at least some edges between them. If the returned sample subgraph was an independent subgraph, then the chord diagram would come out completely empty. Our second concern was at least a reasonable speed even for very large graphs as we did not want to keep the user waiting too long.
 
+Our first sampling approach was based on node degrees. We would sort all nodes by their degree (specifically, by the number of outgoing edges) in descendant order and then take the first 30 nodes. The idea behind this was that the nodes with highest degrees were likely to have edges between them. This idea proved correct (at least for our data sets) and we were getting pretty decent results out of it. A distinct advantage was that this sampling method was very easy to implement.
 
+Nevertheless, it had disadvantages. Namely, the following three:
 
+\begin{itemize}
+\item There was a possibility that for certain types of graphs this approach would yield no results. For example, imagine a graph that consists of many completely independent components which have the shape of a “star”, i. e., all nodes in a component are connected only to one central node which consequently has a very high degree. The sampling method would only select those component “centers” which are,  however, completely independent. Even though we did not come across such a graph during our experiments, we think that the sampling method should be able to deal with it.
+\item This method would not scale well for large graphs. Calculating degrees for all nodes in the graph is an expensive operation and it clearly depends on the graph size. We would prefer a sampling method whose speed (complexity) would solely depend on the sample size, i. e., it would perform well even on very large graphs.
+\item Lastly, the generated sample does not resemble the original graph in any way. If it does, then only by accident. We will get to what \emph{resemble} means in this case later.
 
+\end{itemize}
+% [cite - https://cs.stanford.edu/people/jure/pubs/sampling-kdd06.pdf]
 
+Having done some research, we decided to use the Forest Fire sampling graph algorithm as described and evaluated in paper "Sampling from Large Graphs" \cite{leskovec2006sampling}. This paper defines two different measures for sample quality and then describes several sampling methods and compares them. For our purposes, the Forest Fire model seemed to be the best choice. We will first describe the algorithm, show an actual implementation and then we try to explain and justify why we chose this exact algorithm and whether it fulfilled our expectations.
 
+\cite{leskovec2006sampling} is unfortunately a bit inconsistent in defining the algorithm. They give a short overview and then in the appendix they present the following more detailed description:
 
+\begin{displayquote}
+We first choose node v uniformly at random. We then generate a random number $x$ that is geometrically distributed with mean $p_f/(1-p_f)$. Node v selects x out-links incident to nodes that were not yet visited. Let $w_1 , w_2 , \ldots, w_x$ denote the other ends of these selected links. We then apply this step recursively to each of $w_1, w_2, \ldots, w_x$ until enough nodes have been burned. As the process continues, nodes cannot be visited a second time, preventing the construction from cycling. If the fire dies, then we restart it, i.e. select new node $v$ uniformly at random. We call the parameter $p_f$ the forward burning probability.
+\end{displayquote}
+
+Unfortunately, the overview and the description differ in several aspects. Besides, they also refer to another paper "Graphs over Time: Densification Laws, Shrinking Diameters and Possible Explanations" \cite{leskovec2005graphs} which is where this algorithm was originally defined. In this paper, it was used for modeling graph evolution (so instead of reducing graphs it was responsible for generating graphs). The algorithm as described in \cite{leskovec2005graphs} uses binomial distribution and defines two different probabilities of \emph{burning}, one for outgoing nodes and one for incoming.
+
+In our implementation, we decided to go with the binomial distribution as it is easily simulated with simple \emph{coin flipping}. As a matter of fact, this sampling method is nothing else but an enhanced version of Breadth-first search. We start the \emph{fire} from a randomly chosen node and then spread it over its incident edges to its surroundings. The key difference is that when traversing over an edge, we \emph{flip a coin} with certain probability ($p_f$ for outgoing edges, $p_b$ for incoming edges) to determine whether the \emph{fire} should \emph{spread} over this edge to the other node and \emph{burn} it. The algorithm runs until we collect enough nodes. If we run out of nodes to burn (we are in a small connected component), we choose another random node and start over.
+
+Our implementation also takes weights into account. \emph{Heavier} edges have higher chance to \emph{burn}. Specifically, if an edge has the weight of 2, it counts as two edges with weight 1, i. e., we \emph{flip the coin} twice for this particular edge.
+
+As this part is fairly algorithmically interesting (considering the rest of the thesis), we decided to share here a (almost) full implementation of the algorithm. The algorithm parameters are \texttt{graph} (an object representing the graph we are sampling), \texttt{size} (size of our sample), \texttt{useWeights} (if weights should be taken into account as described in the previous paragraph), \texttt{pF} (forward burning probability $p_f$) and \texttt{pB} (backward burning probability $p_b$).
+
+\begin{verbatim}
+val graph, size, useWeights, pF, pB
+
+/** Run the actual Forest Fire algorithm to generate the sample. */
+def makeSample: Seq[String] = {
+  var sample = Set.empty[String]
+  while (sample.size < Math.min(size, graph.nodeCount)) {
+    // Pick a random node and run BFS from it. If the fire "dies out" before burning
+    // enough nodes for our sample, pick another node and run BFS again.
+    val v = randomNode.uri
+    if (!sample.contains(v))
+      sample = burn(sample + v, Seq(v))
+  }
+
+  sample.toSeq
+}
+
+/**
+  * Pick a random node. As the SPARQL support for randomness varies across different engines,
+  * we decided to use a more reliable solution. We generate a random OFFSET between 0 and
+  * graph node count. We return the node at this offset.
+  */
+def randomNode: Node = nodes(evaluation, random.nextInt(graph.nodeCount), 1).get.head
+
+/**
+  * This is the core BFS recursive function that spreads the "fire" from the current
+  * {@code frontier} to the adjacent (unburnt) nodes, creating a new frontier which is
+  * added to the {@code sample}. The function is then recursively called on the new frontier.
+  *
+  * @param sample set of nodes we have collected so far
+  * @param frontier nodes at the "frontier" of the fire from where it spreads to the graph
+  * @return sample with all discovered "burnt" nodes.
+  */
+def burn(sample: Set[String], frontier: Seq[String]): Set[String] = {
+  // As traversing through the graph using SPARQL queries is rather expensive, we need to
+  // avoid unnecessary queries and stop the algorithm as soon as we have enough nodes.
+  if (sample.size >= size)
+    return sample
+
+  // Iterate over all burning nodes at the frontier and spread fire from each node to its
+  // adjacent nodes. We have to make sure to avoid burning the same node twice.
+  val nextFrontier = frontier
+    .flatMap(spread)
+    .filterNot(sample.contains)
+    .distinct
+    .take(size - sample.size) // To make sure that we don't collect more nodes than we need.
+
+  if (nextFrontier.isEmpty)
+    sample
+  else
+    burn(sample ++ nextFrontier, nextFrontier)
+}
+
+/**
+  * Return those adjacent nodes of {@code node} that "caught on fire", i. e. the nodes
+  * that should "burn" and become part of the next frontier. In standard BFS implementation,
+  * this would simply return all adjacent nodes.
+  */
+def spread(node: String): Seq[String] = {
+  incidentEdges(evaluation, node).getOrElse(Seq())
+    .filter(edge => choose(edge, probability(node, edge)))
+    .map(edge => theOther(node, edge))
+}
+
+/** "Flip a coin" with probability {@code p} and return whether {@code edge} should burn */
+def choose(edge: Edge, p: Double): Boolean = {
+  // When weights are enabled, we're simulating multiple coin tosses for a single edge. One
+  // "heads" is enough to get the edge burnt. To determine such probability, we use the
+  // standard school trick. The probability is determined as "1 - (1 - p)^n" where {@code p}
+  // is the probability of "heads" and n is number of tosses (1 or {@code useWeights} when
+  // weights are enabled).
+  random.nextFloat() < 1 - Math.pow(1 - p, if (useWeights) edge.weight else 1)
+}
+
+/** Determine the probability of whether {@code edge} (relatively to {@code node}) will burn */
+def probability(node: String, edge: Edge): Double = {
+  if (direction(node, edge) == Outgoing || !graph.directed) pF else pB
+}
+
+/** Return "the other" node of {@code edge) relatively {@code node} */
+def theOther(node: String, edge: Edge): String = {
+  if (direction(node, edge) == Outgoing) edge.target else edge.source
+}
+
+/** Determine direction of {@code edge} relatively to {@code node} */
+def direction(node: String, edge: Edge): EdgeDirection = {
+  if (edge.source == node) Outgoing else Incoming
+}
+\end{verbatim}
+
+Let us now discuss the properties of this algorithm. Our first concern was that the sampling method should ideally always return something that is visualizable with the chord diagram, i. e., nodes that have some edges between them. The  Forest Fire algorithm is based on traversing over edges. Therefore it is very unlikely that it would return an independent set (unless, of course, there is nothing else in the graph).
+
+We also cared about the performance. Unlike the \emph{highest degree} method, Forest Fire will work even for very large (reasonable) graphs as its complexity depends on the sample size, not on the size of the whole graph. We will only visit (“burn”) as many nodes as we need for our sample. As what “reasonable” means: this algorithm behaves similarly to the one we used for calculating the adjacency matrix. For every node added to our sample, we fetch all its incident edges. That is how BFS works. If the graph is close to a full graph (i. e., each node is connected to almost all other nodes in the graph), then the performance will very likely degrade. As of the actual real life performance, we experienced a significant boost over the “highest degree” method, especially for the large air routes dataset.
