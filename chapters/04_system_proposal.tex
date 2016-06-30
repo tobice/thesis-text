@@ -1,4 +1,5 @@
 \chapter{System proposal}
+\label{chap:system-proposal}
 
 Based on the information we gathered in the previous chapters, we will now propose our own \emph{application generator}. We will give a detailed description and justification of the characteristics and features that our system will have. 
 
@@ -12,14 +13,9 @@ A \emph{data-driven application generator} is a tool that takes an input data se
 In Section \ref{sec:rw:features}, we presented a list features that we focused on when examining individual related tools. This list of features allowed us to compare the tools between each other in a more organized way. This list also contains the exact features that we would like our tool to have. Let us walk through that list again and explain why we think our \emph{application generator} should support these features.
 
 \begin{itemize}
-\item \emph{Linked Data support}. The majority of the examined tools supported only some kind of tabular data. That proved itself to be a very limiting factor. Each tool required the user to somehow provide the missing \emph{semantic} information (e.g. by describing the data using a \emph{schema}) and even then the tool either generated applications that looked all more or less the same (Miga Data Viewer, Citadel on the Move), or required the user to manually build the whole application (Tableau, Avelca, Exhibit). Linked Data carry way more \emph{semantic} information with them and can be \emph{understood} by the \emph{application generator}. That means that the process of generating applications can be automated (the user does not have to explain to the \emph{generator} what the input data mean) and also as the Linked Data can express way more kinds of information, way more types of applications can be generated from that data.
-% * <tobiaspotocek@gmail.com> 2016-06-17T18:59:01.462Z:
-%
-% > Miga Data Viewer
-%
-% Do I need to make a reference back to the Related Work chapter whenever I mention one of the tools?
-%
-% ^.
+\item \emph{Linked Data support}. The majority of the examined tools supported only some kind of tabular data. That proved itself to be a very limiting factor. Each tool required the user to somehow provide the missing \emph{semantic} information (e.g. by describing the data using a \emph{schema}) and even then the tool either generated applications that looked all more or less the same (Miga Data Viewer, Citadel on the Move),
+\todo[color=green!40]{Do I need to make a reference back to the Related Work chapter whenever I mention one of the tools?}
+ or required the user to manually build the whole application (Tableau, Avelca, Exhibit). Linked Data carry way more \emph{semantic} information with them and can be \emph{understood} by the \emph{application generator}. That means that the process of generating applications can be automated (the user does not have to explain to the \emph{generator} what the input data mean) and also as the Linked Data can express way more kinds of information, way more types of applications can be generated from that data.
 \item \emph{Extendability}. All applications generated for example by Miga Data Viewer looked more or less the same. As explained in the previous paragraph, that was caused to a large extent by the characteristics of the tabular data. Linked Data, on the other hand, are way more versatile. Plus we can hardly imagine that we could come up with a universal solution that would work for any type of data. Therefore making the \emph{generator} extendable is a necessity.
 \item \emph{Data analysis}. A \emph{generator} that automatically analyzes the input data and makes decisions based on how it \emph{understands} the data, is definitely a more capable \emph{generator}. This is directly related to the \emph{Linked Data support}. It is the Linked Data that allow such analysis possible (we are not claiming that it is not possible to run some kind of smart analysis on tabular data, but as it would involve lots of guessing, the results might be debatable). Just to repeat what we have already said: such a smart \emph{application generator} can significantly speed up the process of application generation by making it automated (to an extent) and it can support significantly more types of information with significantly more types of applications.
 \item \emph{Online sharing}. Being able to \emph{share} the final generated application with others is the purpose of all these efforts. We aim to use the whole potential of the data around us and keeping our findings just to ourselves would clearly waste that potential.

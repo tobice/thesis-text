@@ -1,4 +1,5 @@
 \chapter{Implementation}
+\label{chap:implementation}
 
 In this chapter, we will go through our \emph{application generator}, explaining in detail how it works and how it is implemented from the inside. We will focus both on the \emph{platform} aspect and the \emph{framework} aspect. As for the \emph{platform} aspect, we will show how a non-developer can use the new \emph{platform} to generate and share Linked Data based applications. As for the \emph{framework} aspect, we will provide a potential developer with a step-by-step guide for how to implement a new \emph{visualizer}. As our generator is built on top of LinkedPipes Visualization, its official name is LinkedPipes Application Generator. For brevity, we will refer to it simply as to (our) \emph{application generator}. 
 
@@ -863,13 +864,10 @@ Using this approach, the \emph{state} hierarchy corresponds to the \emph{module}
 
 A \emph{module} can also contain routes that would be composable in a similar manner. The route structure, however, does not strictly follow the folder structure as the situation with routing is more complicated. For example, a \emph{module} representing a \emph{visualizer} defines two sets of routes: one for the \emph{configurator} interface and one for the \emph{application} interface.
 
-%%% Během psaní té další kapitoly jsem si myslel, že tato kapitola bude potřeba
-%%% pro pochopení. Teď už si nemůžu vzpomenout proč. Tak ji tady zatím 
-%%% nechávám zakomentovanou
+\section{Process of creating a new application from the code perspective}
+\todo[color=green!40]{Během psaní té další kapitoly jsem si poznamenal, že tato kapitola bude potřeba pro pochopení. Teď už si nemůžu vzpomenout proč. Tak ji tady zatím nechávám a pak se kdyžtak smaže. Případně Vás napadne, proč by měla být důležitá.}
 
-%\section{Process of creating a new application from the code perspective}
-
-%Describing the inner mechanics for the whole \emph{application generator} would take us too long and this description is not that important for the reader anyway. We will just walk through the use case scenario again (Subsection \ref{sec:implementation:use-case-scenario}) and describe what is going on under the hood. Among other things, this should help the reader to better understand how integration of new \emph{visualizers} into the \emph{application generator} works.
+Describing the inner mechanics for the whole \emph{application generator} would take us too long and this description is not that important for the reader anyway. We will just walk through the use case scenario again (Subsection \ref{sec:implementation:use-case-scenario}) and describe what is going on under the hood. Among other things, this should help the reader to better understand how integration of new \emph{visualizers} into the \emph{application generator} works.
 
 \section{Integrating a new visualizer}
 \label{sec:implementation:integrating-visualizer}
@@ -1009,7 +1007,7 @@ From now on, all paths will be relative to the \emph{visualizer} module (located
 
 The \emph{configurator} interfaces are part of the main \emph{platform} bundle. That means that while configuring his applications, the user never leaves the \emph{platform} SPA and the transitions between screens are always very smooth as complete page reloads are not necessary.
 
-The integration is implemented through the router. The \emph{configurator} interface of every \emph{visualizer} defines its own routes that are registered to the \emph{platform} routes. Let us start with the main \texttt{Configurator} component defined in \texttt{pages/Configurator.js}.
+The integration is implemented through the router. The \emph{configurator} interface of every \emph{visualizer} defines its own routes that are registered to the \emph{platform} routes. Let us start with the main \texttt{Configurator} component defined in \texttt{pages/Configurator.js} (on Figure \ref{fig:configurator} the blurred out part corresponds to the \texttt{Configurator} component).
 
 \begin{verbatim}
 import React, { Component, PropTypes } from 'react'
@@ -1194,7 +1192,7 @@ We have to make sure to import the correct routes definition and also that the f
 
 In this step, we will link the LDVM \emph{visualizer component} and the \emph{visualizer} plugin together. That is done through the \emph{application generator} user interface (not LinkedPipes Visualization interface this time).
 
-We need to sign in to the \emph{application generator} with an administrator account. We navigate to the \textbf{Dashboard}, select \textbf{Visualizers} and click the button \textbf{Add visualizer}. A dialog window will appear, containing a list of unused available LDVM \emph{visualizer components}. We select \textbf{Graph Visualizer} (which is the name we provided in the RDF definition)  and click \textbf{Add visualizer}. The new \emph{visualizer} should appear in the table. We click its name to open a configuration dialog window (Figure \ref{fig:edit-visualizer}). We ignore the first two fields as they are related to LinkedPipes Visualization. The most important field is the name. We fill in \texttt{graph}. It is crucial that this value corresponds to the \emph{visualizer} module name, the prefix and the \emph{entry point} name. We also recommend filling in the \emph{visualizer} icon for better user experience. Currently, Material Icons \footnote{https://design.google.com/icons/} collection is used. We chose the \texttt{device\_hub} icon.
+We need to sign in to the \emph{application generator} with an administrator account. We navigate to the \textbf{Dashboard}, select \textbf{Visualizers} and click the button \textbf{Add visualizer}. A dialog window will appear, containing a list of unused available LDVM \emph{visualizer components}. We select \textbf{Graph Visualizer} (which is the name we provided in the RDF definition)  and click \textbf{Add visualizer}. The new \emph{visualizer} should appear in the table. We click its name to open a configuration dialog window (Figure \ref{fig:edit-visualizer}). We ignore the first two fields as they are related to LinkedPipes Visualization. The most important field is the name as it determines which bundle to load for the \emph{application} interface and to which \emph{configurator} URL to redirect. We fill in \texttt{graph}. It is crucial that this value corresponds to the \emph{visualizer} module name, the prefix and the \emph{entry point} name. We also recommend filling in the \emph{visualizer} icon for better user experience. Currently, Material Icons \footnote{https://design.google.com/icons/} collection is used. We chose the \texttt{device\_hub} icon.
 
 \begin{figure}
 	\centering
@@ -1778,7 +1776,9 @@ class Configurator extends Component {
 
 That is it. If we now click the \textbf{More} button in the upper right corner of the \emph{configurator} interface and then select \textbf{Edit labels}, a pencil icon will appear next to the graph name (which will be "Unnamed graph" by default). Clicking that icon will open a dialog where we can define a language dependent values for this resource. By clicking \textbf{Save}, we update the \emph{state} and we can immediately see the change on the screen. By clicking \textbf{Save changes}, we save the changes to the server (the custom labels are part of the common configuration which means that it is automatically taken care of). We now have to add the \texttt{EditableLabel} component to the \texttt{Application} component as well to get it working in the \emph{application} interface.
 
-You might have noticed that we have repeated a lot of work for the \emph{application} and \emph{configurator} interface and their components are nearly identical. Firstly, in a more complex \emph{visualizer} those two interfaces would differ significantly more. Secondly, thanks to the React nature it is always very easy to refactor the code, put the shared aspects into a single component and then re-use it.
+\subsection{Final notes}
+
+You might have noticed that we have repeated a lot of work for the \emph{application} and \emph{configurator} interface and their components are nearly identical. Firstly, in a more complex \emph{visualizer} those two interfaces would differ significantly more. Secondly, thanks to the React nature it is always very easy to refactor the code, put the shared aspects into a single component and then re-use it. No doubt that some of these features could have been implemented more simply but you should consider this a starting point from which you can start extending and building your \emph{visualizer}.
 
 The result of our work can be seen on Figure \ref{fig:graph-visualizer}. For more complex examples we suggest the user to check out the full implementations of the two completed visualizers, the D3.js Chord Visualizer and Google Maps Visualizer (both will be explained later).
 

@@ -1,4 +1,5 @@
 \chapter{Visualizers}
+\label{chap:visualizers}
 
 To show the capabilities or our designed \emph{framework} and \emph{platform}, we decided to implement two concrete visualizers: D3.js Chord Visualizer and Google Maps Visualizer.
 
@@ -28,19 +29,9 @@ We used three different data sets to demonstrate the abilities of this \emph{vis
 Database of contracts between private businesses and public government organizations (ministries, towns etc). The chord diagram could be used to visualize economic activity between individual business entities.
 
 \item \textbf{UNHCR Population Statistics – Asylum seekers by months} \cite{asylum-seekers}
+\todo[color=green!40]{Jirka Helmich: kde jste ho vzal, jak jste ho vyrobil, citace ETL... Tobiáš Potoček: Toto zmiňuji o něco dále. Jakým způsobem jsou data sety převedeny do RDF a do RGML vocabulary. Musím to nějakým způsobem zmínit už zde?}
 
 This database contains information about people from all over the world asking for asylum outside of their home countries. The database contains concrete numbers of people coming from one country to another, divided by months. The chord visualizer would be able to nicely visualize the trends of people moving around the globe.
-% * <tobiaspotocek@gmail.com> 2016-06-27T15:29:26.094Z:
-%
-% > globe
-%
-% Jirka Helmich: kde jste ho vzal, jak jste ho vyrobil, citace ETL http://2016.eswc-conferences.org/sites/default/files/papers/Accepted%20Posters%20and%20Demos/ESWC2016_DEMO_Linked_Pipes_ETL.pdf
-%
-% ^ <tobiaspotocek@gmail.com> 2016-06-27T15:29:46.740Z:
-%
-% Toto zmiňuji o něco dále. Jakým způsobem jsou data sety převedeny do RDF a do RGML vocabulary. Musím to nějakým způsobem zmínit už zde?
-%
-% ^.
 
 \item \textbf{OpenFlights – Air routes} \cite{openflights}
 
@@ -356,13 +347,8 @@ The only problem with this approach is that for every search we need to go throu
 
 \section{Google Maps Visualizer}
 \label{sec:visualizers:google-maps}
-% * <tobiaspotocek@gmail.com> 2016-06-27T13:27:17.697Z:
-%
-% > Google Maps Visualizer}
-%
-% Visualizer ještě projde nějakým tím lehkým faceliftingem, tak teprve pak doplním obrázky do kapitoly.
-%
-% ^.
+\todo[color=green!40]{Visualizer ještě projde nějakým tím lehkým faceliftingem, tak teprve pak doplním obrázky do kapitoly.}
+
 Google Maps Visualizer focuses on visualizing geospatial information. It shows RDF resources containing GPS coordinates on a map in a form of markers. If the data set supports it, it allows the user to filter the resources.
 
 This \emph{visualizer} was already implemented in LinkedPipes Visualization, so we were able to re-use the LDVM \emph{visualizer component} definition and also all the backend code responsible for extracting RDF data from the \emph{pipeline evaluation}. We only had to implement the frontend part, specifically the \emph{configurator} and \emph{application} interfaces.

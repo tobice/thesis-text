@@ -1,4 +1,5 @@
 \chapter{LinkedPipes Visualization}
+\label{chap:linkedpipes-visualization}
 
 We already gave a brief description of LinkedPipes Visualization \cite{linked_pipes_visualization} at the end of the previous chapter. The authors state: \emph{"You point LinkedPipes Visualization to the data and it tells you what it sees in it. This way, you get to a visualization in just a few clicks."}  \cite{linked_pipes_visualization}. We will use this tool as a base for our \emph{application generator}. We will turn \emph{visualizations} into configurable interactive \emph{applications} which will push the whole concept to the next level. Before we get to how we want to achieve that and especially why we decided to use LinkedPipes Visualization in the first place, we will give the reader a deeper and more profound description of this tool. This knowledge will be required in the later parts of this text.
 
@@ -130,14 +131,9 @@ The situation is very similar for \emph{visualizers} as well. Each visualizer is
 \subsection{Visualizers}
 \label{sec:linkedpipes:visualizers}
 
-As already explained, a \emph{visualizer} is a standalone SPA that lives on a unique URL within LinkedPipes Visualization web application. Part of this URL is a parameter which specifies the \emph{pipeline} output that should be visualized using this \emph{visualizer}. The output (or more correctly the \emph{pipeline evaluation}) is a named graph stored in the private triplestore. Each \emph{pipeline evaluation} is also represented by a record in the H2 database and this record contains the graph name. The numeric \texttt{id} of this record is passed through the aforementioned URL parameter. We can say, in this sense, that a \emph{visualizer} is a function that takes the \emph{pipeline evaluation} \texttt{id} as an argument and returns the actual \emph{visualization}.
-% * <tobiaspotocek@gmail.com> 2016-06-17T14:01:13.066Z:
-%
-% > pipeline evaluation
-%
-% I'm not sure about the correct naming. The visualizer visualizes pipeline evaluation results but what is passed through the parameter is the pipeline evaluation id. That is however an implementation detail...
-%
-% ^.
+As already explained, a \emph{visualizer} is a standalone SPA that lives on a unique URL within LinkedPipes Visualization web application. Part of this URL is a parameter which specifies the \emph{pipeline} output that should be visualized using this \emph{visualizer}. The output (or more correctly the \emph{pipeline evaluation})
+\todo[color=green!40]{I'm not sure about the correct naming. The visualizer actually visualizes pipeline evaluation results but what is passed through the parameter is the pipeline evaluation id (and the latest evaluation result is selected). That is however an implementation detail...}
+is a named graph stored in the private triplestore. Each \emph{pipeline evaluation} is also represented by a record in the H2 database and this record contains the graph name. The numeric \texttt{id} of this record is passed through the aforementioned URL parameter. We can say, in this sense, that a \emph{visualizer} is a function that takes the \emph{pipeline evaluation} \texttt{id} as an argument and returns the actual \emph{visualization}.
 
 A typical workflow of a \emph{visualizer} is that once the SPA is loaded, it starts making asynchronous HTTP requests to the backend to fetch the data that should be visualized. The requests are translated by controllers into API calls to the \emph{Model} layer.  The \emph{Model} layer converts API calls into SPARQL queries that fetch data from the named graph which is stored in the private triplestore and contains the \emph{pipeline evaluation}. The returned RDF data are extracted into a representation of native Scala objects and eventually converted to JSON and sent back to the client where they are visualized for the user (see Figure \ref{fig:linked-pipes-visualization-architecture}).
 
