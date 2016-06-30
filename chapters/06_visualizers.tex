@@ -343,10 +343,27 @@ The chord \emph{visualizer} also offers improved ways of sharing the output via 
 % [cite: https://d3js.org/]
 In frontend, the actual chord visualization is powered by the D3.js library. This library was not exactly designed with React in mind and had to be somehow integrated into the application. Besides that, the frontend is simply following concepts that have been described before (Section \ref{sec:implementation:integrating-visualizer}).
 
-% TODO: reformulate 
-What we have done in backend was more interesting. We implemented two brand new backend services, \texttt{FresnelService} (responsible for extracting FRESNEL \emph{lenses} and searching the data set) and \texttt{RgmlService} (responsible for loading graph related data from the data set). In the following chapters, we will focus on some of the more interesting problems that we came across when developing these services. Specifically, we will talk about working in general with a graph represented in RDF, about calculating the adjacency matrix for the chord diagram and lastly about implementing the full text search on top of the fresnel vocabulary.
+In backend, we had to add support for two new vocabularies, FRESNEL and RGML, and implement all the API methods required by the \emph{visualizer}. That involved couple of more interesting problems. The D3.js library renders the chord diagram from an adjacency matrix. Therefore we had to develop an algorithm which calculates such a matrix from the subgraph defined by the nodes in the selected \emph{named list}. Also in case the \emph{searchable lens} is not available or the user has not created any \emph{names lists} yet, the \emph{visualizer} displays a random sample visualization of the graph data. We had to develop an algorithm which is able to produce such a graph sample. Both of these algorithms are described and analyzed in Chapter \ref{chap:theoretical-attachment}.
+
+Here we will just briefly describe how we implement the full text search through the graph node properties defined by the \emph{searchable lens}.
+
+\subsection{Fulltext search through the FRESNEL lens}
+\label{sec:visualizers:chord:search}
+
+We have already described how the FRESNEL \emph{searchable lens} works, how it can be used to mark certain node properties as searchable and how the search is integrated into the user interface. The last missing piece is how the search is implemented on the server side.
+
+What we wanted to achieve was a simple substring based fulltext search. If the user searches a needle, every resource of which at least one of the searchable properties contains the needle, should be returned. We decided that any more complex features (like ranking, i. e., returning the best match first) are not essential and our use cases did not prove this otherwise. The only feature that we came to the conclusion that the search should support, was case insensitivity (most Internet users nowadays expect that they will get the same results for searching “prague” and “Prague”).
+
+Unfortunately, fulltext search is not something that SPARQL excels at. Just like in many other cases, there exist custom extensions which are supported only by certain triple stores. For example, there is IndexingSail \footnote{https://dev.opensahara.com/projects/useekm/wiki/IndexingSail} which works as an extra layer over triplestores providing various extra functionality, including fulltext search. However, it did not seem like a good solution to make our whole \emph{application generator} dependent on this kind of software just because one of the \emph{visualizers} needs it.  In general, finding a standardized, universally supported and fast solution turned out to be a challenge.
+
+For these reasons, we decided to leave the actual searching to our own backend code. We use a specialized SPARQL query that returns all resources as “viewed through the given lense”. Specifically, it returns all resources of the type defined by the lens’ domain (\texttt{rgml:Node} in this case) and it selects all properties defined by the \emph{lens}. Note that this mechanism is universal and can be used for any FRESNEL \emph{lens}, not just the \emph{searchable} one. That means it is completely reusable.
+
+When the resources are fetched, we simply iterate through all of them and for each one we try to find the needle in its properties. Before the actual substring search is performed, we convert both the needle and the property value to uppercase which makes the search case insensitive. This approach proved itself to be pretty usable and sufficiently fast when working with all our data sets.
+
+The only problem with this approach is that for every search we need to go through the whole graph again. The search complexity is always linear with the size of the whole graph. To fix this problem, we would need to come up with a completely different solution, e. g., introduce some kind of indexing. For our current purposes it did not seem necessary.
 
 \section{Google Maps Visualizer}
+\label{sec:visualizers:google-maps}
 % * <tobiaspotocek@gmail.com> 2016-06-27T13:27:17.697Z:
 %
 % > Google Maps Visualizer}

@@ -94,6 +94,7 @@ What is also clear is that none of these steps require any advanced programming 
 
 
 \subsection{Users}
+\label{sec:implementation:overview:users}
 
 Everyone who wants to use our \emph{application generator} needs to create an account first. At this moment, a user can either create a standard local account protected by a password or he can log in with his Google account. No other providers are currently supported. As the user works with the \emph{application generator}, all his applications, data sources and discoveries are linked to his account and no one else can access it. E.g. an application can be configured only by its owner and before it is published, only the owner can view it.
 
@@ -156,6 +157,7 @@ When the user is happy with how the application looks, he can publish it by hitt
 Some \emph{visualizers} offer the option to publish the application in an embed mode. That means that the application's interface is adapted so that it can be inserted for example into an external online article. The interface is usually significantly reduced and stripped from unimportant  control elements. This functionality is not considered common for all \emph{visualizers}  as each \emph{visualizer} can approach it differently. For example, the D3.js Chord Visualizer we used in this section allows the user to create multiple chord diagrams within a single application. Each of these diagrams can be exported separately in the embed mode (a unique URL is generated for each diagram under which the diagram is accessible). See Figure \ref{fig:scenario-10-embed-application}. Clearly, this functionality is specific for D3.js Chord Visualizer.
 
 \section{General architecture}
+\label{sec:implementation:general-architecture}
 
 We decided that we build our \emph{application generator} on top of LinkedPipes Visualization (Section \ref{sec:system_proposal:integration}). We already described the architecture of this tool (Section \ref{sec:linkedpipes:architecture} and especially Figure \ref{fig:linked-pipes-visualization-architecture}). We will now explain how we integrated the \emph{application generator} into LinkedPipes Visualization. You will get the overall idea by referring to Figure \ref{fig:application-generator-architecture}.
 
@@ -702,6 +704,7 @@ class UserView extends React.Component {
 If this component does not receive a \texttt{User} instance through the \texttt{props}, a warning is thrown.
 
 \section{Frontend framework architecture}
+\label{sec:implementation:frontend-architecture}
 
 In this section, we will give the reader a brief overview of the  overall structure of the frontend code and we will also explain several design ideas that are specific to our code. In the previous section (Section \ref{sec:implementation:frontend-development-stack}) we described several tools that together make up the development stack that we use. Clearly, there is no monolithic framework. Each tool solves only one problem and even though they have been all designed to work well together and complement each other, there is missing an overall architecture and design patterns for large scale applications (something that a well-established monolithic framework usually offers).
 
@@ -876,6 +879,7 @@ Now that the reader is equipped with all the necessary knowledge, we will walk h
 Before we start, we would like to make one remark. We will walk the user through the whole process and along the way we will touch parts of the software that were not designed and developed by us but by the authors of LinkedPipes Visualization \cite{linked_pipes_visualization}. We do not want to take credit for those parts. Specifically, those are the parts shared with LinkedPipes Visualization, which means everything related to the LDVM implementation and low-level work with RDF data.
 
 \subsection{LDVM component}
+\label{sec:implementation:integrating-visualizer:ldvm}
 
 We start be defining the LDVM \emph{visualizer component} using the \texttt{ldvm} vocabulary. As the whole definition would be pretty long, we will walk through it statement by statement and provide necessary explanations. Let us start with couple of prefixes for vocabularies that we are going to use.
 
