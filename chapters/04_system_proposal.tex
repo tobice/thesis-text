@@ -13,11 +13,9 @@ A \emph{data-driven application generator} is a tool that takes an input data se
 In Section \ref{sec:rw:features}, we presented a list features that we focused on when examining individual related tools. This list of features allowed us to compare the tools between each other in a more organized way. This list also contains the exact features that we would like our tool to have. Let us walk through that list again and explain why we think our \emph{application generator} should support these features.
 
 \begin{itemize}
-\item \emph{Linked Data support}. The majority of the examined tools supported only some kind of tabular data. That proved itself to be a very limiting factor. Each tool required the user to somehow provide the missing \emph{semantic} information (e.g. by describing the data using a \emph{schema}) and even then the tool either generated applications that looked all more or less the same (Miga Data Viewer, Citadel on the Move),
-\todo[color=green!40]{Do I need to make a reference back to the Related Work chapter whenever I mention one of the tools?}
- or required the user to manually build the whole application (Tableau, Avelca, Exhibit). Linked Data carry way more \emph{semantic} information with them and can be \emph{understood} by the \emph{application generator}. That means that the process of generating applications can be automated (the user does not have to explain to the \emph{generator} what the input data mean) and also as the Linked Data can express way more kinds of information, way more types of applications can be generated from that data.
-\item \emph{Extendability}. All applications generated for example by Miga Data Viewer looked more or less the same. As explained in the previous paragraph, that was caused to a large extent by the characteristics of the tabular data. Linked Data, on the other hand, are way more versatile. Plus we can hardly imagine that we could come up with a universal solution that would work for any type of data. Therefore making the \emph{generator} extendable is a necessity.
-\item \emph{Data analysis}. A \emph{generator} that automatically analyzes the input data and makes decisions based on how it \emph{understands} the data, is definitely a more capable \emph{generator}. This is directly related to the \emph{Linked Data support}. It is the Linked Data that allow such analysis possible (we are not claiming that it is not possible to run some kind of smart analysis on tabular data, but as it would involve lots of guessing, the results might be debatable). Just to repeat what we have already said: such a smart \emph{application generator} can significantly speed up the process of application generation by making it automated (to an extent) and it can support significantly more types of information with significantly more types of applications.
+\item \emph{Linked Data support}. The majority of the examined tools supported only some kind of tabular data. That proved itself to be a very limiting factor. Each tool required the user to somehow provide the missing \emph{semantic} information (e.g. by describing the data using a \emph{schema}) and even then the tool either generated applications that looked all more or less the same (Miga Data Viewer, Citadel on the Move), or required the user to manually build the whole application (Tableau, Avelca, Exhibit). Linked Data carry way more \emph{semantic} information with them and can be \emph{understood} by the \emph{application generator}. That means that the process of generating applications can be automated (the user does not have to explain to the \emph{generator} what the input data mean) and also as the Linked Data can express way more kinds of information, way more types of applications can be generated from that data.
+\item \emph{Extendability}. All applications generated for example by Miga Data Viewer looked more or less the same.  This is caused to a large extent by the characteristics of the tabular data. Linked Data, on the other hand, are way more versatile, potentially allowing way more versatile applications. Also we can hardly imagine that we could come up with a universal solution that would work for any type of data. Therefore making the \emph{generator} extendable with new types of applications for different types of data is a necessity.
+\item \emph{Data analysis}. A \emph{generator} that automatically analyzes the input data and makes decisions based on how it \emph{understands} the data, is definitely a more capable \emph{generator}. This is directly related to the \emph{Linked Data support}. It is the Linked Data that allow such analysis possible (we are not claiming that it is not possible to run some kind of smart analysis on tabular data, but as it would involve lots of guessing, the results might be debatable). Just to repeat what we have already said: such a smart \emph{application generator} can significantly speed up the process of application generation by making it \emph{semi-automatic} and it can support significantly more types of information with significantly more types of applications.
 \item \emph{Online sharing}. Being able to \emph{share} the final generated application with others is the purpose of all these efforts. We aim to use the whole potential of the data around us and keeping our findings just to ourselves would clearly waste that potential.
 \item \emph{Non-developers friendly}. Miga Data Viewer or Exhibit proved that even tools that require their users to have some programming skills, can help a lot by reducing the amount of work necessary for generating an application. Also these tools typically offered a high level of flexibility. Nevertheless, most of our potential users have zero developer skills and we would like to allow these users to generate applications using our \emph{application generator}.
 \item \emph{Platform}. Tools in the form of an online platform (Avelca, Tableau, Citadel on the Move, Payola) clearly make the whole agenda around applications (creating, managing, sharing) simpler for the user. We want our tool to work as a platform as well.
@@ -32,9 +30,9 @@ We proposed that some kind of \emph{data analysis} should be a part of our \emph
 We believe that it is not always necessary to reinvent what has been already invented and that we would rather give ourselves a head start by re-using an existing solution. For various reasons, we decided to integrate our \emph{application generator} into LinkedPipes Visualization. Let us now walk through those reasons.
 
 \begin{enumerate}
-\item Through LinkedPipes Visualization we get a strong analytical and visualization framework that we can immediately use. We will utilize the \emph{discovery} algorithm which will automatically tell use how the input data can be visualized, i.e., what kinds of applications can be generated.
+\item Through LinkedPipes Visualization we get a strong analytical framework that we can immediately use. We will utilize the \emph{discovery} algorithm which will automatically tell use how the input data can be visualized, i.e., what kinds of applications can be generated.
 \item We will greatly benefit from the LinkedPipes Visualization implementation of LVDM. Firstly, it will make our generator easily extendable to support new types of data through new LDVM components. Secondly, any LDVM component following the format defined by this implementation will automatically work in our generator as well (with the limitations explained in Section \ref{sec:linkedpipes:component_registration}).
-\item On a programming level, LinkedPipes Visualization already contains lots of ready-to-use solutions for working with RDF data (querying Virtuoso triplestore, converting RDF to JSON etc.). It also offers a programmatical API providing access to the \emph{discovery} algorithm (launching, accessing results etc).
+\item On a programming level, LinkedPipes Visualization already contains lots of ready-to-use solutions for working with RDF data (querying Virtuoso triplestore, converting RDF to JSON etc.). It also offers a programmatical API providing a direct access to the \emph{discovery} algorithm (launching, accessing results etc).
 \item Finally, we admit that what played an important role in our decision process was the fact that we had direct personal access to the authors of LinkedPipes Visualization. That significantly sped up our work.
 
 \end{enumerate}
@@ -82,4 +80,148 @@ Naturally, thanks to the framework, the user will not have to deal with any of t
 
 To showcase the capabilities of our \emph{platform} and \emph{framework}, we will implement and present to the user two \emph{visualizers}. The first one will be a brand new D3.js Chord Visualizer based, as the name suggest, on the D3.js chord layout, capable of visualizing directed weighted graphs. The other one will be based on the existing LinkedPipes Visualization map visualizer. The RDF definition will remain the same, we will just re-implement the \emph{visualizer} for our \emph{application generator}.
 
-	
+\section{Architecture analysis}
+\label{sec:system-proposal:architecture-analysis}
+
+We decided that we would build our \emph{application generator} on top of LinkedPipes Visualization (Section \ref{sec:system_proposal:integration}). We already described the architecture of this tool (Section \ref{sec:linkedpipes:architecture} and especially Figure \ref{fig:linked-pipes-visualization-architecture}). We will now describe the way the \emph{application generator} is integrated into LinkedPipes Visualization, including the overall software architecture.
+
+\subsection{Integration into LinkedPipes Visualization}
+
+There were two basic ways how we could approach the integration:
+
+\begin{enumerate}
+\item Make the \emph{application generator} a part of LinkedPipes Visualization, i.e., directly integrate the \emph{application generator} into the codebase.
+\item Develop the \emph{application generator} as a separate application and use an instance of LinkedPipes Visualization as a service providing required functionality via a remote (HTTP) API.
+\end{enumerate}
+
+As of the second approach, the architecture of LinkedPipes Visualization (Figure \ref{fig:linked-pipes-visualization-architecture}) would be well suited for it. The backend of LinkedPipes Visualization exposes its functionality (including the LDVM implementation) to the frontend via a public HTTP API. We could immediately use that API in our \emph{application generator}. In general, this would be the cleanest approach from the software architectonic perspective.
+
+Unfortunately, it turned out that if we used LinkedPipes Visualization as a separate service, we could not avoid changes in the codebase of LinkedPipes Visualization. Consider, for example, how a \emph{visualizer} works (see Subsection \ref{sec:linkedpipes:visualizers} for the complete workflow). An important part of a \emph{visualizer's} job is to take the \emph{pipeline} output (which is in RDF) and convert it into a format suitable for the visualization itself (typically JSON). This conversion routine would clearly differ for each \emph{visualizer} as each \emph{visualizer} would be dealing with different kind of data. In LinkedPipes Visualization, this happens on the backend, i.e., each \emph{visualizer} exposes its own public API providing the data extracted from RDF in JSON. The consequence for us is pretty clear: if we wanted to extend our \emph{application generator} to support another type of RDF data, i.e., add another \emph{visualizer}, we would need to extend LinkedPipes Visualization as well. 
+
+A possible solution to this problem would be to alter the public API of LinkedPipes Visualization to return the original RDF data instead and move this custom \emph{visualizer} functionality (we referred to it as to a \emph{plugin}, see Subsection \ref{sec:linkedpipes:ldvm-implementation:component-representation}) to the \emph{application generator}. Working with RDF, however, is a bit complicated and the codebase of LinkedPipes Visualization already contains several ready-to-use solutions that, among other things, significantly speed up the process of implementing support of new types of RDF data (new vocabularies). We could surely use those solutions in our \emph{application generator} but to make them available there, we would need to transfer them somehow (i.e., duplicate) or come up with a way how to share them between the \emph{application generator} and LinkedPipes Visualization.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_application_generator_architecture.png}
+	\caption{Architecture of the \emph{application generator}. Blocks with solid borders are part of the original LinkedPipes Visualization, blocks with dashed borders are newly implemented parts of the \emph{application generator}. The backend follows the standard MVC architecture.} 
+	\label{fig:proposed-application-generator-architecture}
+\end{figure}
+
+Coming to this realization, we decided to take the path of least resistance and integrate our \emph{application generator} directly into the LinkedPipes Visualization codebase, just as the fist approach suggests. As the result, we could immediately start utilizing the existing patterns and tools for working with RDF. 
+
+Nevertheless, even though both tools live in the same code base, we made sure to keep them as separated as possible. So if we decided in the future to separate both tools or for example replace the underlying LDVM implementation, it should be rather straightforward. How this is achieved can be seen on Figure \ref{fig:proposed-application-generator-architecture}. We will walk through the individual layers of integration in the following subsections.
+
+An important consequence of this unification is that the LDVM implementation instance is shared among the \emph{application generator} and LinkedPipes Visualization. That means that they both use the same set of registered LDVM \emph{components}. We benefit from this as well to an extent as we can utilize existing implemented user interfaces handling some of the LDVM related tasks (e.g. new LDVM \emph{components} are registered to the \emph{generator} through the LinkedPipes Visualization user interface).
+
+\subsection{Frontend}
+
+In LinkedPipes Visualization, the frontend is an SPA living in the client web browser. Its responsibility is to render the user interface which communicates with the backend using the public remote API via HTTP. The frontend part does involve some more complex logic, e.g. necessary for rendering the visualizations themselves, but in general all core business logic (anything related to RDF, the \emph{discovery}, any data transformation or filtering) is almost exclusively dealt with in the backend and the frontend merely serves as the way to communicate with the user. The \emph{application generator} frontend follows this approach as well.
+
+There was an option to re-use the original frontend and just extend it with the functionality that we needed. It already contained some work that we could at first glance use (for example frontend parts of existing \emph{visualizer} plugins, i.e., the actual visualizations). Unfortunately, couple of problems prevented us from doing so. 
+
+\begin{enumerate}
+\item The frontend was created just to showcase the capabilities of the underlying LVDM implementation. For this reason, the overall code quality was not  a number one priority. The code was not structured well enough so that we could start extending it. In general, it would take us lots of time to get familiar with it. 
+\item The code was not written with certain features (like for example user support or the aforementioned general extendability) in mind.
+\item Our \emph{visualizers} (with the separated \emph{configurator} and \emph{application} interfaces) work very differently compared to the \emph{visualizers} of LinkedPipes Visualization.
+
+\end{enumerate}
+Having these three reasons in mind, we came to the conclusion that we would have to rewrite a major portion of the original code anyway and therefore we decided to start from the scratch. As a result, there are two existing user interfaces that live within the same application next to each other, available from two different starting URLs.
+
+The frontend itself can be viewed as a standalone application that has its own inner architecture. It is responsible for rendering the user interface which involves many not so simple tasks, including transitions between individual screen, processing user input, processing backend responses (including the the failed ones) and of course visualizations themselves. The architecture is also important because it defines the way the frontend can be extended with new \emph{visualizers}. 
+
+We cannot give any more details about how the frontend is structured as we used a rather uncommon (or perhaps new) development stack with a rather uncommon architecture. We will provide all the necessary knowledge and explanation in the implementation chapter.
+
+\subsection{Backend}
+
+The backend of LinkedPipes Visualization is a standard MVC application, consisting of a \emph{Model} layer, containing various repositories and services that handle the business logic, and \emph{Controllers}, defining the public remote API. The integration of our \emph{application generator} into LinkedPipes Visualization is a matter of adding new controllers, repositories and services to the codebase that will cover the new functionality (Figure~\ref{fig:proposed-application-generator-architecture}).
+
+The vast majority of controllers in both LinkedPipes Visualization and the \emph{application generator} handle the asynchronous HTTP requests coming from the frontend. The role of a controller in this typical case is just to translate the HTTP request into an API call to the \emph{Model} layer and send the response back. All controllers together define a public remote API interface.
+
+Even though we could re-use some of the API methods available from the LinkedPipes Visualization controllers (e.g. those for controlling the \emph{discovery} algorithm), we decided not to do that to avoid hidden dependencies between the frontend and the backend. Dependencies within the  codebase (for example between the \emph{Controller} layer and the \emph{Model} layer) are easy to discover using a static program analysis. Simply put, the whole backend is one piece of code and so if there is a broken dependency, the code will not compile. That is not true for the remote API. Therefore the \emph{application generator} frontend strictly uses only those remote API methods that are handled by the \emph{application generator} controllers (as seen on Figure \ref{fig:proposed-application-generator-architecture}). 
+
+The \emph{Model} layer consists of various repositories and services that handle the business logic. Each repository (or a service) covers a limited area of functionality and exposes a clearly defined public API. Whereas repositories usually work on a lower level, providing for example basic access to RDBMS, services involve a higher level logic.
+
+The new services and repositories that are part of the \emph{application generator} are either completely independent (e.g. service handling the users) or create a one-way dependency on some of the existing repositories or services from LinkedPipes Visualization (this can also be seen on Figure \ref{fig:proposed-application-generator-architecture}). For example, there is a \texttt{PipelineDiscoveryRepository} in the original LinkedPipes Visualization codebase that can return a list of executed LDVM \emph{discoveries}. This repository is, however, completely unaware of users. So we implemented our own custom service, \texttt{DiscoveriesService}, that utilizes the aforementioned repository and adds all the extra functionality related to users (e.g. it can return list of executed \emph{discoveries} by a given user).
+
+Figure \ref{fig:proposed-application-generator-architecture} might suggest that our extension of the \emph{Model} layer directly communicates with RDBMS. Strictly speaking, that is not true because we are utilizing some low level services to access the database and those services could still be considered part of the \emph{Model} layer.
+
+\subsection{Separation from LinkedPipes Visualization}
+
+What is important is that all \emph{application generator} related functionality, even though within the same codebase, is kept separated. The frontend communicates only with our controllers. The backend extension is in a form of a compact layer over the original codebase, consisting of custom controllers, services and repositories. The dependencies on the original codebase, as shown on Figure~\ref{fig:proposed-application-generator-architecture}, are always in a form of utilizing the internal API of LinkedPipes Visualization. It is easy to draw the line where LinkedPipes Visualization ends and our \emph{application generator} begins. Only in rare cases, we re-use some low-level utilities from the original codebase.
+
+\subsection{Extendability by new visualizers}
+
+Let us now talk about one distinct feature that the software architecture needs to count with: extendability. In this case, it specifically means the ability to be extended with new \emph{visualizers}. As we have described, a \emph{visualizer} (Subsection \ref{sec:linkedpipes:visualizers}) consists of an RDF definition of the LDVM \emph{component} and a \emph{plugin}. The RDF definition needs to be simply imported to the LDVM instance so that the \emph{discovery} algorithm can start using it. The situation is more complicated with the \emph{plugin} as it needs to be properly integrated both in the backend and in the frontend. How this is done can be seen on Figure \ref{fig:sample-visualizer-structure}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_chord_visualizer_structure.png}
+	\caption{Architecture of a sample \emph{visualizer}, D3.js Chord Visualizer, showing how it is integrated into the \emph{application generator}. The blocks with dashed borders represent newly implemented components. The label underneath each connections suggests the data format of that particular API.} 
+	\label{fig:sample-visualizer-structure}
+\end{figure}
+
+The backend part is typically responsible for converting the data from RDF to a format suitable for the visualizer frontend. This functionality is exposed via a remote API that the frontend can utilize. What is important is that individual API methods are rather independent. As long as we keep some kind of system in the API method URLs to avoid conflicts (e.g. define a unique URL prefix for each \emph{visualizer}), we can almost indefinitely extend the API with new methods by adding new controllers and extending the old ones. Obviously, the actual business logic is handled in the \emph{Model} layer but that can be extended in similar manner with new repositories and services.
+
+As we are specifically talking about the backed part of a new \emph{visualizer}, this extension would typically involve a new service adding support for a new RDF vocabulary.  Such a service would have a fairly simple structure as it would most likely just expose methods that take input RDF data as an argument and return the data represented in native domain objects (that will be eventually converted to JSON and sent to the frontend). Given this structure, we can easily add as many similar services to support as many vocabularies as we need without worrying about any conflicts. The extendability is rather straightforward.
+
+On the other hand, each such service would heavily depend on the internal RDF infrastructure of LinkedPipes Visualization. This infrastructure not only provides among other things services to access the triplestore but also defines various conventions for example for how a SPARQL should be expressed in the native code. This is the only case when our code significantly overlaps with the original LinkedPipes Visualization code.
+
+The frontend part contains the \emph{configurator} and \emph{application} interfaces. They both need to be integrated into the rest of the frontend which is a rather complex task. Firstly, there must be a mechanism that based on the application type (i.e., the LDVM \emph{visualizer} component) dynamically selects the correct \emph{configurator} (or \emph{application}) interface and shows it to the user. Secondly, not only does the (let us say) \emph{configurator} interface have to be able to communicate with the rest of the frontend, but it also should  look like it is a part of it, i.e., it should fit in and follow the recommended visual design guidelines. Therefore the integration in this case is significantly more complicated than adding a new independent service to the \emph{Model} layer.
+
+Unfortunately, the integration process heavily depends on the custom chosen development stack that we used for the frontend. Without explaining the basic principles of how the frontend is structured, we are not able to provide any general information about how this works. This, including the internal frontend API, will be properly explained in the next implementation chapter.
+
+\subsection{Steps to implement a new visualizer}
+
+Let us summarize the previous subsection by simply listing the base tasks necessary to integrate a new \emph{visualizer} to the \emph{application generator}. Note that the tasks are not numbered. Clearly, one has to start with defining the RDF data format (i.e., how the input data for the \emph{visualizer} should look like) and with designing the API. Once this is done, the order in which the following tasks are carried out is irrelevant.
+
+\begin{itemize}
+\item Define and add the LDVM \emph{visualizer} component so that the \emph{discovery} algorithm can use it.
+\item Implement necessary services in the \emph{Model} layer that extract RDF data in custom vocabularies and convert them to native objects.
+\item Implement the \emph{visualizer} controller that utilizes the services and exposes their functionality via a public remote API.
+\item Implement the \emph{configurator} and \emph{application} user interfaces and integrate them into the frontend. 
+\end{itemize}
+
+\subsection{API design}
+
+The whole application consists of separate layers (Figure \ref{fig:proposed-application-generator-architecture}). On the top level the application is split into the frontend and the backend. The backend is then organized into layers as well, according to the MVC architecture. Finally, the \emph{Model} layer typically consists of multiple levels of abstraction for each problem it covers (repositories, services etc). Each layer defines a public API using which it can be utilized by higher layers.
+
+Let us talk for now about the public remote HTTP API that is exposed by the backend, i.e., the API that is used for the communication between the frontend and the backend. The API consists of many smaller APIs that each covers a limited area of functionality and is represented by a single controller. All the controllers together cover everything that is required by the frontend, i.e., the complete functionality of the \emph{application generator} (remember that on this level, we are not utilizing anything from the original API of LinkedPipes Visualization at all). Let us now walk through the base individual APIs which will give the reader an idea of what the \emph{application generator} do and how it works.
+
+\begin{itemize}
+\item \textbf{Application API} -- returns a generated application and its configuration.
+\item \textbf{Authentication API} -- authentication and registration of users.
+\item \textbf{Catalog API} -- browsing through the catalog of published applications.
+\item \textbf{Common Visualizer API} -- common functionality for all visualizers (e.g. dereferencing labels).
+\item \textbf{Create Application API} -- the process of creating an application which includes browsing data sources, running the \emph{discovery}, executing selected \emph{pipelines}.
+\item \textbf{Dashboard API} -- browsing and basic management of the user content, which includes applications, data sources and \emph{discoveries}.
+\item \textbf{Manage Application API} -- updating, deleting and configuring a generated application.
+\todo[color=green!40]{Jednotlivá API zjevně ve většině případů odpovídají jednotlivým obrazovkám uživatelského rozhraní. Vzniklo to organanicky, prostě jak jsem experimentoval a postupně vyvíjel frontend, tak jsem si tímto způsobem dopisoval backendové API a úplně nad tím nepřemýšlel. Je mi jasné, že ze SWI hlediska není ideální vázat API tímto způsobem na uživatelské rozhraní. Reálně nicméně je ten backend dost jednoduchý a v podstatě tam k problémům, konkrétně duplikaci funkcionality pro různé obrazovky, nedochází, resp. každá ta obrazovka má stejně ty požadavky trochu jiné, takže jsem definoval API metody na míru tomu, co jsem potřeboval. Roli hrálo i to, že v některých případech je nutné, aby byl přihlášen uživatel, což se právě typicky lišilo obrazovka od obrazovky, a authorizaci mám vyřešenou na úrovni celého controlleru, tj. jakýsi návrhový záměr tam je. Mám to nějak řešit, tj. ještě přepsat kód, nebo udělat v textu nějakou poznámku, že jsem si toho vědom, nebo to můžu prostě nechat být?}
+\end{itemize}
+
+These APIs cover the general agenda of the \emph{application generator}. Then each \emph{visualizer} defines its own API (its own controller, see Figure \ref{fig:sample-visualizer-structure}) that covers only the functionality of this particular \emph{visualizer} (note that this is rather a convention). Also note that some of the APIs are completely public (e.g the \textbf{Catalog API}), most of them, however, require the user to be authenticated.
+
+Let us now  have a look at a short scenario showing how the API works. In this scenario, the user will initiate the LDVM \emph{discovery} algorithm and then watch the progress on the screen.
+
+In the preceding step, the user selected the data sources he is interested in. Now he clicks the "Run Discovery" button to initialize the \emph{discovery}. The whole process can be seen on Figure \ref{fig:api-run-discovery-diagram}. The frontend makes an asynchronous HTTP request to the backend. The request is first processed on the \emph{Controller} layer which, among other things, verifies that the user is properly authenticated. The request is then passed on to the \emph{Model} layer where the \texttt{Pipeline Service} starts the actual \emph{discovery} of selected data sources. The \emph{discovery} might take some time so the request does not wait for it to finish. The \texttt{Pipeline Service} simply returns an ID assigned to this particular \emph{discovery}. This ID is what is finally delivered back to the frontend.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_api_run_discovery_diagram.png}
+	\caption{Diagram showing the process of running the \emph{discovery} algorithm from the API perspective. The face represents the user initiating the request.} 
+	\label{fig:api-run-discovery-diagram}
+\end{figure}
+
+As the \emph{discovery} continues, it updates its current status in RDBMS. It also stores to RDBMS the \emph{pipelines} that has been discovered so far. The frontend uses the acquired \emph{discovery} ID to periodically poll the backend for this information until the \emph{discovery} finishes. This way the user can see online on the screen the current status of the \emph{discovery} and also the discovered \emph{pipelines}. This request can be seen on Figure \ref{fig:api-get-discovery-diagram}.
+
+In LinkedPipes Visualization, this particular part is implemented differently. Instead of periodical polling, the \emph{discovery} algorithm output flows through a WebSocket \footnote{\url{https://tools.ietf.org/html/rfc6455}} which is opened between the frontend and the backend. In many ways this solution is more elegant. Only one connection has to be maintained and the updates are pushed to the frontend almost instantly. Unfortunately, in the current implementation in LinkedPipes Visualization, once a WebSocket to a particular \emph{discovery} is closed (e.g. because the user closes the page), it cannot be re-opened again. That means that the user loses the option to watch the \emph{discovery} algorithm progress online. In this sense, our implementation is better as it allows the user to leave and come back anytime later. If the \emph{discovery} has not finished yet, the polling is automatically restored.
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_api_get_discovery_diagram.png}
+	\caption{Diagram showing the process of fetching the \emph{discovery} algorithm status and the discovered pipelines from the API perspective.} 
+	\label{fig:api-get-discovery-diagram}
+\end{figure}
+
+
+
+
+

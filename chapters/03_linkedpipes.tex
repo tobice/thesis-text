@@ -60,6 +60,7 @@ To address this issue, the LDVM implementation in LinkedPipes Visualization requ
 Thanks to this approach, the \emph{compatibility} can be quickly checked at the design time and when we decide to \emph{run} the \emph{pipeline}, we can already be sure that all the components are at least compatible between each other.
 
 \subsection{Component representation}
+\label{sec:linkedpipes:ldvm-implementation:component-representation}
 
 To follow the Linked Data principles, LinkedPipes Visualization implementation of LDVM represents the  components and their configuration in RDF using a custom RDF vocabulary prefixed with \texttt{ldvm} \cite{ldvm_vocabulary}. That makes it possible for the LDVM components to be shared and exchanged with separate instances of LinkedPipes Visualization or possibly even with completely different LDVM based software that supports this RDF representation. This is, however, true only to an extent. Some of the components are truly transferable and independent on the actual software implementation, but many of them require to have a corresponding counterpart in the programming code (we will refer to this counterpart as to a \emph{plugin}). This applies to \emph{visualizers} (the tool actually needs to implement the visualization technique required by the \emph{visualizer} component) but also to some \emph{analyzers} or \emph{transformers} for which SPARQL operators are not sufficient.
 
