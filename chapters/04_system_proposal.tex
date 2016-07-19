@@ -80,6 +80,37 @@ Naturally, thanks to the framework, the user will not have to deal with any of t
 
 To showcase the capabilities of our \emph{platform} and \emph{framework}, we will implement and present to the user two \emph{visualizers}. The first one will be a brand new D3.js Chord Visualizer based, as the name suggest, on the D3.js chord layout, capable of visualizing directed weighted graphs. The other one will be based on the existing LinkedPipes Visualization map visualizer. The RDF definition will remain the same, we will just re-implement the \emph{visualizer} for our \emph{application generator}.
 
+\section{Mockups}
+
+In this subsection we will briefly present to the reader our idea of  the \emph{application generator} user interface. The core parts are the process of generating a new application and configuring an existing application. Let us start with generating an application.
+
+In the first step (Figure \ref{fig:mockups_select_datasources}), the user has to select the RDF data sources. Unlike LinkedPipes Visualization, our \emph{application generator} will offer a user-friendly browser of available data sources (the \textbf{Browse} button on Figure \ref{fig:mockups_select_datasources}) which means that the user will not be forced to deal with notions like SPARQL endpoint, named graph or TTL file. On the other hand, the more advanced users will be allowed to add their own RDF data sources (the \textbf{Add new} button).
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_mockups_select_datasources.png}
+	\caption{Step 1: Selecting data sources. The user is allowed to select an arbitrary number of data sources, either from the already available ones using the browser, or by providing new ones.} 
+	\label{fig:mockups_select_datasources}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_mockups_discovery.png}
+	\caption{Step 2: Running \emph{discovery} algorithm. The screen shows current progress including already discovered \emph{pipelines}.} 
+	\label{fig:mockups_discovery}
+\end{figure}
+
+Once the user is happy with his selection, he hits the \textbf{Run Discovery} button and is redirected to the next screen (Figure \ref{fig:mockups_discovery}) where he can watch the progress of the \emph{discovery} algorithm. As new \emph{pipelines} are discovered, they are shown on the screen, grouped by their LDVM \emph{visualizer} component. That means that unlike in LinkedPipes Visualization, the user can easily see what kinds of visualizations (or applications) are possible from selected data sources. The user first decides for a \emph{visualizer} and then clicks the appropriate \textbf{Show pipelines} button (Figure~\ref{fig:mockups_discovery}) which will open a list of discovered \emph{pipelines} for the chosen \emph{visualizer}.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_mockups_configurator.png}
+	\caption{Sample \emph{configurator interface}. The upper part is for all \emph{visualizers} identical, covering common functionality, the lower part is custom. In this case, the application visualizes entities on a map.} 
+	\label{fig:mockups_configurator}
+\end{figure}
+
+Now the user selects one of the discovered \emph{pipelines} and executes it which will process the data from the data sources and transforms them (according to the \emph{pipeline} structure). This might take a while. Once the \emph{pipeline evaluation} finishes, the user can create a new application from it. Unfortunately, we are not able to help the user in any way with choosing a \emph{pipeline}. If there are multiple \emph{pipelines} available for a single \emph{visualizer}, the user might have to try all of them to see which gives him the best results.
+
+When an application is created, the user is taken to the \emph{configurator} interface (Figure \ref{fig:mockups_configurator}) where he can modify the application before it gets eventually published.
+
 \section{Architecture analysis}
 \label{sec:system-proposal:architecture-analysis}
 
