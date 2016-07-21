@@ -6,7 +6,7 @@ To show the capabilities or our designed \emph{framework} and \emph{platform}, w
 \section{D3.js Chord Visualizer}
 \label{sec:visualizers:chord}
 
-The D3.js Chord Visualizer is a brand new \emph{visualizer} that has not existed before in LinkedPipes Visualization. The core of this \emph{visualizer} is a chord diagram which is a method of visualizing the relationships among a group of entities (the data are usually represent using a square matrix). The diagram is in a form of a circle around which the entities are drown. The relationships between the entities are represent using arcs connecting them.
+The D3.js Chord Visualizer is a brand new \emph{visualizer} that has not existed before in LinkedPipes Visualization. The core of this \emph{visualizer} is a chord diagram which is a method of visualizing the relationships and their strengths among a group of entities (the data are usually represent using a square matrix). The diagram is in a form of a circle around which the entities are drawn (Figure~\ref{fig:chord-example}). The relationships between the entities are represented using arcs connecting them. The arc thickness corresponds to the relationship strength. Some relationships are not symmetrical in which case neither is the arc.
 
 \begin{figure}
 	\centering
@@ -29,7 +29,6 @@ We used three different data sets to demonstrate the abilities of this \emph{vis
 Database of contracts between private businesses and public government organizations (ministries, towns etc). The chord diagram could be used to visualize economic activity between individual business entities.
 
 \item \textbf{UNHCR Population Statistics – Asylum seekers by months} \cite{asylum-seekers}
-\todo[color=green!40]{Jirka Helmich: kde jste ho vzal, jak jste ho vyrobil, citace ETL... Tobiáš Potoček: Toto zmiňuji o něco dále. Jakým způsobem jsou data sety převedeny do RDF a do RGML vocabulary. Musím to nějakým způsobem zmínit už zde?}
 
 This database contains information about people from all over the world asking for asylum outside of their home countries. The database contains concrete numbers of people coming from one country to another, divided by months. The chord visualizer would be able to nicely visualize the trends of people moving around the globe.
 
@@ -51,7 +50,7 @@ In the very beginning, we were considering the option of creating a brand new RD
 Let us look at our data sets again:
 
 \begin{itemize}
-\item The main entity in the Registry of contracts is (not surprisingly) a contract. A contract has two parties. The transition to graph vocabulary is very clear here. A contract is an edge, each party is a vertex. In this case, the graph is undirected as the partners are equal. There can be multiple contracts between two parties, so it is a multi graph. As we are not interested in the individual contracts, but rather in the number of them, all contracts between two parties could be aggregated into a single weighted undirected edge.
+\item The main entity in the Registry of contracts is (not surprisingly) a contract. A contract has two parties. The transition to graph vocabulary is very clear here. A contract is an edge, each party is a vertex. In this case, the graph is undirected as the partners are equal. There can be multiple contracts between two parties, so it is a multi graph. As we are not interested in the individual contracts, but rather in the number of them (the chord diagram visualizes the relationship strength between entities), all contracts between two parties could be aggregated into a single weighted undirected edge.
 \item The asylum seekers data set consists of individual records where each record contains a period of time, country of origin, country of asylum and a number of people stating how many people sought asylum during that period of time between those two countries in this specified direction. Clearly, each record corresponds to an edge and each country corresponds to a vertex. The weight of an edge represents number of people. Unlike in the previous example, this time the graph is directed as it actually matters which direction the people went. Therefore a relationship between two vertices is asymmetrical. That can also be visualized using the chord diagram.
 \item The air routes data set is a combination of the previous two cases. Each air route corresponds to an edge which is directed but is not by default weighted. To express the strength of a relationship, all edges of the same direction between two airports should be merged into one weighted edge.
 \end{itemize}

@@ -1,13 +1,13 @@
-\chapter{Theoretical attachment}
+\chapter{Selected algorithms for graphs represented in RDF}
 \label{chap:theoretical-attachment}
 
-In this chapter, we will describe and analyze two algorithms that we implemented when developing the D3.js Chord Visualizer (Section \ref{sec:visualizers:chord}).
+In this chapter, we will describe and analyze two algorithms that we implemented when developing the D3.js Chord Visualizer (Section~\ref{sec:visualizers:chord}). This particular \emph{visualizer} is using a chord diagram to visualize relationships and their strengths among entities. As we explained in Section~\ref{sec:visualizers:chord:rgml}, the chord diagram is actually visualizing a directed multi graph (as understood in the graph theory). As the input, it takes an adjacency matrix of this graph (or more specifically, of a subgraph that the user selected for visualization), which is what our first algorithm is responsible for. The second algorithm is responsible for generating a random sample subgraph which can be then shown to the user.
+
+As we wanted both our algorithms to work even for potentially very large graphs, loading them into memory and representing them in native data structures was not an option. Because of this requirement, we needed to work directly with the RDF representation of the graph which presented a certain challenge.
 
 \section{Calculating the graph adjacency matrix for the chord diagram}
 
-A graph represented in RDF presented a certain challenge. In our first implementation (when we needed quick results) we would simply load the whole graph into memory, represent it using Scala native data structures and then work with this representation. This approach proved itself sufficient and actually pretty efficient for small graphs (for example the asylum seekers data set, see Subsection \ref{sec:visualizers:chord:data-sets} for data sets description). Compared to SPARQL queries (which involve 
-\todo[color=green!40]{Přístupové časy do paměti, na disk a po síti se liší řádově, což předpokládám patří k základním znalostem matfyzáků. Či je i toto potřeba podložit?}
-accessing the hard drive or even communication over network in case the triple store is on a separate machine), in-memory operations are way faster and fetching couple of hundreds nodes and edges in every request was bearable (we needed just two queries to fetch the nodes and the edges).
+In our first implementation (when we needed quick results) we would simply load the whole graph into memory, represent it using native data structures and then work with this representation. This approach proved itself sufficient and actually pretty efficient for small graphs (for example the asylum seekers data set, see Subsection \ref{sec:visualizers:chord:data-sets} for data sets description). Compared to SPARQL queries (which involve accessing the hard drive or even communication over network in case the triple store is on a separate machine), in-memory operations are way faster and fetching couple of hundreds nodes and edges in every request was bearable (we needed just two queries to fetch the nodes and the edges).
 
 The situation changed (the performance dropped) when we started experimenting with the air routes data set, containing around 8000 airports and almost 70000 routes. To improve performance and support even bigger graphs, we decided to re-implement the service so that the complexity of any operation would depend on the size of the input, not on the size of the graph. That typically means, that we would never do operations like loading all nodes or edges into memory. Obviously, we can guarantee this assumption only in our own code. The triple store (e. g. Virtuoso) might work differently.
 
@@ -17,9 +17,7 @@ Let us have a look at how generating the adjacency matrix for the chord diagram 
 
 \subsection{Problem description}
 
-The input of our function is a list of nodes (more specifically their URIs) of size $n$, for which we want to generate the adjacency matrix. Let us denote the number of all nodes in the graph by $N$ and the number of all edges in the graph by $M$. Let us denote the maximum number of edges between two nodes by $c$. 
-\todo[color=green!40]{V původním textu jsem měl předpoklad, že c je konstanta, nicméně se ukázalo, že to tak úplně konstanta není u všech data setů.}
-That means that $M$ is $O(cN^2)$ and that we can perform the aggregation mentioned above in $O(c)$ for any two nodes.
+The input of our function is a list of nodes (more specifically their URIs) of size $n$, for which we want to generate the adjacency matrix (remember that we are generating the adjacency matrix for a subgraph that the user selected for visualization). Let us denote the number of all nodes in the graph by $N$ and the number of all edges in the graph by $M$. Let us denote the maximum number of edges between two nodes by $c$. That means that $M$ is $O(cN^2)$ and that we can perform the aggregation mentioned above in $O(c)$ for any two nodes.
 
 How much is $c$?  The situation is the simplest with the asylum seekers data set. One edge using its weight represents the number of asylum applicants between two countries in a particular month. The data set contains data for only one year, there is $12$ months to a year, and that is $c$. That means that $c$ is a constant and we can leave it out from the complexities. The situation gets more complicated with the other two data sets. As of the air routes data set, one edge corresponds to one air route between two cities. We can assume that $c$ in this case will not be very high, which is given firstly by the limited size of both airports and also by the limited demand of people wanting to travel between two cities. Unfortunately, we are not able to make any more accurate assumptions. Similarly to the contracts data set, where one edge corresponds to a contract between two companies. Therefore we will include $c$ in all complexities but the reader should keep in mind what this number is and that it typically will not grow out of proportions.
 
@@ -66,18 +64,45 @@ Nevertheless, it had disadvantages. Namely, the following three:
 \begin{itemize}
 \item There was a possibility that for certain types of graphs this approach would yield no results. For example, imagine a graph that consists of many completely independent components which have the shape of a “star”, i. e., all nodes in a component are connected only to one central node which consequently has a very high degree. The sampling method would only select those component “centers” which are,  however, completely independent. Even though we did not come across such a graph during our experiments, we think that the sampling method should be able to deal with it.
 \item This method would not scale well for large graphs. Calculating degrees for all nodes in the graph is an expensive operation and it clearly depends on the graph size. We would prefer a sampling method whose speed (complexity) would solely depend on the sample size, i. e., it would perform well even on very large graphs.
-\item Lastly, the generated sample does not resemble the original graph in any way. If it does, then only by accident. We will get to what \emph{resemble} means in this case later.
+\item Lastly, the generated sample does not resemble the original graph in any way. If it does, then only by accident. We will get to what \emph{resemble} means in this case later but it means that some predefined characteristics should not differ significantly between the original graph and the sampled graph.
 
 \end{itemize}
 In the future paragraphs, we will refer to this algorithm as to the \emph{highest degree} method. We should also note that the current implementation of this method does not take weights into account. Therefore it will be biased towards nodes with lots of edges and it will ignore nodes with \emph{heavy} edges. Depending on a data set, it might give undesired results.
 
+\subsection{General algorithm requirements}
+
+Based on the experience we gained from the \emph{highest degree} method, we were able to summarize the requirements for the sampling algorithm.
+
+\begin{itemize}
+\item \textbf{Usable output}. Given the visualization characteristics (the chord diagram), we want the algorithm to avoid independent sets, if possible, as those would yield empty visualizations.
+\item \textbf{Speed}. We need the sampling algorithm to work fast even for large graphs which means that its speed should depend on the sample size rather than on the size of the original graph. \emph{Speed} is a bit vague term but in this case it cannot be simply substituted with complexity. One crucial limitation is that we cannot load the whole graph in the memory as it would immediately break the initial requirement. This means that we have to work with the original RDF representation of the graph, i.e., the sampling algorithm also needs to optimize the SPARQL queries that are used to access the graph in the triplestore. 
+\item \textbf{Resemblance}. The sample graph should resemble the original graph, i.e., the visualization of the sample graph should give the user an idea of how the original graph looks like. Formally this means that certain characteristics (or metrics) of the original graph should be preserved by the sampling method. These characteristics may include 
+\emph{average and standard deviation of degree}~\cite{krishnamurthy2005reducing},
+\emph{degree distribution}~\cite{krishnamurthy2005reducing},
+\emph{spectral analysis}~\cite{krishnamurthy2005reducing},
+\emph{distance distribution}~\cite{gilbert2004compressing} or
+\emph{connected component size}~\cite{rafiei2005effectively}.
+
+\end{itemize}
 \subsection{Choosing Forest Fire algorithm}
 
-Having done some 
-\todo[color=green!40]{Tady jste mi naznačil, že popsání researche by znamenalo citace zadarmo. Bohužel můj "research" probíhal googlením a tyto dva papery bylo to jediné, na co jsem narazil. Až teď mě napadlo se podívat do citací oněch dvou paperů, kde na toto téma je materiálu spoustu, ale v tuto chvíli nemám kapacity to pročítat. Pokud si myslíte, že by to bylo potřeba, tak z toho můžu udělat jednu z priorit na červenec.} 
-research, we decided to use the Forest Fire sampling graph algorithm as described and evaluated in paper "Sampling from Large Graphs" \cite{leskovec2006sampling}. This paper defines two different measures for sample quality and then describes several sampling methods and compares them.
+Clearly, we were not the first ones with the need to sample a large graph. This problem is pretty common, especially in the area of network topologies. A typical task is to get an idea of how a real-life network represented as a graph looks like, or to run a simulation on it. As such a network would often be very large, one would firstly need to somehow reduce it (\emph{take a sample}). Obviously, the reduction must maintain the base characteristics of the original graph for e.g. the simulation to give meaningful results.
 
-The sampling methods in \cite{leskovec2006sampling} were organized in three groups.
+In "Compressing Network Graphs"~\cite{gilbert2004compressing}, the authors suggest two different approaches for reducing the graph size, \emph{importance compression scheme} and \emph{similarity compression scheme}. In the first approach, the sample graph is induced by selected \emph{important} nodes. The \emph{importance} may be based on a pure topological characteristic of a node (e.g. node degree) or on some specific external information (e.g. in the case of networks, routers would be considered as important nodes). In the second approach, the graph size is reduced by contracting \emph{similar} nodes. \emph{Similar} in this case means for example that nodes share a certain number of adjacent nodes. Unfortunately, neither of those two approaches would fit our requirements. Both the \emph{importance} and the \emph{similarity} would have to be first calculated for the whole graph which clearly breaks the \textbf{speed} requirement. Note that the \emph{importance compression scheme} using node degree as the \emph{importance} metric is, as a matter of fact, our \emph{highest degree} method.
+
+"Reducing Large Internet Topologies for Faster Simulations"~\cite{krishnamurthy2005reducing} presents several random-based sampling methods, divided into three base groups.
+
+\begin{itemize}
+\item \textbf{Deletion methods} based on randomly deleting nodes, edges or both.
+\item \textbf{Contraction methods} based on contracting adjacent nodes.
+\item \textbf{Exploration methods} which involve traversing through the graph either using Breadth-first search or Depth-first search.
+\end{itemize}
+
+The first two approaches are very similar: we start with the original graph and we keep reducing it until we reach the target size. Unfortunately, both these approaches are breaking our \textbf{speed} requirement as we would need to start with making a copy of the original graph. On the other hand, the exploration methods show clear potential. Firstly, we do not need to traverse through the whole graph (the \textbf{speed} requirement), secondly, given their nature they favor connected subgraphs (the \textbf{usable output} requirement).
+
+Considering its name, the "Effectively Visualizing Large Networks Through Sampling"~\cite{rafiei2005effectively} paper was promising at first but it soon turned out that this paper is focused a bit differently. It describes an iterative method of sampling when the user can see the current selected sample visualized on a screen and by giving instructions to the software, he is enabled to \emph{grow} the sample. The sampling itself is very simple as it is based on random nodes and edges selection. The paper distinguishes \emph{global grow}, when the current sample is extended with more randomly selected nodes, and \emph{local grow}, when the current sample is extended with randomly selected nodes that are adjacent to the current sample. Clearly, none of this is useful for our purposes.
+
+Finally, the paper  "Sampling from Large Graphs" \cite{leskovec2006sampling} presents and compares several different sampling methods organized in the following three groups.
 
 \begin{itemize}
 \item \textbf{Sampling by random node selection}. We select the nodes at random, either uniformly or with probability depending on certain node attributes.
@@ -85,19 +110,19 @@ The sampling methods in \cite{leskovec2006sampling} were organized in three grou
 \item \textbf{Sampling by exploration}. This approach involves traversing through the graph. A typical example is \emph{random walk} or the Forest Fire algorithm.
 \end{itemize}
 
-All the sampling methods are fairly algorithmically simple. The authors of \cite{leskovec2006sampling} state that there exist more advanced approaches which are however computationally expensive and therefore unsuitable for large graphs. The Forest Fire algorithm produced the best results according to \cite{leskovec2006sampling} and as we will see, it does not suffer from the issues we had with \emph{highest degree} method. We start by describing the algorithm, then we show an actual implementation and finally we analyze the algorithm and show how it deals with the aforementioned issues.
+All the sampling methods are fairly algorithmically simple. The authors of \cite{leskovec2006sampling} state that there exist more advanced approaches which are however computationally expensive and therefore unsuitable for large graphs. The random approaches meet our \textbf{speed} requirements (we would be just querying random nodes or edges from the triplestore until we would reach the required sample size) but they might be more inclined to select an independent set (the \textbf{usable output} requirement). The exploration methods, as we already explained, are more reliable in this matter and the speed is also sufficient.
+
+From all the presented algorithms, we chose the Forest Fire algorithm, which combines the exploration approach with randomness. As we will show, it meets all our requirements. It also gave the best results to the authors~of~\cite{leskovec2006sampling}. We start by describing the algorithm, then we show an actual implementation and finally we analyze the algorithm and show how it deals with the aforementioned issues. We also try to compare it with the \emph{highest degree} method as that is the only other sampling approach that we implemented.
 
 \subsection{Algorithm description}
 
-\cite{leskovec2006sampling} is unfortunately a bit inconsistent in defining the algorithm. They give a short overview and then in the appendix they
-\todo[color=green!40]{Udělal jsem drobný research a podle toho co jsem našel, tak doslovná citace označená jako citace není problém, a typicky se to používá, pokud přepis vlastními slovy nedává moc smysl. Já se vůči této definici pak dále lehce vymezuji, ale jako výchozí bod mi to přijde vhodné.}
-present the following more detailed description:
+\cite{leskovec2006sampling} is unfortunately a bit inconsistent in defining the algorithm. They give a short overview and then in the appendix they present the following more detailed description:
 
 \begin{displayquote}
 We first choose node v uniformly at random. We then generate a random number $x$ that is geometrically distributed with mean $p_f/(1-p_f)$. Node v selects x out-links incident to nodes that were not yet visited. Let $w_1 , w_2 , \ldots, w_x$ denote the other ends of these selected links. We then apply this step recursively to each of $w_1, w_2, \ldots, w_x$ until enough nodes have been burned. As the process continues, nodes cannot be visited a second time, preventing the construction from cycling. If the fire dies, then we restart it, i.e. select new node $v$ uniformly at random. We call the parameter $p_f$ the forward burning probability.
 \end{displayquote}
 
-Unfortunately, the overview and the description differ in several aspects. Besides, they also refer to another paper "Graphs over Time: Densification Laws, Shrinking Diameters and Possible Explanations" \cite{leskovec2005graphs} which is where this algorithm was originally defined. In this paper, it was used for modeling graph evolution (so instead of reducing graphs it was responsible for generating graphs). The algorithm as described in \cite{leskovec2005graphs} uses binomial distribution and defines two different probabilities of \emph{burning}, one for outgoing nodes and one for incoming.
+The core idea is clear but the overview and the description differ in several aspects. Besides, the authors also refer to another paper "Graphs over Time: Densification Laws, Shrinking Diameters and Possible Explanations" \cite{leskovec2005graphs} which is where this algorithm was originally defined. In this paper, it was used for modeling graph evolution (so instead of reducing graphs it was responsible for generating graphs). The algorithm as described in \cite{leskovec2005graphs} uses binomial distribution and defines two different probabilities of \emph{burning}, one for outgoing nodes and one for incoming.
 
 In our implementation, we decided to go with the binomial distribution as it is easily simulated with simple \emph{coin flipping}. As a matter of fact, this sampling method is nothing else but an enhanced version of Breadth-first search. We start the \emph{fire} from a randomly chosen node and then spread it over its incident edges to its surroundings. The key difference is that when traversing over an edge, we \emph{flip a coin} with certain probability ($p_f$ for outgoing edges, $p_b$ for incoming edges) to determine whether the \emph{fire} should \emph{spread} over this edge to the other node and \emph{burn} it. The algorithm runs until we collect enough nodes. If we run out of nodes to burn (we are in a small connected component), we choose another random node and start over.
 
@@ -105,9 +130,15 @@ Our implementation also takes weights into account. \emph{Heavier} edges have hi
 
 \subsection{Implementation}
 
-As this part is fairly algorithmically interesting (considering the rest of the thesis), we decided to share here a (almost) full
-\todo[color=green!40]{Když budu mít čas, přepíšu to do pseudokódu. Nicméně díky Scale a funkcionálním konstruktům je to samo o sobě docela stručné.}
-implementation of the algorithm. The algorithm parameters are \texttt{graph} (an object representing the graph we are sampling), \texttt{size} (size of our sample), \texttt{useWeights} (if weights should be taken into account as described in the previous paragraph), \texttt{pF} (forward burning probability $p_f$) and \texttt{pB} (backward burning probability $p_b$).
+As this part is fairly algorithmically interesting (considering the rest of the thesis), we decided to share here a (almost) full implementation of the algorithm. The algorithm parameters are following:
+
+\begin{itemize}
+\item \texttt{graph} -- an object representing the graph we are sampling)
+\item \texttt{size} -- size of our sample
+\item \texttt{useWeights} -- if weights should be taken into account as described in the previous paragraph
+\item \texttt{pF} -- forward burning probability $p_f$ 
+\item \texttt{pB} -- backward burning probability $p_b$
+\end{itemize}
 
 \begin{verbatim}
 val graph, size, useWeights, pF, pB
@@ -172,7 +203,9 @@ def spread(node: String): Seq[String] = {
     .filter(edge => choose(edge, probability(node, edge)))
     .map(edge => theOther(node, edge))
 }
+\end{verbatim}
 
+\begin{verbatim}
 /** "Flip a coin" with probability {@code p} and return whether {@code edge} should burn */
 def choose(edge: Edge, p: Double): Boolean = {
   // When weights are enabled, we're simulating multiple coin tosses for a single edge. One
@@ -188,7 +221,7 @@ def probability(node: String, edge: Edge): Double = {
   if (direction(node, edge) == Outgoing || !graph.directed) pF else pB
 }
 
-/** Return "the other" node of {@code edge) relatively {@code node} */
+/** Return "the other" node of {@code edge) relatively to {@code node} */
 def theOther(node: String, edge: Edge): String = {
   if (direction(node, edge) == Outgoing) edge.target else edge.source
 }
@@ -201,20 +234,22 @@ def direction(node: String, edge: Edge): EdgeDirection = {
 
 \subsection{Analysis}
 
-Let us now discuss the properties of this algorithm. Our first concern was that the sampling method should ideally always return something that is visualizable with the chord diagram, i. e., nodes that have some edges between them. The  Forest Fire algorithm is based on traversing over edges. Therefore it is very unlikely that it would return an independent set (unless, of course, there is nothing else in the graph).
+Let us now discuss the properties of this algorithm. Our first concern was that the sampling method should ideally always return something that is visualizable with the chord diagram, i. e., nodes that have some edges between them (the \textbf{usable output} requirement). The  Forest Fire algorithm is based on traversing over edges. Therefore it is very unlikely that it would return an independent set (unless, of course, there is nothing else in the graph).
 
-We also cared about the performance. Unlike the \emph{highest degree} method, Forest Fire will work even for very large (reasonable) graphs as its complexity depends on the sample size, not on the size of the whole graph. We will only visit (\emph{burn}) as many nodes as we need for our sample. As what \emph{reasonable} means: this algorithm behaves similarly to the one we used for calculating the adjacency matrix. For every node added to our sample, we fetch all its incident edges. That is how BFS works. If the graph is close to a full graph (i. e., each node is connected to almost all other nodes in the graph), then the performance will degrade with the graph size.
+The second requirement was the \textbf{speed}. Unlike the \emph{highest degree} method, Forest Fire will work even for very large (reasonable) graphs. Just as required, its complexity depends on the sample size, not on the size of the whole graph. We will only visit (\emph{burn}) as many nodes as we need for our sample. As what \emph{reasonable} means: this algorithm behaves similarly to the one we used for calculating the adjacency matrix. For every node added to our sample, we fetch all its incident edges. That is how BFS works. If the graph is close to a full graph (i. e., each node is connected to almost all other nodes in the graph), then the performance will degrade with the graph size.
+
+We also required that the algorithm should ideally optimize the number of SPARQL queries as it presents a potential bottleneck. For example, a simple sampling method that picks nodes from the graph at random (as mentioned in \cite{rafiei2005effectively} or \cite{leskovec2006sampling}) would make one SPARQL query for each node (we admit that it is possible that some triplestore engines would allow us to select all random nodes at once). Forest Fire algorithm behaves very similarly because we have to make one SPARQL query for each expanded node to get its adjacent nodes. There is a slight difference though. Forest Fire algorithm is essentially BFS which means that the \emph{fire} spreads in iterations. In each iteration, all nodes in the current \emph{frontier} are expanded and their adjacent nodes (that \emph{caught on fire}) are added to the sample and to the next \emph{frontier}. It is clear that once we reach the target sample size, we do not have to expand the last \emph{frontier}. Hypothetically, if each iteration doubles the sample size (from each node the \emph{fire spreads} to two new nodes on average), we do not have to expand half of the nodes in the sample which means 50\% less SPARQL queries. This does not change the complexity in any way, but if the SPARQL queries are the bottleneck (e.g. the triplestore is accessed over an unreliable network), Forest Fire algorithm would  in such an extreme case work twice as fast compared to the random approach. However, in such a situation the \emph{highest degree} method would probably offer the best performance as it only queries the triple store twice (once of nodes, once for edges).
 
 As of the actual real life performance, we experienced a significant boost over the \emph{highest degree} method, especially for the large air routes data set. Note that we did not conduct any exact reproducible benchmarking, but simply by observing the HTTP requests we measured the improvement from 3 seconds to 500 milliseconds. Such a difference is easily noticeable when working with the user interface.
 
-Lastly, we mentioned the \emph{resemblance} between the original graph and the sample subgraph. In general, sampling is useful when the original graph is too large for standard tools. If we are able to make a sample whose characteristics are similar to the characteristics of the original graph (a \emph{realistic} sample), we can then apply the standard tools on the sample (as it is significantly smaller) and get reasonable results. To measure the deviation from the original graph, \cite{leskovec2006sampling} proposes two goals: 
+Lastly, we cared about the \textbf{resemblance} between the original graph and the sample subgraph. In general, sampling is useful when the original graph is too large for standard tools. If we are able to make a sample whose characteristics are similar to the characteristics of the original graph (a \emph{realistic} sample), we can then apply the standard tools on the sample (as it is significantly smaller) and get reasonable results. To measure the deviation from the original graph, \cite{leskovec2006sampling} proposes two goals: 
 
 \begin{itemize}
-\item \textbf{Scale-down goal} which simply compares certain characteristics (like degree distribution) between the sample and the original graph.
+\item \textbf{Scale-down goal} which simply compares certain characteristics (e.g. degree distribution) between the sample and the original graph.
 \item \textbf{Back-in-time goal} which corresponds to traveling back in time and trying to mimic the past versions of the original graph.
 \end{itemize}
 
-The paper provides exact definitions for both goals but those are not important for our cause. According to the paper, the Forest Fire gives the best results for both of  them and that is why chose it. The question is whether it actually works (compared to the \emph{highest degree} method).
+The paper provides exact definitions for both goals but those are not important for our cause. According to the paper, the Forest Fire gives the best results for both of  them and that is why chose it. The question is whether it actually works (specifically compared to the \emph{highest degree} method).
 
 Another conclusion in \cite{leskovec2006sampling} is that 15\% sample is usually enough to match the defined properties of the original graph. In the air routes data set, we sample 30 out of 8000 nodes which is less than 0.4\%. It is clear that in this particular case the chance that we will get with our sample close to the original graph is practically zero. Does this mean that the Forest Fire method utterly fails in this perspective?
 
@@ -236,12 +271,12 @@ It certainly does not give us results \emph{similar} to the original graph as de
 
 We might say that whereas the \emph{highest degree} method is biased towards the most important nodes in the data set, the Forest Fire method will give the user a way more diverse result. Depending on a situation, both approaches might be useful. One of the possible improvements might be that we could let the user manually choose the sampling method as a way to explore the data set.
 
-To sum it up, let us walk again through those three concerns we had regarding graph sampling.
+To sum it up, let us walk again through the three requirements and compare Forest Fire algorithm to the \emph{highest degree} method.
 
 \begin{itemize}
-\item Compared to the \emph{highest degree} method, Forest Fire algorithm is less inclined to return independent sets which is thanks to the underlying BFS. Obviously, if most of the graph are independent nodes, then even Forest Fire algorithm could return an empty sample.
-\item The complexity of Forest Fire algorithm does not depend on the graph size (except for the full graphs). That means that this algorithm will perform well even for very large graphs.
-\item As of the \emph{resemblance} between the original graph and the sample, we explained that given the very small sample size, we cannot objectively measure this attribute. Nevertheless, Forest Fire algorithm does provide more diverse results.
+\item \textbf{Usable output}. Compared to the \emph{highest degree} method, Forest Fire algorithm is less inclined to return independent sets which is thanks to the underlying BFS. Obviously, if most of the graph are independent nodes, then even Forest Fire algorithm could return an empty sample.
+\item \textbf{Speed}. The complexity of Forest Fire algorithm does not depend on the graph size (except for the full graphs). That means that this algorithm will perform well even for very large graphs.
+\item \textbf{Resemblance}. We explained that given the very small sample size, we cannot objectively measure the resemblance between the original graph and the sample. Nevertheless, Forest Fire algorithm does provide more diverse results.
 \end{itemize}
 
 Forest Fire algorithm clearly demonstrates its superiority and that is why we chose it as the default sampling algorithm.
@@ -249,5 +284,3 @@ Forest Fire algorithm clearly demonstrates its superiority and that is why we ch
 There is one last remark we would like to make on this topic. The Forest Fire algorithm can be configured with the forward $p_f$ and backward $p_b$ probabilities. The forward probability is the probability of \emph{fire} \emph{spreading} over outgoing edges whereas the backward probability is the probability of \emph{fire} \emph{spreading} over incoming edges. In \cite{leskovec2006sampling} the authors try to determine the values for which they get the best results. As we already discussed, in our case it is hard to measure the resemblance between the original graph and the sample. We also mentioned that the authors of \cite{leskovec2006sampling} are a bit inconsistent in the exact algorithm description which makes it impossible to reproduce their results. Given this fact we slightly altered the algorithm: we used binomial distribution instead of geometric (as suggested in \cite{leskovec2005graphs}) because there is the nice BFS enhanced with \emph{coin flipping} analogy making the algorithm more straightforward to explain and implement. This all means that the values measured in \cite{leskovec2006sampling} are more or less irrelevant for us.
 
 Nevertheless, this certainly does not mean that those parameters do not matter. With setting $p_f$ to $1$ (or a value close to $1$) we change the algorithm to standard BFS. So for example, if our first randomly selected node is a small American airport (from the air routes data set), the sample will contain only airports from that area. On the other hand, setting $p_f$ (and $p_b$) to $0$ turns off the search completely and we are simply selecting 30 random nodes from the data set. The sample is then completely arbitrary. We decided to leave $p_f$ to $0.2$ and $p_b$ to $0.05$ as suggested in  \cite{leskovec2006sampling}. These values produced \emph{reasonable} results and we had no reason to change them.
-
-\todo[color=green!40]{Tady na konci jsem vynechal ten odstavec ohledně implementace (vytknul jste mi porušení SRP), asi není úplně potřeba}
