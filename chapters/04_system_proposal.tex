@@ -14,15 +14,16 @@ In Section \ref{sec:rw:features}, we presented a list features that we focused o
 
 \begin{itemize}
 \item \emph{Linked Data support}. The majority of the examined tools supported only some kind of tabular data. That proved itself to be a very limiting factor. Each tool required the user to somehow provide the missing \emph{semantic} information (e.g. by describing the data using a \emph{schema}) and even then the tool either generated applications that looked all more or less the same (Miga Data Viewer, Citadel on the Move), or required the user to manually build the whole application (Tableau, Avelca, Exhibit). Linked Data carry way more \emph{semantic} information with them and can be \emph{understood} by the \emph{application generator}. That means that the process of generating applications can be automated (the user does not have to explain to the \emph{generator} what the input data mean) and also as the Linked Data can express way more kinds of information, way more types of applications can be generated from that data.
-\item \emph{Extendability}. All applications generated for example by Miga Data Viewer looked more or less the same.  This is caused to a large extent by the characteristics of the tabular data. Linked Data, on the other hand, are way more versatile, potentially allowing way more versatile applications. Also we can hardly imagine that we could come up with a universal solution that would work for any type of data. Therefore making the \emph{generator} extendable with new types of applications for different types of data is a necessity.
+\item \emph{Extendability}. All applications generated for example by Miga Data Viewer looked more or less the same.  This is caused to a large extent by the characteristics of the tabular data. Linked Data, on the other hand, are way more versatile, potentially allowing way more diverse applications. However, we can hardly imagine that we could come up with a universal solution that would work for any type of data and would at the same time use up the full potential of those data. Therefore making the \emph{generator} extendable with new types of applications for different types of data is a necessity.
 \item \emph{Data analysis}. A \emph{generator} that automatically analyzes the input data and makes decisions based on how it \emph{understands} the data, is definitely a more capable \emph{generator}. This is directly related to the \emph{Linked Data support}. It is the Linked Data that allow such analysis possible (we are not claiming that it is not possible to run some kind of smart analysis on tabular data, but as it would involve lots of guessing, the results might be debatable). Just to repeat what we have already said: such a smart \emph{application generator} can significantly speed up the process of application generation by making it \emph{semi-automatic} and it can support significantly more types of information with significantly more types of applications.
 \item \emph{Online sharing}. Being able to \emph{share} the final generated application with others is the purpose of all these efforts. We aim to use the whole potential of the data around us and keeping our findings just to ourselves would clearly waste that potential.
 \item \emph{Non-developers friendly}. Miga Data Viewer or Exhibit proved that even tools that require their users to have some programming skills, can help a lot by reducing the amount of work necessary for generating an application. Also these tools typically offered a high level of flexibility. Nevertheless, most of our potential users have zero developer skills and we would like to allow these users to generate applications using our \emph{application generator}.
 \item \emph{Platform}. Tools in the form of an online platform (Avelca, Tableau, Citadel on the Move, Payola) clearly make the whole agenda around applications (creating, managing, sharing) simpler for the user. We want our tool to work as a platform as well.
 \item \emph{Configuration}. We have seen two extremes among the examined tools. LinkedPipes Visualization simply produced the visualization and gave user no possibility to configure it before publishing. Tools like Tableau, Avelca or Exhibit, on the other hand, represented the other extreme. The user had to actually \emph{build} the whole application from scratch. Miga Data Viewer was somewhere in between. Most of the application was automatically generated but the user was still allowed to change certain aspects. This is the way that we would like to choose for our \emph{application generator} as well. We want to find a compromise solution that would allow the user to quickly generate new applications and yet it would still give him some space to influence how the application should look like before it gets published.
+\item \emph{Level of automation}. The same argumentation that has been used for \emph{configuration} applies here as well. Based on our findings, making the \emph{application generator} \emph{semi-automatic} is the way to go. It is worth mentioning that it is the \emph{data analysis} that makes the \emph{semi-automation} possible and truly helpful. Thanks to its ability to actually understand the data, the \emph{generator} can help with the generation process, making it faster and smoother.
 \end{itemize}
 
-\section{Advantages and disadvantages of integration into LinkedPipes Visualization}
+\section{Advantages and disadvantages of the integration into LinkedPipes Visualization}
 \label{sec:system_proposal:integration}
 
 We proposed that some kind of \emph{data analysis} should be a part of our \emph{application generator}. Automatic analysis of Linked Data, however, is a vast topic. Within the scope of this thesis, we would be probably able to come up only with a very basic solution consisting of simple rules such as  \textit{"This entity is an address or GPS coordinates, let us display it on a map."} or \textit{"These are some statistical data, let us visualize it using a graph"}. We can say that Miga Data Viewer works in similar way.
@@ -33,12 +34,14 @@ We believe that it is not always necessary to reinvent what has been already inv
 \item Through LinkedPipes Visualization we get a strong analytical framework that we can immediately use. We will utilize the \emph{discovery} algorithm which will automatically tell use how the input data can be visualized, i.e., what kinds of applications can be generated.
 \item We will greatly benefit from the LinkedPipes Visualization implementation of LVDM. Firstly, it will make our generator easily extendable to support new types of data through new LDVM components. Secondly, any LDVM component following the format defined by this implementation will automatically work in our generator as well (with the limitations explained in Section \ref{sec:linkedpipes:component_registration}).
 \item On a programming level, LinkedPipes Visualization already contains lots of ready-to-use solutions for working with RDF data (querying Virtuoso triplestore, converting RDF to JSON etc.). It also offers a programmatical API providing a direct access to the \emph{discovery} algorithm (launching, accessing results etc).
-\item Finally, we admit that what played an important role in our decision process was the fact that we had direct personal access to the authors of LinkedPipes Visualization. That significantly sped up our work.
+\item Finally, we admit that what played an important role in our decision process was the fact that we had direct access to the authors of LinkedPipes Visualization. That significantly sped up our work.
 
 \end{enumerate}
-This decision has also disadvantages. The original guidelines for this thesis suggest that the user should be able to combine together different views for different types of data. Such views should be possible to display in a selected predefined layout before publishing the app. We have seen this approach for example in Tableau. However, LinkedPipes Visualization visualizers use a completely different approach. They are typically very domain specific. Each visualizer focuses on a single type of data, for example map data, and then offers a rich (but static) user interface which is specifically designed to work with this particular type of data (for example, it displays controls allowing the user to filter the visualized data). This is a direct consequence of the underlying LDVM pipeline \emph{discovery} algorithm.
+If we decided not to use LinkedPipes Visualization as the base for our \emph{generator}, we would have to either adopt another solution or create the \emph{generator} from scratch. To our best knowledge, there is no project that would provide an automatic analysis of Linked Data similar to what LinkedPipes Visualization offers. LDVM \cite{ldvm} and its implementation \cite{ldvm_use_cases} in LinkedPipes Visualization were created specifically because of the lack of such a tool. As of creating the \emph{generator} from scratch, we already suggested how that would look like in the introduction paragraph of this section. We would probably come up with a similar solution, yet immensely simpler and less powerful. The third option would be to get rid of the \emph{data analysis} and make the \emph{application generator} fully \emph{manual}. As we argued in Section \ref{sec:proposal:features}, we prefer our \emph{generator} to be rather \emph{semi-automatic}.
 
-Unfortunately, if we are to build on top LinkedPipes Visualization, our applications (which will directly correspond to the \emph{visualizers}) cannot look and work much differently. Nevertheless, both approaches are viable and both have their advantages and disadvantages. By adopting the approach of domain-specific applications, we will reduce the application configurability and it will not be possible to generate dashboard-like applications known from Tableau. On the other hand, our domain-specific applications will offer richer user interfaces allowing more advanced work with the visualized data.
+This decision has also disadvantages. The original guidelines for this thesis suggest that the user should be able to combine together different views for different types of data. Such views should be possible to display in a selected predefined layout before publishing the app. We have seen this approach for example in Tableau. However, LinkedPipes Visualization visualizers use a completely different approach. They are typically domain specific. Each visualizer focuses on a single type of data, for example map data, and then offers a rich (but static) user interface which is specifically designed to work with this particular type of data (for example, it displays controls allowing the user to filter the visualized data). This is a direct consequence of the underlying LDVM pipeline \emph{discovery} algorithm.
+
+Unfortunately, if we are to build on top LinkedPipes Visualization and use its full potential, our applications (which will directly correspond to the \emph{visualizers}) cannot look and work much differently. Nevertheless, these are two vastly different approaches that both are viable and both have their advantages and disadvantages. By adopting the approach of domain-specific applications, we will reduce the application configurability and it will not be possible to generate dashboard-like applications known from Tableau. On the other hand, our domain-specific applications will offer richer user interfaces allowing more advanced work with the visualized data. Moreover, we are convinced that this approach has more use-case scenarios. It is possible that the user decides to use as an input a large data set, like DBPedia~\cite{dbpedia}, or a combination of many smaller data sets, that would contain lots of different data, potentially resulting in many discovered \emph{pipelines} and therefore many different visualizations. Those would make sense to be organized in a dashboard-like application. Such a scenario, however, is not very probable.
 
 \section{Contribution}
 
@@ -46,25 +49,57 @@ We already classified LinkedPipes Visualization as an \emph{application generato
 
 \subsection{Configuration phase}
 
-In LinkedPipes Visualization, when the user selects and executes a \emph{pipeline}, he is redirected to the corresponding \emph{visualizer} user interface. That generates the actual \emph{visualization} from the \emph{pipeline evaluation}. In the context of LinkedPipes Visualization, that is the generated application. In our \emph{application generator}, we will introduce a configuration phase that will precede the publication. Each \emph{visualizer} will consist of two user interfaces: a \emph{configurator} interface and an \emph{application} interface. 
+\begin{figure}
+	\centering
+	\includegraphics[width=135mm]{img/04_pipeline_scheme_lpv.png}
+	\caption{Pipeline schema in LinkedPipes Visualization. The \emph{pipeline evaluation} is directly passed to the \emph{visualizer} which produces the final visualization. The process is fully automatic with zero input from the user.} 
+	\label{fig:pipeline-scheme-lpv}
+\end{figure}
 
-The \emph{configurator} interface will let the user to shape the application before publishing. The configuration possibilities will differ depending on the \emph{visualizer}, but typically the user will be allowed to filter the data (select a subset) and tune the level of interactivity for the audience. For example, he could either create a completely static visualization with pre-filtered data (e.g. a static graph), or he could let the audience decide what they want to see (i.e., let the audience decide what kind of graph they want to see). This will greatly increase the re-usability of data sets and \emph{visualizers}. A single data source with a single \emph{visualizer} will work as a potential source for many applications, each serving a different purpose (and a different target audience).
+In LinkedPipes Visualization, when the user selects and executes a \emph{pipeline}, he is redirected to the corresponding \emph{visualizer} user interface. That generates the actual \emph{visualization} from the \emph{pipeline evaluation} (Figure~\ref{fig:pipeline-scheme-lpv}). In the context of LinkedPipes Visualization, that is the generated application. In our \emph{application generator}, we will introduce a configuration phase that will precede the publication. Each \emph{visualizer} will consist of two user interfaces: a \emph{configurator} interface and an \emph{application} interface. 
 
-The \emph{application} interface is what the end-user (the audience) is going to see. When describing how a \emph{visualizer} works in LinkedPipes Visualization (Section \ref{sec:linkedpipes:visualizers}), we stated that a \emph{visualizer} is a function that takes the \emph{pipeline evaluation} as an argument and returns the actual \emph{visualization}. In our \emph{application generator}, the \emph{application} interface will be a function with two arguments: the \emph{pipeline evaluation} and the configuration created in the \emph{configurator}.
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_pipeline_scheme_appgen.png}
+	\caption{Pipeline schema in the \emph{application generator}. The user creating the application can provide further configuration which will affect how the final application presented to the audience will look like. Compared to LinkedPipes Visualization, the \emph{application generator} introduces the \emph{configurator} and \emph{application} user interfaces (marked with dashed borders).} 
+	\label{fig:pipeline-scheme-appgen}
+\end{figure}
 
-By introducing the configuration phase, we created another level of abstraction. The process of generating a new application (which includes the configuration phase now) requires no programming skills. It is very \emph{non-developer friendly}. But it does require certain understanding of the data. Not to mention that the data produced by the \emph{pipeline} might not be in a perfect state and therefore making sense out of the data (e.g. creating a meaningful graph) might require quite a lot of effort. In LinkedPipes Visualization, any user has to put in this effort when using the generated \emph{visualization}. In our \emph{application generator}, only the user generating the application will have to make this sacrifice while in the configuration phase, but the end user (the audience) will get only the final refined application.
+The \emph{configurator} interface will let the user to shape the application before publishing (Figure~\ref{fig:pipeline-scheme-appgen}). The configuration possibilities will differ depending on the \emph{visualizer}, but typically the user will be allowed to filter the data (select a subset) and tune the level of interactivity for the audience.
 
-We should mention that some features will be available in all \emph{configurators} regardless of the \emph{visualizer}. The user will be allowed to fill missing information (e.g. missing labels) and provide basic application meta data (name and description).
+Let us say that we are working with the Google Maps Visualizer and our data set contains geospatial points divided into a large number of categories. 
 
-We should also eliminate any confusion in the terminology that might have arisen in this section. A \emph{visualizer} is the last LDVM component in a \emph{pipeline}. It consists of the RDF definition and of the actual implementation in the code (the \emph{plugin}). The RDF definition is always the same, but the  \emph{plugin} will differ for LinkedPipes Visualization and of our \emph{application generator}. In the latter case, a \emph{visualizer} will consist of the aforementioned \emph{configurator} interface and \emph{application} interface. In a sense, it will work as an \emph{application template} for generating new applications. Nevertheless, we will stick to the term \emph{visualizer} in the rest of this text.
+\begin{itemize}
+\item The user could create a \textbf{completely static} visualization by selecting one (or more) of the categories to be visualized and fixing them (i.e., the audience will not be able to change them). This will result in a static map with fixed points (very convenient for embedding into external web pages).
+\item The user could create a \textbf{partially dynamic} visualization. As the number of categories might be too large, the user could select only a couple of them but this time he would allow the audience to arbitrarily choose which categories they want to visualize.
+\item The user could create a \textbf{fully dynamic} visualization by leaving all categories enabled, giving the audience full control over the visualization. This corresponds to what LinkedPipes Visualization would produce.
+\end{itemize}
+
+This will greatly increase the re-usability of data sets and \emph{visualizers}. A single data source with a single \emph{visualizer} will work as a potential source for many applications, each serving a different purpose (and a different target audience).
+
+The \emph{application} interface is what the end-user (the audience) is going to see. When describing how a \emph{visualizer} works in LinkedPipes Visualization (Section \ref{sec:linkedpipes:visualizers}), we stated that a \emph{visualizer} is a function that takes the \emph{pipeline evaluation} as an argument and returns the actual \emph{visualization}. In our \emph{application generator}, the \emph{application} interface will be a function with two arguments: the \emph{pipeline evaluation} and the configuration created in the \emph{configurator} (Figure~\ref{fig:pipeline-scheme-appgen}).
+
+By introducing the configuration phase, we created another level of abstraction. The process of generating a new application (which includes the configuration phase now) requires no programming skills. It is very \emph{non-developer friendly}. But it does require certain understanding of the data and making sense out of the data (e.g. creating a meaningful graph) might require quite a lot of effort. In LinkedPipes Visualization, any user has to put in this effort when using the generated \emph{visualization}. In our \emph{application generator}, only the user generating the application will have to make this sacrifice during the configuration phase, but the end user (the audience) will get only the final refined application.
+
+Another problem that the configuration phase addresses is the potential overall poor data quality. For example according to~\cite{dbpedia_quality}, $11.93\%$ of evaluated triples from DBpedia~\cite{dbpedia} suffer from some quality issues.  Clearly, the configuration phase presents an opportunity to deal with these issues before the visualization reaches the audience. This may take a form of creating a partially dynamic visualization (as explained above) that would simply hide the corrupted data from the user. To give the reader a more specific example, a typical problem that the user might face while creating an application could be missing or incorrect labels of visualized RDF resources. The configurator will allow to provide a custom label for any such visualized RDF resource.
+\begin{figure}
+	\centering
+	\includegraphics[width=100mm]{img/04_visualizer_comparision_scheme.png}
+	\caption{Comparison between a \emph{visualizer} structure in LinkedPipes Visualization (on the left) and in our \emph{application generator} (on the right). } 
+	\label{fig:visualizer-comparison-scheme}
+\end{figure}
+
+We should also eliminate any confusion in the terminology that might have arisen in this section. A \emph{visualizer} is the last LDVM component in a \emph{pipeline}. It consists of the RDF definition and of the actual implementation in the code (the \emph{plugin}). The RDF definition is always the same, but the  \emph{plugin} will differ for LinkedPipes Visualization and of our \emph{application generator}. In the latter case, a \emph{visualizer} will consist of the aforementioned \emph{configurator} interface and \emph{application} interface. See Figure \ref{fig:visualizer-comparison-scheme}. In a sense, it will work as an \emph{application template} for generating new applications. Nevertheless, we will stick to the term \emph{visualizer} in the rest of this text.
 
 \subsection{Platform}
 
-LinkedPipes Visualization is a technical successor of Payola but it dropped most of Payola's platform features along the way. We will give them back, at least to the extent that makes sense for our cause. As our applications will be configurable, we will build an agenda around application management. That includes also support for registering and authenticating users.
+LinkedPipes Visualization is a technical successor of Payola but it dropped most of Payola's platform features along the way. We will give them back, at least to the extent that makes sense for our cause. As our applications will be configurable, we will build necessary infrastructure around application management. That includes also support for registering and authenticating users.
 
-Moreover, one of the Payola's important features was sharing and re-using of the \emph{plugins}. This also works in LinkedPipes Visualization. The \emph{discovery} algorithm is using all available LDVM components. But when a user wants to specifically run the \emph{discovery} algorithm on a \emph{data source} that already exists in the system, it is not possible. We will make a simple database of available data sets part of our \emph{application generator}. The idea is that some users will be responsible for producing interesting data sets and the platform will allow them to share the data sets with other users who will use them to generate applications. Also a simple catalog of published applications will be part of the platform.
+Moreover, one of the Payola's important features was sharing and re-using of the \emph{plugins}. This also works in LinkedPipes Visualization. The \emph{discovery} algorithm is using all available LDVM components. But when a user wants to specifically run the \emph{discovery} algorithm on a selected \emph{data source} that already exists in the system, it is not possible. It is only possible to tell the \emph{discovery} algorithm that it should try to combine the new \emph{data source} with the existing ones. That process is, however, also fully automatic, i.e., it is not possible to specify which ones the \emph{discovery} algorithm should use. It will always use all of them.
 
-In general, the whole user interface of LinkedPipes Visualization is rather bare and simplistic as its point is merely to show the capabilities of the underlying LDVM \emph{discovery} algorithm. Our aim, on the other hand, will be to create a more refined and polished product. Obviously, this aspect is rather subjective and we will let the reader to be the judge of that.
+We will make a simple database of available data sets part of our \emph{application generator}. The idea is that some users will be responsible for producing interesting data sets and the platform will allow them to share the data sets with other users who will use them to generate applications. Also a simple catalog of published applications will be part of the platform.
+
+In general, the whole user interface of LinkedPipes Visualization is rather bare and simplistic as its point is merely to show the capabilities of the underlying LDVM \emph{discovery} algorithm. Our aim, on the other hand, will be to create a more refined and polished product.
 
 \subsection{Framework}
 
@@ -144,7 +179,7 @@ Nevertheless, even though both tools live in the same code base, we made sure to
 
 An important consequence of this unification is that the LDVM implementation instance is shared among the \emph{application generator} and LinkedPipes Visualization. That means that they both use the same set of registered LDVM \emph{components}. We benefit from this as well to an extent as we can utilize existing implemented user interfaces handling some of the LDVM related tasks (e.g. new LDVM \emph{components} are registered to the \emph{generator} through the LinkedPipes Visualization user interface).
 
-\subsection{Frontend}
+\subsection{Frontend integration}
 
 In LinkedPipes Visualization, the frontend is an SPA living in the client web browser. Its responsibility is to render the user interface which communicates with the backend using the public remote API via HTTP. The frontend part does involve some more complex logic, e.g. necessary for rendering the visualizations themselves, but in general all core business logic (anything related to RDF, the \emph{discovery}, any data transformation or filtering) is almost exclusively dealt with in the backend and the frontend merely serves as the way to communicate with the user. The \emph{application generator} frontend follows this approach as well.
 
@@ -158,9 +193,115 @@ There was an option to re-use the original frontend and just extend it with the 
 \end{enumerate}
 Having these three reasons in mind, we came to the conclusion that we would have to rewrite a major portion of the original code anyway and therefore we decided to start from the scratch. As a result, there are two existing user interfaces that live within the same application next to each other, available from two different starting URLs.
 
-The frontend itself can be viewed as a standalone application that has its own inner architecture. It is responsible for rendering the user interface which involves many not so simple tasks, including transitions between individual screen, processing user input, processing backend responses (including the the failed ones) and of course visualizations themselves. The architecture is also important because it defines the way the frontend can be extended with new \emph{visualizers}. 
+\subsection{Frontend architecture}
+\label{sec:system-proposal:architecture-analysis:frontend-architecture}
 
-We cannot give any more details about how the frontend is structured as we used a rather uncommon (or perhaps new) development stack with a rather uncommon architecture. We will provide all the necessary knowledge and explanation in the implementation chapter.
+The frontend itself can be viewed as a standalone application that has its own inner architecture. It is responsible for rendering the user interface which involves many not so simple tasks, including transitions between individual screen, processing user input, processing backend responses (including the the failed ones) and of course visualizations themselves. The architecture is also important because it defines the way the frontend can be extended with new \emph{visualizers}. 
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_frontend_base_structure_spas.png}
+	\caption{The \emph{application generator} frontend consists of several separated Single-page applications.} 
+	\label{fig:frontend-base-structure-spas}
+\end{figure}
+
+The frontend actually consists of several standalone Single-page applications, as Figure \ref{fig:frontend-base-structure-spas} suggests. There is one big \emph{platform} SPA, which contains \emph{configurator interfaces} for all \emph{visualizers}, and then for each \emph{visualizer} there is a small dedicated SPA, which contains only the \emph{application interface} for that particular \emph{visualizer}. The \emph{platform} SPA covers the overall generator agenda which includes most importantly generating and configuring applications. Each \emph{visualizer} SPA, on the other hand, is responsible only for rendering published application of that particular type. 
+
+When a published application is accessed, depending on the \emph{visualizer}, the appropriate SPA is loaded. On the other hand, the \emph{platform} SPA needs to deal with this problem dynamically, using an internal mechanism that loads the appropriate \emph{configurator interface} on demand. This mechanism will be described later in this subsection.
+\begin{figure}
+	\centering
+	\includegraphics[width=120mm]{img/04_frontend_flux_redux.png}
+	\caption{Unidirectional data flow inside an application following the Flux~\cite{flux} pattern.} 
+	\label{fig:frontend-flux-redux}
+\end{figure}
+
+The inner frontend architecture follows the Flux~\cite{flux} pattern, or specifically the Redux~\cite{redux} mutation of Flux. The core idea is a unidirectional data flow, as shown on Figure \ref{fig:frontend-flux-redux}. Let us take an example of how this pattern deals with user interactions. Let us say that the user clicks a button to increase a counter's value. This is what would happen:
+
+\begin{enumerate}
+\item The user clicks the button
+\item The \emph{controller-view}~\footnote{\url{https://facebook.github.io/flux/docs/overview.html}} layer intercepts that interaction and dispatches an appropriate \emph{action} to the \emph{store}.
+\item The \emph{store} updates the \emph{state} using the \emph{action} and notifies the \emph{controller-view} layer of the change.
+\item The \emph{controller-view} updates itself using the new \emph{state} which results in a change on the screen.
+\end{enumerate}
+
+The \emph{state} is a single hierarchically structured object that holds the complete state of the user interface, i.e., what the user sees on the screen is a function of the \emph{state}. The \emph{controller-view} layer both defines how the user interface, given the \emph{state}, should look like and how it should respond to user input. An \emph{action} represents an event that occurs in the system. It is a structured object which is identified by a unique name and can carry a payload. To create \emph{actions} we usually use factories called \emph{action creators}. The \emph{store} holds the \emph{state}, it updates it with incoming \emph{actions} and notifies the \emph{controller-view} layer of changes.
+
+It is important that the only way the \emph{state} (and consequently the user interface) is updated, is through \emph{actions}. That means that given an initial \emph{state} and a sequence of \emph{actions}, we always reach the same \emph{state}. This aspect greatly improves the predictability of the frontend application. 
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_frontend_making_http_request.png}
+	\caption{Making an HTTP request to the backend. The arrows with solid lines represent the first phase (the request is made), the arrows with dashed lines represent the second phase (the response is received).} 
+	\label{fig:frontend-making-http-request}
+\end{figure}
+
+As the initial example was very simple, let us take a more complex one, which involves communication with the backend. In this example, the user clicks the \textbf{Refresh} button (see mockup Figure~\ref{fig:mockups_configurator}) to load updated markers from the server to be shown on a Google Map. The whole process is visualized on Figure~\ref{fig:frontend-making-http-request}. It consists of the following steps:
+
+\begin{enumerate}
+\item The user clicks the \textbf{Refresh} button.
+\item The \emph{controller-view} layer (represented by a \texttt{Google Maps Configurator Component} at this moment) intercepts the click and invokes \texttt{Get Markers Action Creator}.
+\item The \emph{action creator} firstly dispatches the \texttt{GET\_MARKERS\_START}  action.
+\item The \emph{store} updates the \emph{state} accordingly (let us say that an appropriate boolean variable \texttt{loading} is flipped to \texttt{true}) and informs the \emph{controller-view} layer of this change which results in a user interface update and consequently visual feedback on the screen (e.g. the user will see an animated loading indicator).
+\item The \emph{action creator} makes the actual HTTP request to the backend to get the markers and waits for the response.
+\item The backend responds with the markers.
+\item The \emph{action creator} dispatches the \texttt{GET\_MARKERS\_SUCCESS} action with the received markers as the action payload.
+\item The \emph{store} updates the \emph{state} accordingly (the aforementioned variable is flipped back to \texttt{false} and the markers are stored in the state). The \emph{controller-view} layer is notified of another changes and updates itself according to the new \emph{state} (e.g. the loading bar is hidden and the markers are shown on the map).
+\end{enumerate}
+\begin{figure}
+	\centering
+	\includegraphics[width=120mm]{img/04_frontend_react_component_hierarchy.png}
+	\caption{The hierarchical component representation of a screen containing a \emph{configurator interface}, as suggested on the mockup Figure \ref{fig:mockups_configurator}. The component with the dotted border is the component representing the \emph{configurator interface}. Each \emph{visualizer} defines its own configurator component.} 
+	\label{fig:frontend-react-component-hierarchy}
+\end{figure}
+
+Let us now talk more in detail about individual parts of this architecture. The actual user interface, i.e. the \emph{controller-view} layer, is composed of hierarchically structured UI components, specifically React~\cite{react} components. On the mockup Figure~\ref{fig:mockups_configurator} we suggested how a screen with a \emph{configurator interface} should look like. Now you can refer to Figure \ref{fig:frontend-react-component-hierarchy} to see how this screen would be represented with the component hierarchy.
+
+An UI component is the base building block that we work with while creating the user interface. It works as a \emph{view}, defining how it should be rendered on the screen, and also as a \emph{controller}, defining how it should respond to user interactions. The main asset of this component approach is composability. One component typically consists of several smaller components, creating as many levels of abstraction as necessary. This can be nicely seen  on Figure \ref{fig:frontend-react-component-hierarchy}. One consequence is that even though we talk about a \emph{controller-view} layer, some components are rather \emph{controllers}, focusing on the application logic, and some are rather \emph{views}, focusing on the visual aspect.
+\begin{figure}
+	\centering
+	\includegraphics[width=140mm]{img/04_frontend_state_structure.png}
+	\caption{The \emph{state} hierarchy mapped to the user interface. Unlike on Figure~\ref{fig:frontend-react-component-hierarchy}, the user interface contains an universal navigation bar that is displayed on top of the screen across the whole platform (among other things it shows the currently authenticated user).} 
+	\label{fig:frontend-state-structure}
+\end{figure}
+
+The \emph{state} is similarly structured as the user interface, even though the hierarchies are not identical. Figure \ref{fig:frontend-state-structure} gives the reader an idea of what kind of information the \emph{state} actually contains and how this information is mapped to the user interface. 
+
+The role of the \emph{state} is similar to how RDBMS is used in the backend. It works as a structured storage of data (instead of tables we have an arbitrarily deep nested hierarchy). Whereas in backend repositories typically work as the first abstraction layer through which the RDBMS is accessed, in frontend we utilize \emph{reducers} to define how the \emph{state} should be updated using \emph{action}, and \emph{selectors} to select specific data from the \emph{state}. Note that both \emph{reducers} and \emph{selectors} always work only on a single piece of the whole \emph{state}.
+
+Figure \ref{fig:frontend-reducer-and-selector} shows how these concepts are utilized in a real situation. After successful authentication with the backend, the \texttt{SIGN\_IN} action carrying the current user is dispatched. The \texttt{User Reducer} updates the \emph{state} (stores the authenticated user) and the \emph{User Selector} selects the user from the \emph{state} and passes it to a UI component.
+\begin{figure}
+	\centering
+	\includegraphics[width=120mm]{img/04_frontend_reducer_and_selector.png}
+	\caption{Example showing how a \emph{reducer} is used to update the \emph{state} and how a \emph{selector} is used to obtain a specific piece of information from the \emph{state}.} 
+	\label{fig:frontend-reducer-and-selector}
+\end{figure}
+
+There is a clear analogy between repositories and the combination of \emph{actions}, \emph{reducers} and \emph{selectors}. \emph{Actions} define API for updates (setters), \emph{selectors} for reads (getters). \emph{Reducers} represent the actual implementations of the setters. \emph{Action creators}, on the other hand,  constitute a higher level of abstraction as they handle more complex tasks from the business logic (such as communication with the backend, as shown in the example on Figure \ref{fig:frontend-making-http-request}). 
+
+Whereas in backend all this functionality is tightly bundled in a single repository or service object (object as in OOP), in backend the individual parts are represented as functions that are coupled only loosely. Nevertheless, we use a name \emph{duck} to refer to a unit of related \emph{actions}, \emph{action creators}, \emph{selectors} and \emph{reducers} that cover a limited functionality (e.g. users). Just as there are different repositories and services in backend, having different responsibilities, there are different \emph{ducks} in frontend. Here are some examples (the \emph{state} structure on Figure~\ref{fig:frontend-state-structure} might have already given some ideas to the user):
+
+\begin{itemize}
+\item \textbf{User} -- authenticated user
+\item \textbf{Dialog windows} -- state of opened dialog windows
+\item \textbf{Promises} -- state of all asynchronous operations in the system (typically HTTP requests to the backend)
+\item \textbf{Notifications }-- on-screen user notifications
+\item \textbf{Discovery} -- state of the currently opened discovery
+\item \textbf{Published applications} -- list of published applications (catalog content)
+\end{itemize}
+
+These were just some of the many that exist in the frontend, plus they are typically related to the general \emph{platform} functionality. Then every \emph{visualizer} would define its own \emph{ducks}, typically responsible for fetching and storing the RDF data from the backend and for the \emph{configuration} (as seen on Figure~\ref{fig:frontend-state-structure}).
+
+The last missing piece of the frontend architecture is routing. Despite the frontend being an SPA, standard URLs are still used for identification of different screens, i.e., by changing the current URL the user transitions to another screen. In a typical OOP MVC implementation as is used in the backend, a URL is mapped onto a controller object method. In our frontend application, each URL is mapped on a hierarchy of UI components. 
+
+Let us consider the screen with Google Maps Visualizer \emph{configurator interface} as mocked up on Figure~\ref{fig:mockups_configurator}, with component structure shown on Figure~\ref{fig:frontend-react-component-hierarchy}. Note that this applies only to the \emph{platform} SPA. The URL of this screen is \texttt{/app/13/googleMaps}. The mapping on a component hierarchy would be following:
+
+\begin{itemize}
+\item \texttt{app} -- \texttt{Configurator Loader} component
+\item \texttt{13} -- the ID of current application. It is passed as a parameter to the \texttt{Configurator Loader} component
+\item \texttt{googleMaps} -- \texttt{Google Maps Configurator} component
+\end{itemize}
+
+On Figure~\ref{fig:frontend-react-component-hierarchy} there is a \texttt{Router} component high up in the hierarchy. This component is responsible for injecting the components that map on the current URL into the hierarchy. If any segment of the URL changes, the \texttt{Router} replaces the old component with a new one that maps on the new URL segment which results in a screen update. Note the hierarchical nature of this routing approach. 
+
+This suggests how the internal mechanism for loading the appropriate \emph{configurator interface} works. Each \emph{visualizer} defines its own \emph{configurator interface} in a form of a UI component which is seemingly integrated into the component hierarchy (see Figure~\ref{fig:frontend-react-component-hierarchy} where the configurator component is highlighted with a dotted border). Each such component maps on a unique URL. When a user decides to configure an application, he is redirected to this URL and the \emph{Router} activates the appropriate component. 
 
 \subsection{Backend}
 
@@ -180,7 +321,7 @@ Figure \ref{fig:proposed-application-generator-architecture} might suggest that 
 
 What is important is that all \emph{application generator} related functionality, even though within the same codebase, is kept separated. The frontend communicates only with our controllers. The backend extension is in a form of a compact layer over the original codebase, consisting of custom controllers, services and repositories. The dependencies on the original codebase, as shown on Figure~\ref{fig:proposed-application-generator-architecture}, are always in a form of utilizing the internal API of LinkedPipes Visualization. It is easy to draw the line where LinkedPipes Visualization ends and our \emph{application generator} begins. Only in rare cases, we re-use some low-level utilities from the original codebase.
 
-\subsection{Extendability by new visualizers}
+\subsection{Extendability with new visualizers}
 
 Let us now talk about one distinct feature that the software architecture needs to count with: extendability. In this case, it specifically means the ability to be extended with new \emph{visualizers}. As we have described, a \emph{visualizer} (Subsection \ref{sec:linkedpipes:visualizers}) consists of an RDF definition of the LDVM \emph{component} and a \emph{plugin}. The RDF definition needs to be simply imported to the LDVM instance so that the \emph{discovery} algorithm can start using it. The situation is more complicated with the \emph{plugin} as it needs to be properly integrated both in the backend and in the frontend. How this is done can be seen on Figure \ref{fig:sample-visualizer-structure}.
 
@@ -197,9 +338,11 @@ As we are specifically talking about the backed part of a new \emph{visualizer},
 
 On the other hand, each such service would heavily depend on the internal RDF infrastructure of LinkedPipes Visualization. This infrastructure not only provides among other things services to access the triplestore but also defines various conventions for example for how a SPARQL should be expressed in the native code. This is the only case when our code significantly overlaps with the original LinkedPipes Visualization code.
 
-The frontend part contains the \emph{configurator} and \emph{application} interfaces. They both need to be integrated into the rest of the frontend which is a rather complex task. Firstly, there must be a mechanism that based on the application type (i.e., the LDVM \emph{visualizer} component) dynamically selects the correct \emph{configurator} (or \emph{application}) interface and shows it to the user. Secondly, not only does the (let us say) \emph{configurator} interface have to be able to communicate with the rest of the frontend, but it also should  look like it is a part of it, i.e., it should fit in and follow the recommended visual design guidelines. Therefore the integration in this case is significantly more complicated than adding a new independent service to the \emph{Model} layer.
+The frontend part contains the \emph{configurator} and \emph{application} interfaces. They both need to be integrated into the rest of the frontend which is a rather complex task. Firstly, there must be a mechanism that based on the application type (i.e., the LDVM \emph{visualizer} component) dynamically selects the correct \emph{configurator} (or \emph{application}) interface and shows it to the user. Secondly, not only does the (let us say) \emph{configurator} interface have to be able to communicate with the rest of the frontend, but it also should  look like it is a part of it, i.e., it should fit in and follow the recommended visual design guidelines. 
 
-Unfortunately, the integration process heavily depends on the custom chosen development stack that we used for the frontend. Without explaining the basic principles of how the frontend is structured, we are not able to provide any general information about how this works. This, including the internal frontend API, will be properly explained in the next implementation chapter.
+We partially described this process in Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture}. The frontend user interface is defined using a hierarchy of \emph{controller-view} components. Both the \emph{configurator} and \emph{application} interfaces are in a form of such a component that is seemingly integrated into the component hierarchy. The mechanism that dynamically selects an appropriate component depending on a \emph{visualizer} has been also described in Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture}. 
+
+We have also mentioned a concept of \emph{ducks} which corresponds to the concept of repositories and services in backend. Therefore extending the frontend with a new \emph{visualizer} does not only involve implementing UI components for the \emph{configurator}  and \emph{application} interfaces, but also usually means adding new \emph{ducks} that handle the frontend business logic of this \emph{visualizer}. This functionality typically involve utilizing the backend \emph{visualizer} API (e.g. loading the data to be visualized) and also the \emph{visualizer} configuration.
 
 \subsection{Steps to implement a new visualizer}
 
@@ -209,7 +352,8 @@ Let us summarize the previous subsection by simply listing the base tasks necess
 \item Define and add the LDVM \emph{visualizer} component so that the \emph{discovery} algorithm can use it.
 \item Implement necessary services in the \emph{Model} layer that extract RDF data in custom vocabularies and convert them to native objects.
 \item Implement the \emph{visualizer} controller that utilizes the services and exposes their functionality via a public remote API.
-\item Implement the \emph{configurator} and \emph{application} user interfaces and integrate them into the frontend. 
+\item Implement necessary \emph{ducks} that cover the \emph{visualizer} frontend functionality (specifically loading the data to be visualized).
+\item Implement the \emph{configurator} and \emph{application} components and integrate them into the frontend. 
 \end{itemize}
 
 \subsection{API design}
