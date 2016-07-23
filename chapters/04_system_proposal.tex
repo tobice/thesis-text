@@ -152,6 +152,7 @@ When an application is created, the user is taken to the \emph{configurator} int
 We decided that we would build our \emph{application generator} on top of LinkedPipes Visualization (Section \ref{sec:system_proposal:integration}). We already described the architecture of this tool (Section \ref{sec:linkedpipes:architecture} and especially Figure \ref{fig:linked-pipes-visualization-architecture}). We will now describe the way the \emph{application generator} is integrated into LinkedPipes Visualization, including the overall software architecture.
 
 \subsection{Integration into LinkedPipes Visualization}
+\label{sec:system-proposal:architecture-analysis:integration}
 
 There were two basic ways how we could approach the integration:
 
@@ -174,12 +175,13 @@ A possible solution to this problem would be to alter the public API of LinkedPi
 \end{figure}
 
 Coming to this realization, we decided to take the path of least resistance and integrate our \emph{application generator} directly into the LinkedPipes Visualization codebase, just as the fist approach suggests. As the result, we could immediately start utilizing the existing patterns and tools for working with RDF. 
-
+very
 Nevertheless, even though both tools live in the same code base, we made sure to keep them as separated as possible. So if we decided in the future to separate both tools or for example replace the underlying LDVM implementation, it should be rather straightforward. How this is achieved can be seen on Figure \ref{fig:proposed-application-generator-architecture}. We will walk through the individual layers of integration in the following subsections.
 
 An important consequence of this unification is that the LDVM implementation instance is shared among the \emph{application generator} and LinkedPipes Visualization. That means that they both use the same set of registered LDVM \emph{components}. We benefit from this as well to an extent as we can utilize existing implemented user interfaces handling some of the LDVM related tasks (e.g. new LDVM \emph{components} are registered to the \emph{generator} through the LinkedPipes Visualization user interface).
 
 \subsection{Frontend integration}
+\label{sec:system-proposal:architecture-analysis:frontend-integration}
 
 In LinkedPipes Visualization, the frontend is an SPA living in the client web browser. Its responsibility is to render the user interface which communicates with the backend using the public remote API via HTTP. The frontend part does involve some more complex logic, e.g. necessary for rendering the visualizations themselves, but in general all core business logic (anything related to RDF, the \emph{discovery}, any data transformation or filtering) is almost exclusively dealt with in the backend and the frontend merely serves as the way to communicate with the user. The \emph{application generator} frontend follows this approach as well.
 
@@ -304,6 +306,7 @@ On Figure~\ref{fig:frontend-react-component-hierarchy} there is a \texttt{Router
 This suggests how the internal mechanism for loading the appropriate \emph{configurator interface} works. Each \emph{visualizer} defines its own \emph{configurator interface} in a form of a UI component which is seemingly integrated into the component hierarchy (see Figure~\ref{fig:frontend-react-component-hierarchy} where the configurator component is highlighted with a dotted border). Each such component maps on a unique URL. When a user decides to configure an application, he is redirected to this URL and the \emph{Router} activates the appropriate component. 
 
 \subsection{Backend}
+\label{sec:system-proposal:architecture-analysis:backend}
 
 The backend of LinkedPipes Visualization is a standard MVC application, consisting of a \emph{Model} layer, containing various repositories and services that handle the business logic, and \emph{Controllers}, defining the public remote API. The integration of our \emph{application generator} into LinkedPipes Visualization is a matter of adding new controllers, repositories and services to the codebase that will cover the new functionality (Figure~\ref{fig:proposed-application-generator-architecture}).
 
@@ -322,6 +325,7 @@ Figure \ref{fig:proposed-application-generator-architecture} might suggest that 
 What is important is that all \emph{application generator} related functionality, even though within the same codebase, is kept separated. The frontend communicates only with our controllers. The backend extension is in a form of a compact layer over the original codebase, consisting of custom controllers, services and repositories. The dependencies on the original codebase, as shown on Figure~\ref{fig:proposed-application-generator-architecture}, are always in a form of utilizing the internal API of LinkedPipes Visualization. It is easy to draw the line where LinkedPipes Visualization ends and our \emph{application generator} begins. Only in rare cases, we re-use some low-level utilities from the original codebase.
 
 \subsection{Extendability with new visualizers}
+\label{sec:system-proposal:architecture-analysis:extendability}
 
 Let us now talk about one distinct feature that the software architecture needs to count with: extendability. In this case, it specifically means the ability to be extended with new \emph{visualizers}. As we have described, a \emph{visualizer} (Subsection \ref{sec:linkedpipes:visualizers}) consists of an RDF definition of the LDVM \emph{component} and a \emph{plugin}. The RDF definition needs to be simply imported to the LDVM instance so that the \emph{discovery} algorithm can start using it. The situation is more complicated with the \emph{plugin} as it needs to be properly integrated both in the backend and in the frontend. How this is done can be seen on Figure \ref{fig:sample-visualizer-structure}.
 

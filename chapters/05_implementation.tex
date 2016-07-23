@@ -1,7 +1,9 @@
 \chapter{Implementation}
 \label{chap:implementation}
 
-In this chapter, we will go through our \emph{application generator}, explaining in detail how it works and how it is implemented from the inside. We will focus both on the \emph{platform} aspect and the \emph{framework} aspect. As for the \emph{platform} aspect, we will show how a non-developer can use the new \emph{platform} to generate and share Linked Data based applications. As for the \emph{framework} aspect, we will provide a potential developer with a step-by-step guide for how to implement a new \emph{visualizer}. As our generator is built on top of LinkedPipes Visualization, its official name is LinkedPipes Application Generator. For brevity, we will refer to it simply as to (our) \emph{application generator}. 
+In this chapter, we will go through our \emph{application generator}, explaining in detail how it works and how it is implemented under the hood. We will focus both on the \emph{platform} aspect and the \emph{framework} aspect. As for the \emph{platform} aspect, we will show how a non-developer can use the new \emph{platform} to generate and share Linked Data based applications. As for the \emph{framework} aspect, we will provide a potential developer with a step-by-step guide for how to implement a new \emph{visualizer}. As our generator is built on top of LinkedPipes Visualization, its official name is LinkedPipes Application Generator. For brevity, we will refer to it simply as to (our) \emph{application generator}.
+
+Note that certain sections of this chapter, especially the step-by-step guide, are very technical and rather exhaustive. Under normal circumstances those sections would be part of the separate development guide. Nevertheless, as one of the goals of this thesis was to develop a framework, we need to convince the reader that we fulfilled this goal. We can only do that by providing enough detail about how the framework works and especially how it can be used by other developers.
 
 \section{Overview}
 
@@ -10,86 +12,81 @@ Before we dive into technical details, let us walk the reader through the \emph{
 \subsection{Sample use case scenario}
 \label{sec:implementation:use-case-scenario}
 
-In this scenario, we will utilize the D3.js Chord Visualizer and the Asylum Seekers 2015 data set. Both will be properly described later in a separate chapter dedicated to this particular visualizer. Let us say that our fictional user is a journalist writing an article on the refugee crisis. He comes across our \emph{application generator} and finds there the Asylum Seekers 2015 data set. The Figures \ref{fig:scenario-01-browse-data-sources} to \ref{fig:scenario-11-embedded-application} show step-by-step how the journalist can use our tool to create an interactive application and share it with his readers.
+In this scenario, we will utilize the D3.js Chord Visualizer and the Asylum Seekers 2015 data set. Both will be properly described later in a separate chapter dedicated to this particular visualizer. Let us say that our fictional user is a journalist writing an article on the refugee crisis. He comes across our \emph{application generator} and finds there the Asylum Seekers 2015 data set. The Figures \ref{fig:scenario-01-browse-data-sources} to \ref{fig:scenario-11-embedded-application} show step-by-step how the journalist can use our tool to create an interactive application and share it with his readers. 
 
-The actual mechanics of this visualizer will be explained later in the aforementioned separate chapter. Nevertheless, on a more general level this scenario nicely illustrates the principles that we suggested in the system proposal (Section \ref{sec:proposal:features}). The selected data set is automatically \emph{analyzed} and an appropriate visualization is offered to the user (Figure \ref{fig:scenario-02-discovery-result}). The configuration phase allows the user to work with the data and to affect the final shape of the application before it gets published. He can select for the visualization only the data he (or his audience) is interested in (Figure \ref{fig:scenario-05-search-graph}). He can even extend the data set itself with missing information (Figure \ref{fig:scenario-08-custom-label-editor}). Finally, the application can be easily shared using its public URL (Figure \ref{fig:scenario-09-published-app}).
+The actual mechanics of this visualizer will be explained later in the aforementioned separate chapter. Nevertheless, on a more general level this scenario nicely illustrates the principles that we suggested in the system proposal (Section \ref{sec:proposal:features}). 
 
-What is also clear is that none of these steps require any advanced programming knowledge. The process is very \emph{non-developer friendly}. The only exception in this case is the preparation of the data set. Unfortunately, the original data are not available in RDF and the conversion has to be done by an expert. Nevertheless, once the data set is prepared and available in the \emph{application generator}, it can become a source for a large number of different applications.
-
+\begin{itemize}
+\item \emph{Data analysis}. The selected data set is automatically \emph{analyzed} and an appropriate visualization is offered to the user (Figure \ref{fig:scenario-02-discovery-result}).
+\item \emph{Configuration}. The configuration phase allows the user to work with the data and to affect the final shape of the application before it gets published.  He can select for the visualization only the data he (or his audience) is interested in (Figure \ref{fig:scenario-05-search-graph}). He can even extend the data set itself with missing information (Figure \ref{fig:scenario-08-custom-label-editor}). 
+\item \emph{Online sharing}. The application can be easily shared using its public URL (Figure~\ref{fig:scenario-09-published-app}).
+\item \emph{Non-developers friendly}. None of these steps require any advanced programming knowledge. The only exception in this case is the preparation of the data set. Unfortunately, the original data are not available in RDF and the conversion has to be done by an expert. Nevertheless, once the data set is prepared and available in the \emph{application generator}, it can become a source for a large number of different applications (the \emph{platform} feature.
+\end{itemize}
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_01_browse_data_sources.png}
-	\caption{Use case scenario: Data source browser. The journalist selects the Asylum Seekers 2015 data set.}
+	\caption{Asylum Seekers scenario: Browser locally available data sets. The journalist selects the Asylum Seekers 2015 data set.}
 	\label{fig:scenario-01-browse-data-sources}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_02_discovery_result.png}
-	\caption{Use case scenario: Discovery result. The journalist can see that the Asylum Seekers 2015 data set can be visualized only using the D3.js Chord Visualizer. He runs the one discovered LDVM \emph{pipeline} that ends with this particular LDVM \emph{visualizer component}.}
+	\caption{Asylum Seekers scenario: Discovery result. The journalist can see that the Asylum Seekers 2015 data set can be visualized only using the D3.js Chord Visualizer. He runs the one discovered LDVM \emph{pipeline} that ends with this particular LDVM \emph{visualizer component}.}
 	\label{fig:scenario-02-discovery-result}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_03_create_application.png}
-	\caption{Use case scenario: Create application dialog. When the \emph{pipeline evaluation} is done, the user can proceed by creating an application.}
+	\caption{Asylum Seekers scenario: Create application dialog. When the \emph{pipeline evaluation} is done, the user can proceed by creating an application.}
 	\label{fig:scenario-03-create-application}
 \end{figure}
 
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_04_graph_sample.png}
-	\caption{Use case scenario: Configurator of D3.js Chord Visualizer. Immediately after the application is created, the journalist is presented with a random sample visualization of the data.}
+	\caption{Asylum Seekers scenario: Configurator of D3.js Chord Visualizer. Immediately after the application is created, the journalist is presented with a random sample visualization of the data.}
 	\label{fig:scenario-04-graph-sample}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_05_search_graph}
-	\caption{Use case scenario: Search dialog. The journalist wants to create a visualization of asylum seekers coming from Syria. He uses the search feature to find Syria in the data set and adds it together with all target countries to the visualization \emph{list}.}
+	\caption{Asylum Seekers scenario: Search dialog. The journalist wants to make a visualization of asylum seekers coming from Syria. He creates a new  \emph{list} (a \emph{list} contains entities that should be visualized using a single diagram). The journalist uses the search feature to find Syria in the data set and adds it together with all target countries to the new \emph{list}.}
 	\label{fig:scenario-05-search-graph}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_06_ready_application}
-	\caption{Use case scenario: Visualization of selected countries. The journalist is now presented with the chord diagram of the countries he added into the \emph{list}.}
+	\caption{Asylum Seekers scenario: Visualization of selected countries. The journalist is now presented with the chord diagram of the countries he added into the \emph{list}.}
 	\label{fig:scenario-06-ready application}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_07_general_settings}
-	\caption{Use case scenario: General application settings. The journalist can also provide the application description (in this case he uses it to explicitly mention the source of the data).}
+	\caption{Asylum Seekers scenario: General application settings. The journalist can also provide the application description (in this case he uses it to explicitly mention the source of the data).}
 	\label{fig:scenario-07-general-settings}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_08_custom_label_editor}
-	\caption{Use case scenario: Custom labels editor. The journalist is targeting Czech audience but the country names in the data set are in English. The configurator lets the journalist provide his own names that will override the default ones. }
+	\caption{Asylum Seekers scenario: Custom labels editor. The journalist is targeting Czech audience but the country names in the data set are in English. The configurator lets the journalist provide his own names that will override the default ones. }
 	\label{fig:scenario-08-custom-label-editor}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_09_published_app}
-	\caption{Use case scenario: Published application. This is what the journalist's readers will see when the application gets published. Using the menu on the side, the users can switch on/off individual countries in the chord diagram.}
+	\caption{Asylum Seekers scenario: Published application. This is what the journalist's readers will see when the application gets published. Using the menu on the side, the users can switch on/off individual countries in the chord diagram.}
     \label{fig:scenario-09-published-app}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_10_embed_application}
-	\caption{Use case scenario: Embed application dialog. The journalist may decide to embed the chord diagram directly into his article.}
+	\caption{Asylum Seekers scenario: Embed application dialog. The journalist may decide to embed the chord diagram directly into his article.}
     \label{fig:scenario-10-embed-application}
 \end{figure}
-
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_scenario_11_embedded_application}
-	\caption{Use case scenario: Embedded application. In this form, stripped from all controls to the bare visualization, it is perfect for direct embedding into web pages.}
+	\caption{Asylum Seekers scenario: Embedded application. In this form, stripped from all controls to the bare visualization, it is perfect for direct embedding into web pages.}
     \label{fig:scenario-11-embedded-application}
 \end{figure}
 
@@ -97,7 +94,7 @@ What is also clear is that none of these steps require any advanced programming 
 \subsection{Users}
 \label{sec:implementation:overview:users}
 
-Everyone who wants to use our \emph{application generator} needs to create an account first. At this moment, a user can either create a standard local account protected by a password or he can log in with his Google account. No other providers are currently supported. As the user works with the \emph{application generator}, all his applications, data sources and discoveries are linked to his account and no one else can access it. E.g. an application can be configured only by its owner and before it is published, only the owner can view it.
+Everyone who wants to use our \emph{application generator} needs to create an account first. At this moment, a user can either create a standard local account protected by a password or he can log in with his Google account (using OAuth 2.0 based Google Sign-In authentication system\footnote{\url{https://developers.google.com/identity/sign-in/web/}}). No other providers are currently supported. As the user works with the \emph{application generator}, all his applications, data sources and discoveries are linked to his account and no one else can access it. E.g. an application can be configured only by its owner and before it is published, only the owner can view it.
 
 One exception are \emph{administrator} accounts which work similarly to root users known from Unix systems. Such users can access and update any applications, data sources or discoveries in the system. The first user to register in our \emph{application generator} automatically becomes an administrator. The others have to be manually appointed (which is currently not possible through the user interface and has to be done by directly updating the database record).
 
@@ -110,21 +107,21 @@ One exception are \emph{administrator} accounts which work similarly to root use
 
 \subsection{Data sources}
 
-Our  approach to data sources is slightly different to LinkedPipes Visualization. In LinkedPipes Visualization, the user starts by providing the data source (may it be the SPARQL endpoint URL or a *.ttl file with serialized RDF data) and he has to do it every single time he wants to create a visualization. In our \emph{application generator}, we focused more on the possibility to re-use and share the data sets. So the user has to start by adding a data source to the generator, giving it a common name and only then he is allowed to select it for visualization. 
+Our  approach to data sources is slightly different to LinkedPipes Visualization. In LinkedPipes Visualization, the user starts by providing the data source (may it be the SPARQL endpoint URL or a *.ttl file with serialized RDF data) and he has to do it every single time he wants to create a visualization. In our \emph{application generator}, we focused more on the possibility to re-use and share the data sets. So the user has to start by adding a data source to the generator, giving it a common name and only then he is allowed to select it for visualization. This data source remains linked to his account (i.e., he is the owner of this data source) which is also a significant change compared to LinkedPipes Visualization.
 
-If we just have a new data set and want to get to a visualization quickly, the approach of LinkedPipes Visualization is faster. But once we want to re-use that data set, our approach wins over. 
+We distinguish between public and private data sources. Private data sources are seen only by their owner (it should be mentioned that they are just hidden by the user interface, they are not actively protected from being used by other users). Public data sources, on the other hand, ale openly available for anyone and can be selected in the data source browser (Figure \ref{fig:scenario-01-browse-data-sources}). Any user can decide to make any of his data sources public (when he is adding the data source or any time later). The idea is that one user (a data expert) might prepare the data set and another might use it to generate an application.
 
-That is not the only advantage. In our \emph{application generator}, we distinguish between public and private data sources. Private data sources are seen only by their owner (it should be mentioned that they are just hidden by the user interface, they are not actively protected from being used by other users). Public data sources, on the other hand, ale openly available for anyone and can be selected in the data source browser (Figure \ref{fig:scenario-01-browse-data-sources}). Any user can decide to make any of his data sources public. The idea is that one user (a data expert) might prepare the data set and another might use it to generate an application.
-
-This approach introduces another level of abstraction. The user generating an application does not have to know what RDF or a SPARQL endpoint is, i.e, he is separated from the technical details. He can simply select the data source he is interested in from the browser and use it.
+This approach introduces another level of abstraction. The user generating an application does not have to know what RDF or a SPARQL endpoint is, i.e, he is separated from the technical details. He can simply browse the publicly available data sources and select those that he is interested in.
 
 \subsection{Pipeline discovery}
 
-The \emph{application generator} runs the underlying LDVM \emph{discovery} algorithm on the selected data sources. The \emph{discovery} returns all possible LDVM \emph{pipelines} that lead to a visualization, i.e., they end with a \emph{visualizer component}. Multiple \emph{pipelines} might use the same \emph{visualizer component} (they might use different \emph{analyzers} and \emph{visualizer transformers} along the way to get the input data compatible with this particular visualizer). Unfortunately, we are not able to give the user any detailed information about how the data produced by a \emph{pipeline} will look like. The only way to find out is to actually run the \emph{pipeline} and create an application from it. If the data do not make sense or are not what the user expects, he can try another one.
+The \emph{application generator} runs the underlying LDVM \emph{discovery} algorithm on the selected data sources. The \emph{discovery} returns all possible LDVM \emph{pipelines} that lead to a visualization, i.e., they end with a \emph{visualizer component}. Multiple \emph{pipelines} might use the same \emph{visualizer component} (they might use different \emph{analyzers} and \emph{visualizer transformers} along the way to get the input data compatible with this particular visualizer).
+
+Unfortunately, we are not able to give the user any detailed information about how the data produced by a \emph{pipeline} will look like. The reason is that the \emph{pipelines} are assembled using a static \emph{compatibility} check as explained in Section~ \ref{sec:linkedpipes:ldvm-implementation}. The compatibility check guarantees that the \emph{pipeline} will produce some data that are visualizable by the \emph{visualizer} but it cannot provide any more information about the actual data quality. The only way to find out is to actually execute the \emph{pipeline} and create an application from it. If the data do not make sense or are not what the user expects, the user can try another one.
 
 The user can watch the \emph{discovery} algorithm progress on a dedicated screen that shows the current \emph{discovery} status and also the list of \emph{pipelines} that have been discovered so far (Figure \ref{fig:scenario-02-discovery-result}). The \emph{pipelines} are grouped by \emph{visualizers}. As the algorithm may take some time, the user can leave the screen and come back later. It is accessible even after the \emph{discovery} algorithm finishes. The list of all discoveries can be found on the dashboard \ref{fig:dashboard}.
 
-Note that not all \emph{visualizer} are supported by our \emph{application generator} (i.e., the corresponding \emph{plugin} is missing). For example, LinkedPipes Visualization contains a \emph{visualizer} for statistical data described using Data Cube Vocabulary \cite{datacube_vocabulary}. If the appropriate LDVM \emph{component} is registered in our \emph{application generator}, the \emph{discovery} algorithm will return \emph{pipelines} that use this \emph{component}. However, those will not be offered to the user.
+Note that not all \emph{visualizers} are supported by our \emph{application generator} (i.e., the corresponding \emph{plugin} is missing). For example, LinkedPipes Visualization contains a \emph{visualizer} for statistical data described using Data Cube Vocabulary \cite{datacube_vocabulary}. If the appropriate LDVM \emph{component} is registered in our \emph{application generator}, the \emph{discovery} algorithm will return \emph{pipelines} that use this \emph{component}. However, those will not be offered to the user (the \emph{application generator} will inform the user that this particular \emph{visualizer} is not supported).
 
 \subsection{Application configuration}
 
@@ -133,7 +130,7 @@ The configuration phase is the core feature of the \emph{application generator} 
 \begin{figure}
 	\centering
 	\includegraphics[width=145mm]{img/05_configurator.png}
-	\caption{The configurator interface. The blurred out part is controlled by the current visualizer whereas the rest is identical for all visualizers. It contains the common functionality (e.g. the "More" button in the upper right corner shows a menu allowing the user to delete the application or change the application name and description).}
+	\caption{The configurator interface. The blurred out part with the dashed border is controlled by the current visualizer whereas the rest is identical for all visualizers. It contains the common functionality (e.g. the "More" button in the upper right corner shows a menu allowing the user to delete the application or change the application name and description).}
     \label{fig:configurator}
 \end{figure}
 
@@ -146,7 +143,7 @@ The configuration phase is the core feature of the \emph{application generator} 
 
 \subsection{Publishing applications}
 
-When the user is happy with how the application looks, he can publish it by hitting the green "Publish button" (as seen for example on the Figure \ref{fig:scenario-04-graph-sample} in the upper right corner). The application then becomes accessible on a public URL which is generated from the application ID (internal numeric identificator) and its name. The \emph{application generator} at this moment does not offer any fine grained control of who gets to access the application. It is either public or not. Once it is published, it also becomes part of the public application catalog (Figure \ref{fig:catalog}).
+When the user is happy with how the configuration looks, he can publish it by hitting the green "Publish button" (as seen for example on the Figure \ref{fig:scenario-04-graph-sample} in the upper right corner). The application then becomes accessible on a public URL which is generated from the application ID (internal numeric identificator) and its name. The \emph{application generator} at this moment does not offer any fine grained control of who gets to access the application. It is either public or not. Once published, it also becomes a part of the public application catalog (Figure \ref{fig:catalog}).
 
 \begin{figure}
 	\centering
@@ -157,569 +154,39 @@ When the user is happy with how the application looks, he can publish it by hitt
 
 Some \emph{visualizers} offer the option to publish the application in an embed mode. That means that the application's interface is adapted so that it can be inserted for example into an external online article. The interface is usually significantly reduced and stripped from unimportant  control elements. This functionality is not considered common for all \emph{visualizers}  as each \emph{visualizer} can approach it differently. For example, the D3.js Chord Visualizer we used in this section allows the user to create multiple chord diagrams within a single application. Each of these diagrams can be exported separately in the embed mode (a unique URL is generated for each diagram under which the diagram is accessible). See Figure \ref{fig:scenario-10-embed-application}. Clearly, this functionality is specific for D3.js Chord Visualizer.
 
-\section{General architecture}
-\label{sec:implementation:general-architecture}
+\section{Backend implementation}
 
-We decided that we build our \emph{application generator} on top of LinkedPipes Visualization (Section \ref{sec:system_proposal:integration}). We already described the architecture of this tool (Section \ref{sec:linkedpipes:architecture} and especially Figure \ref{fig:linked-pipes-visualization-architecture}). We will now explain how we integrated the \emph{application generator} into LinkedPipes Visualization. You will get the overall idea by referring to Figure \ref{fig:application-generator-architecture}.
+Implementation-wise, the backend is fairly simple compared to the frontend. Everything important has been already covered in the corresponding analytical part of this text (Section~\ref{sec:system-proposal:architecture-analysis:backend}). The backend of LinkedPipes Visualization is powered by Play Framework\footnote{\url{https://www.playframework.com/}} which follows the MVC architecture and is written in Scala. As explained, we simply extend the existing backend codebase with controllers and services (or repositories) that cover the functionality of the \emph{application generator}. 
 
-\begin{figure}
-	\centering
-	\includegraphics[width=140mm]{img/05_application_generator_architecture.png}
-	\caption{Application Generator Architecture. Blocks with solid borders are part of the original LinkedPipes Visualization, blocks with dashed borders are newly implemented parts of the \emph{application generator}.} 
-	\label{fig:application-generator-architecture}
-\end{figure}
-
-The \emph{application generator} is part of the original LinkedPipes Visualization code base. We made this decision after consulting the authors of LinkedPipes Visualization. From the software architectonic perspective, it is probably not the cleanest approach, but it significantly sped up our work. The original code base contained many solutions and APIs that we could immediately use (for example the LDVM implementation API, various RDF tools etc.). Nevertheless, even though both tools live in the same code base, we made sure to keep them as separated as possible (Figure \ref{fig:application-generator-architecture} shows that clearly). So if we decided in the future to separate both tools or for example replace the underlying LDVM implementation, it should not be impossible.
-
-An important consequence of this unification is that the LDVM implementation instance is shared among the \emph{application generator} and LinkedPipes Visualization. That means that they both use the same set of registered LDVM \emph{components}. We benefited from this as well to an extent. Due to the lack of time, we did not manage to implement all user interfaces for our generator. For example, new LDVM \emph{components} are registered to the \emph{generator} through the LinkedPipes Visualization user interface.
-
-\subsection{Frontend}
-
-The \emph{application generator} frontend is completely new and independent on the original frontend. The original frontend already contained some work that we could at first glance use (e.g. existing \emph{visualizer} plugins). Unfortunately, couple of problems prevented us from doing so. Firstly, the AngularJS frontend was created just to showcase the capabilities of the underlying LVDM implementation. For this reason, its code was in a rather poor state with no documentation. Clearly, it would take us lots of time to get familiar with it. Secondly, this code was not written with certain features (like for example user support) in mind. Thirdly, our \emph{visualizers} (with the separated \emph{configurator} and \emph{application} interfaces) work very differently compared to the \emph{visualizers} of LinkedPipes Visualization. Having these three reasons in mind, we came to the conclusion that we would have to rewrite a major portion of the original code anyway and therefore we decided to start from the scratch. We also decided to go with a different development stack (we replaced AngularJS with React and related tools) which we believed would fit our needs better. 
-
-As a result, there are two existing user interfaces that live within the same application next to each other. The original LinkedPipes Visualization interface is accessible from the home page (the \texttt{/} URL). Our \emph{application generator} can be found at \texttt{/appgen} and individual published applications live at \emph{/app}.
-
-\subsection{Controllers}
-
-The vast majority of controllers in both LinkedPipes Visualization and the \emph{application generator} handle the asynchronous HTTP requests coming from the frontend (the only exception are the controllers handling the initialization of the SPAs). The role of a controller in this typical case is just to translate the HTTP request into an API call to the \emph{Model} layer and send the response back. All controllers together define a public remote API interface.
-
-Even though we could re-use some of the methods available from the LinkedPipes Visualization controllers (e.g. those for controlling the \emph{discovery} algorithm), we decided not to do that to avoid hidden dependencies between the frontend and the backend. Dependencies within the Scala code base (for example between the \emph{Controller} layer and the \emph{Model} layer) are easy to discover. If they break, the code will not compile. That is not true for the remote API. Therefore the \emph{application generator} frontend strictly uses only those remote API methods that are handled by the \emph{application generator} controllers. They all exist in a standalone \texttt{controllers.appgen} Scala package.
-
-\subsection{Model}
-
-The \emph{Model} layer consists of various repositories and services that handle the business logic. The repositories and services that specifically handle the \emph{application generator} business logic (e.g. application management, users etc) can all be found in the \texttt{model.appgen} package.
-
-The \emph{Model} layer among other things contains tools for working with RDF data, e.g. services converting RDF data in various vocabularies into Scala objects. While we were developing our \emph{visualizers}, we needed to add support for some new vocabularies to the code base. This is the only case when our code significantly overlaps with the original LinkedPipes Visualization code. However, this code is not specific to our \emph{application generator}, it actually extends the functionality of LinkedPipes Visualization.
-
-Figure \ref{fig:application-generator-architecture} might suggest that our extension of the \emph{Model} layer directly communicates with the H2 database. Strictly speaking, that is not true because we are utilizing some low level services to access the database and those services could still be considered part of the \emph{Model} layer.
-
-What is important is that all \emph{application generator} related Scala code exists in those two packages (\texttt{controllers.appgen} and \texttt{model.appgen}). Also the frontend strictly communicates only  with our controllers. Therefore it is easy to draw the line where LinkedPipes Visualization ends and our \emph{application generator} begins. Dependencies between our code and the original code base are shown on Figure \ref{fig:application-generator-architecture} and are always a matter of Scala code. The dependencies are in a form of utilizing the internal API of LinkedPipes Visualization. In rare cases, we re-use some low-level utilities from the original code base.
+One of our concerns was to keep the \emph{application generator} as separated as possible from the original codebase. Therefore all our controllers are in a separate Scala package \texttt{controllers.appgen} and similarly all our services and repositories can be found in a separate Scala package \texttt{model.appgen}. The only exception are the services that we developed to add support for new RDF vocabularies. We do not consider these services to be the \emph{application generator} exclusive as they can be utilized by the LinkedPipes Visualization as well. Therefore when implementing them, we followed the structuring suggested by the authors of LinkedPipes Visualization.
 
 \section{Frontend development stack}
 \label{sec:implementation:frontend-development-stack}
 
-One of the goals of this chapter is to convince the reader that our \emph{application generator} can work as a \emph{framework} for developing new \emph{visualizers}. For that we need the reader to understand the \emph{application generator} on a code level. The backend architecture is fairly standard and especially the integration is simple. Most of the work happens in frontend which uses a development stack that is rather new and very specific. In this section, we will try to explain the reader the core frontend technologies that we use so that he can later understand the integration process of a new \emph{visualizer}. The information that we are about to provide here is in no way related directly to the \emph{application generator}. It will be a short extract from the documentations of these tools and we will only aim to provide just enough information so that the reader can understand our code. Anyone who feels already familiar with these tools, can skip this part.
+As we explained in Section~\ref{sec:system-proposal:architecture-analysis:frontend-integration}, the \emph{application generator} frontend is completely separated from the LinkedPipes Visualization frontend. It uses a different development stack (set of tools) which is rather new and very specific. It includes React~\cite{react}, Redux~\cite{redux}, Reselect~\cite{reselect} and React-router~\cite{react-router}. 
 
-\subsection{ES6 and Babel compiler}
+In Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture} we covered the conceptual architecture of the frontend so the reader should have a general idea of how it works. However, in order for us to be able to convince the reader that our \emph{application generator} can work as a \emph{framework} for developing new \emph{visualizers}, we need the reader to understand the \emph{application generator} on a code level. Therefore we attached to this thesis a brief introduction (Attachment ~\ref{att:devstack}) that should get the reader familiar enough with these tools so that he can understand the following sections. Anyone who feels already familiar with these tools, can skip this part.
 
-The frontend is completely written using ECMAScript 2015 \cite{es6} (known as ES6) which is the 6th version of ECMAScript standard. JavaScript is an implementation of ECMAScript, available in all mainstream browsers. ES6 introduces many new language constructs which are, however, not all supported by the current JavaScript implementation. We use Babel \footnote{https://babeljs.io/} transpiler which converts our ES6 code into standard JavaScript.
+We should mention that Attachment~\ref{att:devstack} describes essentially the same ideas as Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture}, but on implementation level. 
 
-We will mention some of the features that we frequently use.
+\section{Frontend framework conventions}
+\label{sec:implementation:frontend-conventions}
 
-\begin{verbatim}
-// Arrow functions
-[1, 2, 3].map(x => x * x);
+The tools that we have chosen for our frontend (Section \ref{sec:implementation:frontend-development-stack}) define the overall frontend architecture and the internal mechanisms (Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture}). Clearly, there is no monolithic framework. Each tool solves only one problem and even though they have been all designed to work well together and complement each other, there is missing an overall architecture and design patterns for large scale applications (something that a monolithic framework, such as Play Framework that we use in backend, usually offers).
 
-// var is replaced with const (for constants) and let (for mutable variables)
-const PI = 3.14;
-let i = 1;
-i++;
+There exist recommendations and patterns but they evolve just as quickly and erratically as the modern world of JavaScript frontend itself. While developing the \emph{application generator} (and turning into a \emph{framework}) we had to choose the right patterns and conventions for us and sometimes even come up with some new patterns.
 
-// Standard class syntax (the prototypical inheritance is still under the hood)
-class Dog extends Animal {
-  constructor(name) {
-    super(name);
-  }
-}
+This involves literary everything from the very basic questions of how our code should be organized to which library should we use to generate forms or how we should implement visual feedback for asynchronous requests. In this section we will focus mainly on the basic aspects which involve the code organization which is important because it affects the process of integrating new \emph{visualizers}.
 
-// Enhanced Object Literals
-const a = 2;
-const b = 3;
-const obj = { a, b };
-obj.a === 2;
-obj.b === 3;
-
-// Desctructing
-const obj = { a: 2, b: 3 };
-const { a, b } = obj;
-a === 2;
-b === 3;
-
-const arr = [1, 2, 3];
-const [a, b] = obj;
-a === 1;
-b === 2;
-\end{verbatim}
-
-Perhaps the most important feature for us are ES6 modules. Each file is a module which \emph{imports} its dependencies and \emph{exports} values that make a public API of that module.
-
-\begin{verbatim}
-// lib/math.js
-
-export const PI = 3.14;
-
-export function add(a, b) {
-  return a + b;
-}
-
-export const multiply = (a, b) => a * b;
-
-export default { add, multiply, PI };
-\end{verbatim}
-
-There are several ways how a dependency can be \emph{imported}.
-
-\begin{verbatim}
-import { multiply, PI } from './lib/math'
-
-const result = multiply(PI, 2);
-\end{verbatim}
-
-\begin{verbatim}
-import * as math from './lib/math'
-
-const result = math.add(math.PI, 2);
-\end{verbatim}
-
-\begin{verbatim}
-import math from './lib/math'
-
-const result = math.add(math.PI, 2);
-\end{verbatim}
-
-\subsection{npm}
-npm \cite{npm} is a package manager for JavaScript. We use it to manage our JavaScript dependencies. They are all listed in the file \texttt{src/package.json}. Once installed, a package can be used with the standard \texttt{import} command.
-
-\begin{verbatim}
-import moment from 'moment'
-
-moment().format('MMMM Do YYYY, h:mm:ss a'); // prints current time and date, i.e. June 24th 2016, 8:52:00 pm
-\end{verbatim}
-
-Note that when importing a npm dependency, we do not use relative paths starting with a dot.
-
-\subsection{React}
-React \cite{react} is a JavaScript library for building user interfaces. The base building block is a React component.
-
-\begin{verbatim}
-import React from 'react'
-
-const HelloMessage = ({ name }) => (
-    <div>Hello <strong>{name}</strong></div>
-  )
-
-React.render(<HelloMessage name="Jon Snow" />, document.getElementById('container'));
-\end{verbatim}
-
-
-This is the simplest shortest example possible where a component works as a plain function. It takes some input data and prints user interface. The input data are in the form of \texttt{props} which are passed in the first argument (we use ES6 destructing to extract the name \texttt{prop}). The user interface is defined using a XML-like syntax called JSX. This component prints a greeting with the highlighted name. Using the last line, the component is mounted to a specific DOM node marked with an id equal to "container".
-
-The components can be composed. 
-
-\begin{verbatim}
-const HelloMessage = ({ name }) => (
-    <div>Hello <strong>{name}</strong></div>
-  );
-  
-const MessageList = ({ names }) => (
-    <ul>
-      {names.map(name => 
-        <li>
-          <HelloMessage name={name} />
-        </li>
-      )}
-    </ul>
-  )
-
-const names = ['Jon Snow', 'Tyrion'];
-React.render(<MessageList names={names} />, document.getElementById('container'));
-\end{verbatim}
-
-This example will print a greeting for each name in the list. As you can see, we can easily combine HTML tags with our own components. The \texttt{props} are passed down to the components with the syntax that we use for specifying  standard HTML attributes.
-
-The components can be interactive.
-
-\begin{verbatim}
-class Counter extends React.Component {
-  constructor(props) {
-    this.state = {
-      value: props.initialValue
-    }
-  }
-  
-  increase() {
-    this.setState({
-      value: this.state.value + 1
-    })
-  }
-  
-  render() {
-    const { value } = this.state;
-    return (
-      <input type="button" 
-        onClick={() => this.increase()} 
-        value={'Increase: ' + value} />
-     );
-  }
-} 
-
-React.render(<Counter initialValue={10} />, document.getElementById('container'));
-\end{verbatim}
-
-This component no longer works as a simple function as it maintains its own state. The state contains just a numeric value which is increased every time the user click the button. The value is displayed in the input label. Note that we cannot simply assign the new value to the \texttt{state} object, we need to use the \texttt{setState} method which is part of the React API.
-
-In this case, the rendered UI is a function of the component \texttt{props} and the component \texttt{state}. Whereas the \texttt{props} are immutable (like function arguments), the \texttt{state} can be mutated within the component.
-
-In React, \textbf{you do not mutate the user interface}. That means that you do not define how the user interface should transition between different states but instead, you specify how the interface should look like given the current \texttt{props} and \texttt{state}. Every time the \texttt{state} changes or new \texttt{props} are passed from the parent component, the whole UI is completely re-rendered. This significantly simplifies building interactive user interfaces. If nothing else, the number of possible component states is significantly lower than the number of possible transitions between those states.
-
-The React API defines several life cycle methods.
-
-\begin{verbatim}
-class GreetOnMount extends React.Component {
-  componentWillMount() {
-   alert('This component is about to be mounted to the DOM tree!');
-  }
-  
-  componentWillUnmount() {
-   alert('This component is about to be unmounted from the DOM tree!');
-  }
-  
-  render() {
-   return <div />
-  }
-}
-\end{verbatim}
-
-We have used two life cycle methods, \texttt{componentWillMount} which is triggered when the component is about to appear, and \texttt{componentWillUnmount} which is triggered when the component is about to disappear from the screen. These methods are especially useful for components that fetch data from the server. The first method can be used to initiate the request and the second method to cancel the request or possibly do some cleaning up.
-
-\subsection{Redux}
-\label{sec:implementation:frontend-development-stack:redux}
-
-If we were to use the MVC terminology, we would say that a React component is a \emph{controller-view}. It both handles the interaction with the user and the visual representation. In our code, we usually try to distinguish between controllers and views. We create either a component that is rather a controller, i.e., it handles user input but does not focus on the visuals, or a component that is rather a view, i.e., there is no business logic going on and the component focuses only on representing the data on the screen. By composing components of these two types we build the whole user interface.
-
-The component state fits the definition of the \emph{Model} layer. Nevertheless, this approach, i.e., storing everything in the state of React components, would not work for large-scale applications which would have a lot of state. The \emph{state} in this context can mean literary everything, starting all the data fetched from the server, ending with the list of open dialog windows. That is why we use Redux.
-
-Redux \cite{redux} is, as explained by the authors, a "predictable state container for JavaScript apps" that evolved from the Flux ideas. Flux \cite{flux} is an application architecture that was designed specifically to work with React applications. Even though Redux is independent on React, they work extremely well together. 
-
-Setting up Redux with React is a bit complicated so we skip it. It is not really necessary because it is already done for us in the fronted code base and we can immediately start using it. The more important thing is to understand how it works.
-
-The core idea is that we move the state out of the components. Let us start with a simple example. Our \emph{state} will be just a single number. We want to be able to increment and decrement the number. For each such operation we create an \emph{action type}.
-
-\begin{verbatim}
-const INCREMENT = 'INCREMENT';
-const DECREMENT = 'DECREMENT';
-\end{verbatim}
-
-It is good practice that we also define \emph{action creators}.
-
-\begin{verbatim}
-function increment() {
-  return { type: INCREMENT };
-}
-
-function decrement() {
-  return { type: DECREMENT };
-}
-\end{verbatim}
-
-Now we define a special function called a \emph{reducer} which specifies how every \emph{action} transforms the \emph{state}.
-
-\begin{verbatim}
-function valueReducer(state = 0, action) {
-  switch (action.type) {
-    case INCREMENT:
-      return state + 1
-    case DECREMENT:
-      return state - 1
-    default:
-      return state
-  }
-}
-\end{verbatim}
-
-The function takes the current \emph{state} and an \emph{action} as an argument. Depending on the \emph{action type} (and typically also \emph{action payload}), it transforms the \emph{state}. What is important is that the function does not mutate the old \emph{state} but rather creates a completely new \emph{state} from the old \emph{state}. In this case the \emph{state} is just an integer which is by its nature immutable. If the \emph{state} was more complex, typically an object, we would need to make sure to create a new object  every time it changes.
-
-From a \emph{reducer} we create a \emph{store} which represents a running instance of Redux. It holds the current \emph{state} and provides a \emph{dispatch} function that we use to apply the \emph{actions} on the \emph{state}.
-
-\begin{verbatim}
-dispatch(increment());
-dispatch(decrement());
-\end{verbatim}
-
-Now let us see how we bind this to a React component.
-
-\begin{verbatim}
-import React from 'react'
-import { connect } from 'react-redux'
-
-const Counter = ({ dispatch, value }) => (
-  <div>
-    {value}
-    <input type="button" onClick={() => dispatch(increase())} label="Increase" />
-    <input type="button" onClick={() => dispatch(decrease())} label="Decrease" />
-  </div>
-);
-
-const mapStateToProps = state => ({
-  value: state
-});
-
-export default connect(mapStateToProps)(Counter);
-\end{verbatim}
-
-This way we \emph{connected} the component to the \emph{store}. The \emph{dispatch} function is automatically injected to the component as a \emph{prop} which means that we can start \emph{dispatching} actions to modify the \emph{state}. The \emph{state} (in our case just a single integer) is also injected to the component through the \emph{props} but we have to specifically define how that should happen using the \texttt{mapStateToProps} function.
-
-The process makes up a circle. The user clicks the button in the component and an \emph{action} is \emph{dispatched} to the \emph{reducer}. The \emph{reducer} updates the \emph{state} and the \emph{store} notifies the component of a change. The component re-renders with the updated value. As the \emph{state} can be changed only using \emph{actions}, the system behavior is predictable and very explicit. Redux offers a development mode in which it is very easy to monitor the \emph{actions} flowing through the system and how they change the \emph{state} (Figure \ref{fig:graph-visualizer}).
-
-The \emph{reducers} can be composed and combined. Let us now add another reducer that will simply count the number of clicks.
-
-\begin{verbatim}
-function clickCountReducer(state = 0, action) {
-  switch (action.type) {
-    case INCREMENT:
-    case DECREMENT:
-      return state + 1
-    default:
-      return state
-  }
-}
-\end{verbatim}
-
-Now we combine the reducers together.
-
-\begin{verbatim}
-import { combineReducers } from 'redux'
-
-const rootReducer = combineReducers({
-  value: valueReducer,
-  clickCount: clickCountReducer
-});
-\end{verbatim}
-
-This creates a new \emph{reducer} that combines the other two \emph{reducers} together in a way that it maintains two values in an object where each value is updated by the corresponding \emph{reducer}. Whenever an \emph{action} is \emph{dispatched}, the root \emph{reducer} passes the \emph{action} to both child \emph{reducers}.
-
-Suddenly, our \emph{state} is more complicated because it is an object with two values. We have to update the \texttt{mapStateToProps} function accordingly.
-
-\begin{verbatim}
-const Counter = ({ dispatch, value, clickCount }) => (
-  // ...
-);
-
-const mapStateToProps = state => state;
-\end{verbatim}
-
-In this case, we could actually significantly simplify the function as the \emph{state} structure directly corresponds to the \emph{props} that we want to inject.
-
-In a similar manner we could start adding more and more \emph{reducers} to fit the needs of the application (and the \emph{state} hierarchy would grow correspondingly). Our \emph{application generator} has only one single vast and deep \emph{state} that holds all the information. If we apply the React component hierarchy on this \emph{state} hierarchy (updated by the \emph{reducer} hierarchy), we get the user interface that is currently on the screen.  We can say that what you can see on the screen is a \emph{function} of the \emph{state}.
-
-% TODO: show action creators using promises and thunks
-
-\subsection{Reselect}
-
-We use the \texttt{mapStateToProps} function to extract the values from the \emph{state} required by a component. That worked really well for our simple examples but  it would not scale with the increasing size and depth of the \emph{state} object.
-
-The \emph{state} can be viewed as a database. It is a huge blob of data that any part of the application can access. It defines a clear API for making updates and the updates are always performed in transactions (that stems from the single-threaded nature of JavaScript but what also matters is that when an \emph{action} is \emph{dispatched}, it has to update all \emph{reducers} first before another \emph{action} can be \emph{dispatched}). What we miss is an API for selecting data from the database, i.e., the \emph{state}. We use Reselect \cite{reselect} for that.
-
-We will re-use the last iteration of our example with the \texttt{valueReducer} and \texttt{clickCountReducer}.
-
-\begin{verbatim}
-import {  createStructuredSelector } from 'reselect'
-
-// ... the component
-
-const valueSelector = state => state.value;
-const clickCountSelector = state => clickCount;
-
-const selector = createStructuredSelector({
-  value: valueSelector,
-  clickCount: clickCountSelector
-});
-
-export default connect(selector)(Counter);
-\end{verbatim}
-
-A Reselect \emph{selector} is like a named database query. It extracts a specific piece of data from the \emph{state}. We defined two base \emph{selectors} that access directly the state and we combined them together. Our final \emph{selector} becomes the \texttt{mapStateToProps} function. What is important is that once a \emph{selector} is created, we do not have to care about how it is implemented. For us, it is just a query that returns the data we need. That separates us from the raw \emph{state} structure. Just like we have a \emph{reducer} hierarchy and a \emph{component} hierarchy, we can add a \emph{selector} hierarchy covering the whole \emph{state}.
-
-Let us say that \texttt{state.auth.user.id} contains the ID of the currently authenticated user. We want to inject that ID into a component. This is the simple \texttt{mapStateToProps} approach:
-
-\begin{verbatim}
-const mapStateToProps = state => ({
-  userId: state.auth.user.id
-});
-\end{verbatim}
-
-With a smart \emph{selector} hierarchy, we could do this.
-
-\begin{verbatim}
-import { createSelector } from 'reselect'
-import { userSelector } from './selectors'
-
-const selector = createSelector(
-  [userSelector],
-  user => ({ userId: user.id }));
-\end{verbatim}
-
-Whereas in the first example, we actually have to know the complete \emph{state} hierarchy to extract this piece of information (and that can very often change due to refactoring), in the second example we are completely separated from the \emph{state} hierarchy and we just need to know the schema of the user object that the \texttt{userSelector} returns.
-
-The selectors can do some extra calculations. Using a simple math formula we calculate the number of increment clicks. Clearly, we could maintain this information in another \emph{reducer} but as we can derive this information from information that is already in the state, it would be duplication.
-
-\begin{verbatim}
-const incrementCountSelector = createSelector(
-  [valueSelector, clickCountSelector],
-  (value, clickCount) => (clickCount + value) / 2);
-\end{verbatim}
-
-The \emph{selectors} can be arbitrarily combined.
-
-\begin{verbatim}
-const decrementCountSelector = createSelector(
-  [clickCountSelector, incrementCountSelector],
-  (clickCount, incrementCount) => clickCount - incrementCount);
-\end{verbatim}
-
-Every time the \emph{state} is updated, the \emph{selectors} are recalculated and consequently the \emph{components} are re-rendered. The \emph{selectors} are actually slightly smarter than that. The \emph{selector} output is automatically cached and if its input does not change, the cached value is returned instead. Therefore the \emph{selectors} can be used even for heavy computations.
-
-\subsection{React-router}
-
-As one would expect, our \emph{application generator} will consist of many different screens with different functionality. We need a mechanism for transitioning between those screens. Although many approaches are viable, we prefer the one with classic URLs, i.e., every different screen has its own URL. It has clear benefits as the user navigates through the interface as if it was a standard web page (e.g. even with the back button support).
-
-Our \emph{application generator} is a SPA which means that each URL will contain the part corresponding to the actual physical address of the SPA (the entry URL) and the part maintained only by the frontend JavaScript application.
-
-\begin{verbatim}
-Sample URL: 
-http://localhost:9000/appgen/dashboard/discoveries
-
-SPA entry URL: 
-http://localhost:9000/appgen/
-
-Virtual URL part maintained by the SPA: 
-dashboard/discoveries
-\end{verbatim}
-
-JavaScript API in modern web browsers allows us to change the URL without actually reloading the page.
-
-We use React-router \cite{react-router} as a routing library for React. To show you how it works, we borrow an example from their documentation.
-
-\begin{verbatim}
-import React from 'react'
-import { Route, IndexRoute } from 'react-router'
-
-const App = ({ children }) => (
-    <div>
-      <h1>Welcome to our app</h1>
-      {children}
-    </div>
-  );
-
-const About = () => <h2>About</h2>
-
-const Users = ({ children }) => (
-    <div>
-      <h2>Users</h2>
-      {children}
-    </div>
-  );
-
-const User = ({ params: { userId }}) => <div>User: <strong>{userId}</div>
-
-const NoMatch = () => <h2>Not found</h2>
-
-const routes = (
-    <Route path="/" component={App}>
-      <Route path="about" component={About}/>
-      <Route path="users" component={Users}>
-        <Route path=":userId" component={User}/>
-      </Route>
-      <Route path="*" component={NoMatch}/>
-    </Route>
-  );
-\end{verbatim}
-
-The React-router uses JSX for routes definition which makes it very declarative. For each route, we define a React component that is activated when the URL matches this particular route. The URL segment that has to be matched is defined by the \texttt{path} attribute, the component by the \texttt{component} attribute. The routes definition is hierarchical specifying the complete URL schema.
-
-When a URL is matched, all components along the path of matching routes through the routes definition are activated. For example, for the URL \texttt{/users/15} the components \texttt{App}, \texttt{Users} and \texttt{User} are activated. The child component is always passed to the parent component through the \texttt{children prop}. 
-
-As you might have noticed, all the tools in our stack introduce some kind of explicit composability. That is very useful because it will make all parts of our  \emph{application generator} easily extendable and re-usable.
-
-\subsection{Immutable.js}
-
-Immutable.js \cite{immutable} is a library containing  standard data structures that we may know for example from Java (e.g. \texttt{List}, \texttt{Map} or \texttt{Stack}). The core feature is that all the data structures are \emph{immutable} which means that they cannot be changed. If we change an instance of a \texttt{List} (e.g. by adding an element) we create a completely new instance and the old one remains unchanged. Consider the following example.
-
-\begin{verbatim}
-import { List } from 'immutable'
-
-const list = new List();
-const listUpdated = list.push(5);
-
-list.size === 0;
-listUpdated.size === 1;
-\end{verbatim}
-
-This library has many advantages. Firstly, it provides an extremely strong and well documented API which goes beyond the capabilities of standard JavaScript collections (\texttt{object} or \texttt{array}). The API fits better into the functional nature of our code. Secondly, it works really well with \emph{reducers}. As explained, a \emph{reducer} has to always return a new state which is sometimes a bit complicated using the standard JavaScript API. In the following example, we need to create a new copy of an object containing users identified by their IDs.
-
-\begin{verbatim}
-function usersReducer(state = {}, action) {
-  switch (action.type) {
-    case ADD_USER: 
-      return Object.assign({}, state, {
-        action.payload.id: action.payload.id
-      })
-    default:
-      return state;
-  }
-}
-\end{verbatim}
-
-Now consider the version with Immutable.js.
-
-\begin{verbatim}
-import { Map } from 'immutable'
-
-function usersReducer(state = new Map(), action) {
-  switch (action.type) {
-    case ADD_USER: 
-      return state.set(action.payload.id, action.payload.id);
-    default:
-      return state;
-  }
-}
-\end{verbatim}
-
-Thirdly, there are some speed benefits as this is what makes the Reselect caching actually possible. A \emph{selector} recalculates only when the input arguments change. If an input argument was a standard mutable object, it would be very complicated (and expensive) to determine whether it changed. We would be keeping a reference to that object and have no idea whether the object was changed in the mean time. On the other hand, if we keep a reference to an immutable structure and the reference does not change, then we can be sure that the content of the referenced structure also did not change and we can re-use the cached value. Similar mechanism is used also for React components, i.e., it is possible to avoid unnecessary re-renders.
-
-Lastly, Immutable.js library offers the \texttt{Record} data structure which is essentially a \texttt{Map} (i.e., a \emph{key-value} storage, just like a standard JavaScript \texttt{object}) but with an enforced schema.
-
-\begin{verbatim}
-const User = Record({
-  id: 0,
-  name: 'Anonymous user'
-});
-
-const user = new User({ id: 5, gender: 'male' });
-
-user.id === 5;
-user.name === 'Anonymous user';
-user.gender === null;
-\end{verbatim}
-
-Any values that are missing during the instantiation are replaced with the default values and any values that are not part of the schema are removed. Unlike the standard immutable \texttt{Map}, a \texttt{Record} properties can be accessed using the standard dot notation (it even supports destructing). It is also very useful when we are defining the \texttt{propTypes} of a React component.
-
-\begin{verbatim}
-class UserView extends React.Component {
-  static propTypes = {
-    user: React.PropTypes.instanceOf(User).isRequired
-  }
-}
-\end{verbatim}
-
-If this component does not receive a \texttt{User} instance through the \texttt{props}, a warning is thrown.
-
-\section{Frontend framework architecture}
-\label{sec:implementation:frontend-architecture}
-
-In this section, we will give the reader a brief overview of the  overall structure of the frontend code and we will also explain several design ideas that are specific to our code. In the previous section (Section \ref{sec:implementation:frontend-development-stack}) we described several tools that together make up the development stack that we use. Clearly, there is no monolithic framework. Each tool solves only one problem and even though they have been all designed to work well together and complement each other, there is missing an overall architecture and design patterns for large scale applications (something that a well-established monolithic framework usually offers).
-
-There exist recommendations and patterns but they evolve just as quickly and erratically as the modern world of JavaScript frontend itself. While developing the \emph{application generator} (and making it a \emph{framework}) we had to choose the right patterns for us and sometimes even come up with some new patterns on our own.
-
-This involves literary everything from the very basic questions of how our code should be organized to which library should we use to generate forms or how we should implement visual feedback for asynchronous requests. In this section we will focus mainly on the basic aspects which involve the code organization. It will all become useful when we start integrating our own \emph{visualizer}.
+Note that these conventions and patterns present a significant contribution from our side. Whereas the core architecture concepts, as described in Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture}, were to a large extent just given to us through the chosen development stack, it is these conventions and patterns that adopt the concepts, taking them from simple demos to a rather large, complex and extendable application as our \emph{application generator} is.
 
 \subsection{JavaScript bundles}
 
-As explained, our frontend code is written in ES6 and has to be compiled (or more correctly \emph{transpiled}) into standard JavaScript that any browser can understand. The frontend code base consists of large amount of (not only) ES6 files which are all transpiled and put together into a single JavaScript file which we call a \emph{bundle}. This bundle is loaded to the web browser and contains everything that is required to run the SPA. We use Webpack bundler \footnote{http://webpack.github.io/} to put our code together and Babel \footnote{http://babeljs.io/} transpiler to convert our code.
+As explained, our frontend code is written in ES6 and has to be compiled (or more correctly \emph{transpiled}) into standard JavaScript that any browser can understand. The frontend codebase consists of large amount of (not only) ES6 files which are all transpiled and put together into a single JavaScript file which we call a \emph{bundle}. This bundle is loaded to the web browser and contains everything that is required to run the SPA. We use Webpack bundler \footnote{http://webpack.github.io/} to put our code together and Babel \footnote{http://babeljs.io/} transpiler to convert our code.
 
-The disadvantage of this approach is that this bundle is typically very large and therefore takes some time to load. Before it loads, the user does not see anything on the screen. On the other hand, once it is loaded, the user experience is very smooth because we do not have to make any more request to the server to fetch additional resources.
+The disadvantage of this approach is that this bundle is typically relatively large (3-4 Megabytes at this moment) and therefore takes some time to load. Before it loads, the user does not see anything on the screen. On the other hand, once it is loaded, the user experience is very smooth because we do not have to make any more request to the server to fetch additional resources.
 
-Our \emph{application generator} consists of several bundles. The main is the \emph{platform} bundle which contains the whole \emph{platform} user interface and also \emph{configurator} interfaces for all registered \emph{visualizers}. Then every registered \emph{visualizer} has its own bundle that contains only the \emph{application} interface. This bundle is used for published applications and as it does not contain the whole platform, it is significantly smaller and faster to load.
+Our \emph{application generator} consists of several bundles which correspond to the different SPAs (Figure~\ref{fig:frontend-base-structure-spas}). The main is the \emph{platform} bundle which contains the whole \emph{platform} user interface and also \emph{configurator} interfaces for all registered \emph{visualizers}. Then every registered \emph{visualizer} has its own bundle that contains only the \emph{application} interface. This bundle is used for published applications and as it does not contain the whole platform, it is significantly smaller and faster to load.
 
 Even though we have multiple bundles, all the code exists in one spot. The reason is that there is very little code that is used only in a single bundle and therefore it would not make sense to separate it in any way. What defines a bundle is an \emph{entry point} which is a simple JavaScript file where Webpack starts the bundling process.
 
@@ -740,7 +207,7 @@ The frontend code is all in the folder \texttt{src/app/assets\_webpack/appgen}. 
 
 Our code contains lots of Redux \emph{actions}, \emph{reducers} and Reselect \emph{selectors}. A common pattern is to put all \emph{actions} into the \texttt{actions.js} file, all \emph{reducers} into the \texttt{reducers.js} file and all selectors into a \texttt{selectors.js} file. In our \emph{application generator}, we decided to adopt the \emph{duck} format \footnote{https://github.com/erikras/ducks-modular-redux}. The idea is that we put all \emph{actions}, \emph{reducers} and \emph{selectors} related to the same functionality into a single file called a \emph{duck}. 
 
-We take the example from Section \ref{sec:implementation:frontend-development-stack:redux} where we were explaining how Redux works and rewrite it into the duck format. This would be a single file (i.e., an ES6 module).
+We take the example from Section \ref{att:devstack:redux} where we were explaining how Redux works and rewrite it into the duck format. This would be a single file (i.e., an ES6 module).
 
 \begin{verbatim}
 // Actions 
@@ -773,7 +240,7 @@ export default function valueReducer(state = 0, action) {
 export const valueSelector = state => state.value;
 \end{verbatim}
 
-This \emph{duck} covers the complete functionality regarding incrementing and decrementing a value. It exports public API for updating the value (\emph{action creators}), reading the value (\emph{selectors}) and it defines how the value should be represented and updated (\emph{reducer}). The \emph{action types} are exported as well which means that anyone can listen to these \emph{dispatched} \emph{actions}. In \emph{object-oriented programming} terminology we could say that the \emph{action creators} correspond to object \emph{setters} and \emph{selectors} to object \emph{getters}.
+This \emph{duck} covers the complete functionality regarding incrementing and decrementing a value. It exports public API for updating the value (\emph{action creators}), reading the value (\emph{selectors}) and it defines how the value should be represented and updated (\emph{reducer}). The \emph{action types} are exported as well which means that anyone can listen to these \emph{dispatched} \emph{actions}. In \emph{object-oriented programming} terminology we could say that the \emph{action creators} correspond to object \emph{setters} and \emph{selectors} to object \emph{getters} (note that we already mentioned \emph{ducks} in Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture} while describing the general frontend architecture).
 
 \subsection{Modules}
 
@@ -790,7 +257,7 @@ A \emph{module} is in the first place a folder with standardized content. Let us
 \item \textbf{pages} -- React components that are bound to React-router routes
 \end{itemize}
 
-All \emph{action types} in one \emph{module} should have a common prefix corresponding to the \emph{module} name. Firstly, when an \emph{action} is dispatched, we can easily identify which \emph{module} it came from. Secondly, we do not have to worry about conflicting \emph{action types} (with the prefix we are creating a separated namespace). Therefore each \emph{module} should contain a \texttt{prefix.js} file.
+As a module covers a concrete functionality, it is very likely to define its own \emph{actions}. All \emph{action types} in one \emph{module} should have a common prefix corresponding to the \emph{module} name. Firstly, when an \emph{action} is dispatched, we can easily identify which \emph{module} it came from. Secondly, we do not have to worry about conflicting \emph{action types} (with the prefix we are creating a separated namespace). Therefore each \emph{module} needs to contain a \texttt{prefix.js} file.
 
 \begin{verbatim}
 // prefix.js
@@ -803,7 +270,7 @@ export default createPrefixer(MODULE_PREFIX);
 
 The \texttt{MODULE\_PREFIX} should contain the \emph{module} name, i.e., the folder name containing the \emph{module}. We tried to come up with a solution which would automatically populate this constant with the folder name but that is, to our best knowledge, not possible due to how Webpack bundling process works. 
 
-This is how we would use it in our \emph{duck} (following the \emph{module} structure, the \emph{duck} should be placed in \texttt{ducks/value.js}). We apologize for the a bit unfortunate name "value".
+This is how we would use it in our \emph{duck} (following the \emph{module} structure, the \emph{duck} should be placed in \texttt{ducks/value.js}).
 
 \begin{verbatim}
 // ducks/value.js
@@ -864,22 +331,35 @@ Using this approach, the \emph{state} hierarchy corresponds to the \emph{module}
 
 A \emph{module} can also contain routes that would be composable in a similar manner. The route structure, however, does not strictly follow the folder structure as the situation with routing is more complicated. For example, a \emph{module} representing a \emph{visualizer} defines two sets of routes: one for the \emph{configurator} interface and one for the \emph{application} interface.
 
-\section{Process of creating a new application from the code perspective}
-\todo[color=green!40]{Během psaní té další kapitoly jsem si poznamenal, že tato kapitola bude potřeba pro pochopení. Teď už si nemůžu vzpomenout proč. Tak ji tady zatím nechávám a pak se kdyžtak smaže. Případně Vás napadne, proč by měla být důležitá.}
-
-Describing the inner mechanics for the whole \emph{application generator} would take us too long and this description is not that important for the reader anyway. We will just walk through the use case scenario again (Subsection \ref{sec:implementation:use-case-scenario}) and describe what is going on under the hood. Among other things, this should help the reader to better understand how integration of new \emph{visualizers} into the \emph{application generator} works.
-
-\section{Integrating a new visualizer}
+\section{Framework usage: A guide to integrating new visualizers}
 \label{sec:implementation:integrating-visualizer}
 
 Now that the reader is equipped with all the necessary knowledge, we will walk him through the process of creating a brand new \emph{visualizer} to demonstrate the abilities of our framework. The \emph{visualizer} will be visualizing a graph (as understood in the graph theory) represented with the RGML vocabulary (which makes it very similar to the D3.js Chord Visualizer that will be properly described later, including the vocabulary). The purpose of this section is merely to get the reader familiar with the basic integration steps. The presented \emph{visualizer} will simply display number of vertices and edges of the graph and let the user configure the graph label.
 
 Before we start, we would like to make one remark. We will walk the user through the whole process and along the way we will touch parts of the software that were not designed and developed by us but by the authors of LinkedPipes Visualization \cite{linked_pipes_visualization}. We do not want to take credit for those parts. Specifically, those are the parts shared with LinkedPipes Visualization, which means everything related to the LDVM implementation and low-level work with RDF data.
 
+\subsection{Guide overview}
+
+Let us start with a list of steps to give the reader an overview of what is ahead of us. The first five steps are mandatory in a way that they are necessary to get the \emph{visualizer} up and running. When the first five steps are done, it is possible to generate new applications with this new \emph{visualizer} (this among other things means that the \emph{discovery} is able to utilize the new \emph{visualizer} while looking for pipelines). The other four steps add some actual functionality to the \emph{visualizer}. This functionality includes extracting some RDF data from the \emph{pipeline output}, loading them to the frontend and showing them to the user.
+
+\begin{enumerate}
+\item LDVM \emph{component} (\ref{sec:implementation:integrating-visualizer:ldvm})
+\item Frontend \emph{visualizer} module (\ref{sec:implementation:integrating-visualizer:2})
+\item \emph{Configurator} user interface (\ref{sec:implementation:integrating-visualizer:configurator})
+\item \emph{Application} user interface (\ref{sec:implementation:integrating-visualizer:4})
+\item Linking LDVM \emph{component} to the \emph{plugin} (\ref{sec:implementation:integrating-visualizer:5})
+\item Scala backend  (\ref{sec:implementation:integrating-visualizer:6})
+\item Extracting RDF data from the pipeline evaluation  (\ref{sec:implementation:integrating-visualizer:extracting-rdf})
+\item Making asynchronous requests from the client (\ref{sec:implementation:integrating-visualizer:8})
+\item Saving and loading application configuration (\ref{sec:implementation:integrating-visualizer:configuration})
+\end{enumerate}
+
+The guide will be concluded with some final notes on the process~(\ref{sec:implementation:integrating-visualizer:final-notes}).
+
 \subsection{LDVM component}
 \label{sec:implementation:integrating-visualizer:ldvm}
 
-We start be defining the LDVM \emph{visualizer component} using the \texttt{ldvm} vocabulary. As the whole definition would be pretty long, we will walk through it statement by statement and provide necessary explanations. Let us start with couple of prefixes for vocabularies that we are going to use.
+We start be defining the LDVM \emph{visualizer component} using the \texttt{ldvm} vocabulary~\cite{ldvm_vocabulary}. As the whole definition would be pretty long, we will walk through it statement by statement and provide necessary explanations. Let us start with couple of prefixes for vocabularies that we are going to use.
 
 \scriptsize
 \begin{verbatim}
@@ -974,7 +454,7 @@ v-graph-r:GraphDescriptor a ldvm:Descriptor ;
 
 The SPARQL query contained in the \emph{descriptor} is looking for a graph instance and at least one edge between two vertices. This requirement is applied on the input that we have defined before. If we put this all together we get that \textit{the \emph{mandatory feature} requires the data flowing through the only \emph{component input} to contain a non-empty graph}. So we have just specified how the RDF data coming to our \emph{visualizer} should look like.
 
-What we have to do now is put all these lines together into a single *.ttl file (we have been using the Turtle syntax) and upload it to the \emph{application generator}. Unfortunately, the user interface for this task is not yet available inside the \emph{application generator} and we need to use LinkedPipes Visualization interface for it. So go to the homepage, open the left side menu, click \textbf{Components} and then the green \textbf{Add} button. It should get you to a screen that you can see on Figure \ref{fig:upload_component_definition}. Use the form to upload the definition.
+What we have to do now is put all these lines together into a single *.ttl file (we have been using the Turtle syntax~\cite{turtle}) and upload it to the \emph{application generator}. Unfortunately, the user interface for this task is not yet available inside the \emph{application generator} and we need to use LinkedPipes Visualization interface for it. So go to the homepage, open the left side menu, click \textbf{Components} and then the green \textbf{Add} button. It should get you to a screen that you can see on Figure \ref{fig:upload_component_definition}. Use the form to upload the definition.
 
 \begin{figure}
 	\centering
@@ -986,6 +466,7 @@ What we have to do now is put all these lines together into a single *.ttl file 
 Once this is done, the \emph{discovery} algorithm is able to utilize this new \emph{visualizer component} when discovering pipelines. If you now ran the \emph{discovery} inside LinkedPipes Visualization on a data set containing some graph data, it should find a \emph{pipeline} ending with this \emph{visualizer component}. Now we need to implement the corresponding \emph{visualizer plugin} for our \emph{application generator}.
 
 \subsection{Frontend module}
+\label{sec:implementation:integrating-visualizer:2}
 
 As the first thing, we need to choose a unique short name for our \emph{visualizer}. When creating the RDF definition, we used the name \texttt{graph} as a RDF prefix. We will stick to this name.
 
@@ -1092,6 +573,7 @@ export default Configurator;
 The objects representing the selected application and visualizer are  for your convenience automatically injected using \texttt{props} to the \texttt{Configurator} component (but they are available from the \emph{state} at any time). Here we just use them to print their names. We also used the \texttt{BodyPadding} component to add the standard padding around the text.
 
 \subsection{Application user interface}
+\label{sec:implementation:integrating-visualizer:4}
 
 As explained, the \emph{application} interface of each \emph{visualizer} lives in a standalone JavaScript bundle. The \emph{application} interface that we are about to implement will support embedding. It will run in two different modes. There will be the default \emph{standalone} mode which besides the visualization itself will also display the application name and description. It will be accessible on the default root \texttt{/} URL. Then there will be the \emph{embed} mode containing just the visualization. It will be accessible on the \texttt{/embed} URL.
 
@@ -1189,6 +671,7 @@ initEntry(createRoutes);
 We have to make sure to import the correct routes definition and also that the file name corresponds to the \emph{visualizer} name. Webpack will pick up this new \emph{entry point} automatically (if you are running Webpack in the watch mode, you need to restart it) and generate a new JavaScript bundle of the same name.
 
 \subsection{Linking LDVM component to the plugin}
+\label{sec:implementation:integrating-visualizer:5}
 
 In this step, we will link the LDVM \emph{visualizer component} and the \emph{visualizer} plugin together. That is done through the \emph{application generator} user interface (not LinkedPipes Visualization interface this time).
 
@@ -1203,6 +686,7 @@ We need to sign in to the \emph{application generator} with an administrator acc
 This was the last mandatory step. At this moment, the \emph{visualizer} (even though it does not do anything) should be working, i.e., it should be possible to create a new application using this \emph{visualizer} from a data set containing graph data.
 
 \subsection{Scala backend}
+\label{sec:implementation:integrating-visualizer:6}
 
 Surprisingly enough, we did not have to touch the Scala backend to register our new \emph{visualizer}. Technically speaking, it is really not necessary but only until the very moment when we need the \emph{visualizer} to actually \textit{do something useful}. That typically involves fetching and extracting the RDF data produced by the \emph{pipeline}. For that we do need the backend.
 
@@ -1220,7 +704,7 @@ The package information clearly says where this class should belong. The \texttt
 \subsection{Extracting RDF data from the pipeline evaluation}
 \label{sec:implementation:integrating-visualizer:extracting-rdf}
 
-We said that our \emph{visualizer} would show the number of vertices and edges in the graph. For us that means that we need to access the RDF data produced by the \emph{pipeline}, extract this information from it, send it to the client and then display it on the screen. We start with accessing the RDF data.
+We said that our \emph{visualizer} would show the number of vertices and edges in the graph. For us that means that we need to access the RDF data produced by the \emph{pipeline}, extract this information from it, send it to the client and then display it on the screen. We start with accessing the RDF data. Note that in this part, we are utilizing the LinkedPipes Visualization API for working with RDF data.
 
 Since it is RDF data, we will use SPARQL queries to fetch the information we need. 
 
@@ -1275,15 +759,14 @@ class GraphExtractor extends QueryExecutionResultExtractor[GraphQuery, Graph] {
   def extract(input: QueryExecution): Option[Graph] = {
 
     try {
-      val resultSet = input.execSelect()
+      val resultSet = input.execSelect
+      val solution = if (resultSet.hasNext) Some(resultSet.next) else None
 
-      if (!resultSet.hasNext) return None
-
-      val solution = resultSet.nextSolution()
-      Some(Graph(
+      solution map { solution => Graph(
         solution.getLiteral("directed").getBoolean,
         solution.getLiteral("nodeCount").getInt,
-        solution.getLiteral("edgeCount").getInt))
+        solution.getLiteral("edgeCount").getInt)
+      }
     } catch {
       case e: org.apache.jena.sparql.engine.http.QueryExceptionHTTP => {
         None
@@ -1342,6 +825,7 @@ implicit val graphWrites = Json.writes[Graph]
 \end{verbatim}
 
 \subsection{Making asynchronous requests from the client}
+\label{sec:implementation:integrating-visualizer:8}
 
 Everything is prepared on the server-side. Now comes the client. When the application loads, we will make an synchronous HTTP request to fetch the graph information. Once we receive it, we store it in the \emph{state} and show it on the screen.
 
@@ -1634,9 +1118,9 @@ class Application extends Component {
 \end{verbatim}
 
 \subsection{Saving and loading application configuration}
-\label{sec:implementation:integration:configuration}
+\label{sec:implementation:integrating-visualizer:configuration}
 
-The framework provides an optional solution for saving and loading the application configuration easily. The idea is very simple, the configuration consists of different bits and pieces of the \emph{state}. To save the configuration, we just serialize those bits and pieces into JSON and save it on the server. To load the configuration, we fetch it from the server, unserialize it from JSON and let the \emph{reducers} to update the \emph{state}.
+The framework provides an optional solution for saving and loading the application configuration easily. The idea is very simple yet powerful. The configuration consists of different bits and pieces of the \emph{state}. To save the configuration, we just serialize those bits and pieces into JSON and save it on the server. To load the configuration, we fetch it from the server, unserialize it from JSON and let the \emph{reducers} to update the \emph{state}.
 
 The configuration contains parts that are \emph{visualizer} specific and parts that are common for all \emph{visualizers} and we have to make sure that they both are saved and loaded properly together.
 
@@ -1747,7 +1231,7 @@ class Configurator extends Component {
 
 Similarly, we would load the configuration in the \texttt{Application} component.
 
-As a concrete example, we will let the user to edit graph label. To keep this subsection short, we will utilize one of the available framework utilities, custom label editor. This editor allows the user to specify alternative labels for RDF resources. Each RDF resource is identified with a URI. Unfortunately, we do not have the graph URI but for simplicity, we will just make up one.
+As a concrete example, we will let the user to edit graph label. To keep this subsection short, we will utilize one of the available framework utilities, custom label editor (Figure~\ref{fig:scenario-08-custom-label-editor}). This editor allows the user to specify alternative labels for RDF resources. Each RDF resource is identified with a URI. Unfortunately, we do not have the graph URI but for simplicity, we will just make up one.
 
 \begin{verbatim}
 // pages/Configurator.js
@@ -1777,10 +1261,13 @@ class Configurator extends Component {
 That is it. If we now click the \textbf{More} button in the upper right corner of the \emph{configurator} interface and then select \textbf{Edit labels}, a pencil icon will appear next to the graph name (which will be "Unnamed graph" by default). Clicking that icon will open a dialog where we can define a language dependent values for this resource. By clicking \textbf{Save}, we update the \emph{state} and we can immediately see the change on the screen. By clicking \textbf{Save changes}, we save the changes to the server (the custom labels are part of the common configuration which means that it is automatically taken care of). We now have to add the \texttt{EditableLabel} component to the \texttt{Application} component as well to get it working in the \emph{application} interface.
 
 \subsection{Final notes}
+\label{sec:implementation:integrating-visualizer:final-notes}
 
 You might have noticed that we have repeated a lot of work for the \emph{application} and \emph{configurator} interface and their components are nearly identical. Firstly, in a more complex \emph{visualizer} those two interfaces would differ significantly more. Secondly, thanks to the React nature it is always very easy to refactor the code, put the shared aspects into a single component and then re-use it. No doubt that some of these features could have been implemented more simply but you should consider this a starting point from which you can start extending and building your \emph{visualizer}.
 
-The result of our work can be seen on Figure \ref{fig:graph-visualizer}. For more complex examples we suggest the user to check out the full implementations of the two completed visualizers, the D3.js Chord Visualizer and Google Maps Visualizer (both will be explained later).
+Also some parts might have seemed excessively verbose. For example, when we defined all the \emph{action type} constants for saving and loading the configuration (Subsection \ref{sec:implementation:integrating-visualizer:configuration}). To an extent this verbosity is caused by the development stack. In this particular case, it is up to the developer whether he decides to define all \emph{action types} that might occur as part of good practice, or to define just those that he actually needs. We prefer defining all \emph{action types} as it explicitly describes what can happen in the application.
+
+The result of our work can be seen on Figure \ref{fig:graph-visualizer}. For more complex examples we suggest the user to check out the full implementations of the two completed visualizers, the D3.js Chord Visualizer and Google Maps Visualizer (both will be described later).
 
 \begin{figure}
 	\centering
@@ -1882,7 +1369,7 @@ Note that the \texttt{Label} component wraps the \texttt{LocalizedValue} compone
 \subsection{Custom labels editor}
 \label{sec:implementation:advanced-features:custom-labels-editor}
 
-We have already explained how the custom labels editor work (Subsection \ref{sec:implementation:frontend-development-stack:redux}). Using a component \texttt{EditableLabel} you can allow the user to provide his own labels for any RDF resource. Here we would just like to say that this component internally uses the aforementioned \texttt{Label} component. That means that \texttt{EditableLabel} supports multiple languages and also if the label is missing and is not provided by the user, it is fetched from the server.
+We have already explained how the custom labels editor works in the integration guide (Subsection \ref{sec:implementation:integrating-visualizer:configuration}). Using the component \texttt{EditableLabel} you can allow the user to provide his own labels for any RDF resource (Figure \ref{fig:scenario-08-custom-label-editor}). Here we would just like to say that this component internally uses the aforementioned \texttt{Label} component. That means that \texttt{EditableLabel} supports multiple languages and also if the label is missing and is not provided by the user, it is fetched from the server.
 
 We believe this nicely shows the strength of our development stack. Each of these three components (\texttt{LocalizedValue}, \texttt{Label}, \texttt{EditableLabel}) has a single purpose and by simple composition we achieve pretty interesting results. Also the developer can drop any of these components wherever he wants and it \emph{just works}. This approach shows a lot of potential for other similar solutions.
 
