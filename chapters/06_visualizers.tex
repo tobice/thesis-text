@@ -346,7 +346,6 @@ The only problem with this approach is that for every search we need to go throu
 
 \section{Google Maps Visualizer}
 \label{sec:visualizers:google-maps}
-\todo[color=green!40]{Visualizer ještě projde nějakým tím lehkým faceliftingem, tak teprve pak doplním obrázky do kapitoly.}
 
 Google Maps Visualizer focuses on visualizing geospatial information. It shows RDF resources containing GPS coordinates on a map in a form of markers. If the data set supports it, it allows the user to filter the resources.
 
@@ -370,20 +369,54 @@ Available \emph{filters} and their \emph{values} has to be explicitly defined in
 
 \subsection{Configurator and application user interface}
 
-\emph{Configurator} and \emph{application} interfaces are very similar. Both of them feature a map and a sidebar on the left with \emph{filters}. The key difference is that in the \emph{configurator} interface, the \emph{filters} can be displayed in two modes: configuration and preview. The \emph{application} interface shows the \emph{filters} always in the same way which corresponds to the preview mode.
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_map_configuration}
+	\caption{Google Maps Visualizer: \emph{Configurator interface}. Values with the "check" sign are enforced, values with the "cross" sign are disabled and values with the "face" sign can be controlled by the audience.}
+    \label{fig:map-configuration}
+\end{figure}
+
+\emph{Configurator} and \emph{application} interfaces are very similar. Both of them feature a map and a sidebar on the left with \emph{filters}. The key difference is that in the \emph{configurator} interface, the \emph{filters} can be displayed in two modes: configuration and preview (Figure~\ref{fig:map-configuration}). The \emph{application} interface shows the \emph{filters} always in the same way which corresponds to the preview mode (Figure~\ref{fig:map-configuration-preview}).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_map_configuration_preview}
+	\caption{Google Maps Visualizer: \emph{Configurator interface} in preview mode. The filters are configured according to Figure~\ref{fig:map-configuration}.}
+    \label{fig:map-configuration-preview}
+\end{figure}
 
 The idea is that by configuring the \emph{filters} the user can significantly affect the shape of the published application. Here are some examples.
 
 \begin{itemize}
 \item A \emph{filter} can be \textbf{disabled}. A disabled \emph{filter} is interpreted as if all its \emph{values} have been selected, i.e., it has no impact on the selected output. This filter is completely hidden in the published application.
-\item A \emph{value} can be \textbf{enforce}. That means that it is always selected.
+\item A \emph{value} can be \textbf{enforced}. That means that it is always selected.
 \item A \emph{value} can be \textbf{disabled}. That means that it cannot be selected. This \emph{value} is completely hidden in the published application.
 \item A \emph{filter} can be switched between \textbf{checkbox} mode and \textbf{radio} mode. In checkbox mode, an arbitrary number of \emph{filter} \emph{values} can be selected. In radio mode, only one \emph{value} can be selected. The mode names correspond to the appropriate form controls.
-
 \end{itemize}
-Thanks to the enforcing and disabling of certain \emph{values}, it is possible to create default filters that are always applied. That essentially means that the published application can be based just on a subset of the input data. If we go back to our example with laptops, one could generate a browser of Dell laptops filterable by screen size. To achieve that, one would have to disable the operating system \emph{filter}, enforce the Dell \emph{value} and disable all other \emph{values} for the brand \emph{filter}.
 
-By either fixing or disabling all \emph{filters} and \emph{values}, it is actually possible to generate a completely static application which might also make sense in certain situations. Moreover, It is possible to disable the sidebar with \emph{filters} completely which reduces the published application just to a static map with pre-selected markers.
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_map_published}
+	\caption{Google Maps Visualizer: Published application with filters configured according to Figure~\ref{fig:map-configuration}. The audience can access only a subset of the original input data.}
+    \label{fig:map-published}
+\end{figure}
+
+Thanks to the enforcing and disabling of certain \emph{values}, it is possible to create default filters that are always applied. That essentially means that the published application can be based just on a subset of the input data (Figure~\ref{fig:map-published}). If we go back to our example with laptops, one could generate a browser of Dell laptops filterable by screen size. To achieve that, one would have to disable the operating system \emph{filter}, enforce the Dell \emph{value} and disable all other \emph{values} for the brand \emph{filter}.
+
+By either fixing or disabling all \emph{filters} and \emph{values}, it is actually possible to generate a completely static application which might also make sense in certain situations. Moreover, it is possible to disable the sidebar with \emph{filters} completely which reduces the published application just to a static map with pre-selected markers (Figure~\ref{fig:map-published-static}), ideal for embedding (Figure~\ref{fig:map-published-embed}).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_map_published_static}
+	\caption{Google Maps Visualizer: Completely static published application with fixed and hidden filters.}
+    \label{fig:map-published-static}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_map_published_embed}
+	\caption{Google Maps Visualizer: Completely static published application in embed mode.}
+    \label{fig:map-published-embed}
+\end{figure}
 
 Besides the filter configuration, the \emph{configurator} interface also allows the user to fix the default map position and zoom level. Naturally, it also implements the available universal features, like multi language support and custom labels editor (e.g. it is possible to rename \emph{filters}  and their \emph{values}).
 
@@ -392,7 +425,14 @@ Besides the filter configuration, the \emph{configurator} interface also allows 
 
 The reader might be wondering why we presented a sample data set but then we used a completely different example to explain how the filtering works. The reason is that the presented data set is if not actually broken then at least very confusing (its quality is a little poor). That does not make it very suitable for explaining principles, but it makes it perfect for demonstrating the abilities of our \emph{visualizer}.
 
-As explained, each business subject has a \emph{primary category} and a \emph{secondary category}. Those are two properties that would both make up one \emph{filter} each. Since the data is in RDF, each property is actually an RDF resource with a unique URI. The problem here is that they both have the same label and they both contain exactly the same \emph{values} which means that they will both look exactly the same to the user. The label can be approximately translated as \textit{"Businesses as defined by the 1st attachment of the integrated prevention law"}.
+As explained, each business subject has a \emph{primary category} and a \emph{secondary category}. Those are two properties that would both make up one \emph{filter} each. Since the data is in RDF, each property is actually an RDF resource with a unique URI. The problem here is that they both have the same label and they both contain exactly the same \emph{values} which means that they will both look exactly the same to the user. The label can be approximately translated as \textit{"Businesses as defined by the 1st attachment of the integrated prevention law"} (Figure~\ref{fig:map-confusing-filters}).
+
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_map_confusing_filters}
+	\caption{Google Maps Visualizer: Default view on the filters of the data set \textbf{Integrated prevention and pollution limitation} \cite{prevention-and-pollution-limitation}. There are two categories; both with the exactly same labels. They both have approximately 60 identical values to choose from (the values are not visible as the \emph{filters} are collapsed).}
+    \label{fig:map-confusing-filters}
+\end{figure}
 
 If we go back to the example of the e-shop selling laptops, there is one big assumption: We assume that the user is at least to some extent familiar with the nature of the product. E.g. he knows what the brand or the screen size is. Therefore we assume that he would intuitively understand what happens if he selects in the filters the brand Dell and the screen size 15 inches. In case of our data set, however, not only might the user have no idea what \textit{"Businesses as defined by the 1st attachment of the integrated prevention law"} are in the first place, but also the fact that this property is there twice would confuse him even more. 
 
@@ -404,6 +444,13 @@ In the example with laptops this would mean that each laptops would have two bra
 
 The reader might object that this behavior in the UI is not a bug but is rather intentional as it follows the structure of the data. Let us imagine that a laptop has two new properties. A chassis color and a keyboard color. They would correspond to two new \emph{filters} with exactly the same \emph{values} (a list of several predefined colors). Clearly, we want to select the colors independently. Selecting red for the chassis should not automatically mean selecting red for the keyboard. Note that structure of this example is identical to our data set. The only difference is that our \emph{primary category} and \emph{secondary category} both have the same label, so they appear as identical. But they are not. Their URIs are different and that is what matters.
 
+\begin{figure}
+	\centering
+	\includegraphics[width=145mm]{img/06_map_fixed_example}
+	\caption{Google Maps Visualizer: Sample application generated from the data set \textbf{Integrated prevention and pollution limitation} \cite{prevention-and-pollution-limitation}. One of the \emph{filters} is disabled, the other is given a more user-friendly name. We also disabled many of the available \emph{values}.}
+    \label{fig:map-fixed-example}
+\end{figure}
+
 To sum it up: a visualization of this data set generated with LinkedPipes Visualization would expose all these flaws to any end user that would come across this visualization. This makes the visualization not very user friendly. On the other hand, in our \emph{application generator} we can utilize the configuration phase to fix these issues and deliver much better user experience (not to mention that our implementation does not suffer from the aforementioned bug). Specifically, we could undergo the following steps:
 
 \begin{itemize}
@@ -412,6 +459,6 @@ To sum it up: a visualization of this data set generated with LinkedPipes Visual
 \item \textbf{Reduce the data set}. Even if one of the \emph{filters} is disabled, there is still more than 60 \emph{values} to choose from. Perhaps we could instead of one big application generate multiple smaller applications where each would utilize default filters to visualize only a specific subset of the data set.
 \end{itemize}
 
-Using our \emph{application generator}, we were able to take a data set of poor quality and turn it into a useful and user-friendly application. Which is something that would not be possible with LinkedPipes Visualization.
+Using our \emph{application generator}, we were able to take a data set of poor quality and turn it into a useful and user-friendly application (Figure~\ref{fig:map-fixed-example}). Which is something that would not be possible with LinkedPipes Visualization.
 
 One last remark. The \emph{configurator interface} does not shield the user from these data set related problems. The main advantage is that only the user that generates the application needs to deal with these issues. Once the application is properly generated, it is ready to be comfortably consumed by a way broader audience. In LinkedPipes Visualization, on the other hand, everybody gets the raw visualization and has to make his own sense out of the data.
