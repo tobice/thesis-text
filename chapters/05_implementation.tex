@@ -6,10 +6,11 @@ In this chapter, we will go through our \emph{application generator}, explaining
 Note that certain sections of this chapter, especially the step-by-step guide, are very technical and rather exhaustive. Under normal circumstances those sections would be part of the separate development guide. Nevertheless, as one of the goals of this thesis was to develop a framework, we need to convince the reader that we fulfilled this goal. We can only do that by providing enough detail about how the framework works and especially how it can be used by other developers.
 
 \section{Overview}
+\label{sec:implementation:overview}
 
 Before we dive into technical details, let us walk the reader through the \emph{application generator} features from a user perspective. We will start by describing a sample use case scenario and then we will continue with individual \emph{platform} features.
 
-\subsection{Sample use case scenario}
+\subsection{Sample use case scenario: Generating a new application}
 \label{sec:implementation:use-case-scenario}
 
 In this scenario, we will utilize the D3.js Chord Visualizer and the Asylum Seekers 2015 data set. Both will be properly described later in a separate chapter dedicated to this particular visualizer. Let us say that our fictional user is a journalist writing an article on the refugee crisis. He comes across our \emph{application generator} and finds there the Asylum Seekers 2015 data set. The Figures \ref{fig:scenario-01-browse-data-sources} to \ref{fig:scenario-11-embedded-application} show step-by-step how the journalist can use our tool to create an interactive application and share it with his readers. 
@@ -178,7 +179,7 @@ There exist recommendations and patterns but they evolve just as quickly and err
 
 This involves literary everything from the very basic questions of how our code should be organized to which library should we use to generate forms or how we should implement visual feedback for asynchronous requests. In this section we will focus mainly on the basic aspects which involve the code organization which is important because it affects the process of integrating new \emph{visualizers}.
 
-Note that these conventions and patterns present a significant contribution from our side. Whereas the core architecture concepts, as described in Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture}, were to a large extent just given to us through the chosen development stack, it is these conventions and patterns that adopt the concepts, taking them from simple demos to a rather large, complex and extendable application as our \emph{application generator} is.
+Note that these conventions and patterns present a significant contribution from our side. Whereas the core architecture concepts, as described in Section~\ref{sec:system-proposal:architecture-analysis:frontend-architecture}, were to a large extent just given to us through the chosen development stack, it is these conventions and patterns that adopt the concepts, taking them from simple demos to a rather large, complex and extendable application that our \emph{application generator} is.
 
 \subsection{JavaScript bundles}
 
@@ -394,7 +395,7 @@ v-graph-r:GraphVisualizerTemplate a ldvm:VisualizerTemplate ;
 
 Do not be confused by the word \texttt{Template}. In LDVM, even the \emph{pipelines} themselves are represented in RDF. Each \emph{pipeline} consists of \emph{component instances} that are instantiated from \emph{component templates} just like this one.
 
-As you can see, this \emph{component} has a \emph{configuration}, one \emph{input} and one \emph{feature}. There is nothing important now about the \emph{configuration} and also the \emph{input} is pretty straightforward, so we will just drop here the definitions.
+As you can see, this \emph{component} has a \emph{configuration}, one \emph{input} and one \emph{feature}. There is nothing important now about the \emph{configuration} and also the \emph{input} is pretty straightforward, so we will just drop here the definitions. To avoid any confusion: as we explained for example in Section~\ref{sec:system_proposal:contribution}, each \emph{visualizer} will allow the user to configure the application before it gets published. This \emph{configuration} could be represented in RDF. The \texttt{ldvm} vocabulary clearly supports it. But we prefer a simpler and more straightforward approach which will be explained later in this guide. 
 
 \scriptsize
 \begin{verbatim}
@@ -1120,7 +1121,7 @@ class Application extends Component {
 \subsection{Saving and loading application configuration}
 \label{sec:implementation:integrating-visualizer:configuration}
 
-The framework provides an optional solution for saving and loading the application configuration easily. The idea is very simple yet powerful. The configuration consists of different bits and pieces of the \emph{state}. To save the configuration, we just serialize those bits and pieces into JSON and save it on the server. To load the configuration, we fetch it from the server, unserialize it from JSON and let the \emph{reducers} to update the \emph{state}.
+The framework provides an optional solution for saving and loading the application configuration easily. The idea is very simple yet powerful. The configuration consists of different bits and pieces of the \emph{state}. To save the configuration, we just serialize those bits and pieces into JSON and save it on the server. To load the configuration, we fetch it from the server, unserialize it from JSON and let the \emph{reducers} to update the \emph{state}. What is important is that this approach is very flexible. We can arbitrarily add and remove those bits and pieces to the configuration without updating the backend implementation which therefore can be universal for all \emph{visualizers}.
 
 The configuration contains parts that are \emph{visualizer} specific and parts that are common for all \emph{visualizers} and we have to make sure that they both are saved and loaded properly together.
 
@@ -1277,6 +1278,7 @@ The result of our work can be seen on Figure \ref{fig:graph-visualizer}. For mor
 \end{figure}
 
 \section{Advanced framework features}
+\label{sec:implementation:advanced-features}
 
 While we were demonstrating how a new \emph{visualizer} can be integrated into our \emph{application generator}, we showed couple of available features that the developer can use to speed up the process. Namely, we described the prepared solution for saving and loading application configuration and we also showed how we can easily extract RDF data from the \emph{pipeline evaluation}. Here we will briefly mention couple more examples.
 
@@ -1374,6 +1376,7 @@ We have already explained how the custom labels editor works in the integration 
 We believe this nicely shows the strength of our development stack. Each of these three components (\texttt{LocalizedValue}, \texttt{Label}, \texttt{EditableLabel}) has a single purpose and by simple composition we achieve pretty interesting results. Also the developer can drop any of these components wherever he wants and it \emph{just works}. This approach shows a lot of potential for other similar solutions.
 
 \subsection{Miscellaneous}
+\label{sec:implementation:advanced-features:miscellaneous}
 
 The framework also contains a lot of smaller and less important features which, however, can be of great help for the developer in certain situations. Especially because  the chosen development stack lacks many features that a well-established monolithic framework would offer.  We will just provide a brief list of some of them. 
 
